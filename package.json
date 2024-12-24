@@ -1,9 +1,10 @@
 {
-  "name": "react-native-openfort",
-  "main": "expo-router/entry",
-  "version": "1.0.0",
+  "name": "@openfort/react-native",
+  "main": "dist/index.js",
+  "version": "0.0.2",
   "scripts": {
     "start": "expo start",
+    "build": "rimraf dist && tsc",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
@@ -11,13 +12,20 @@
     "test": "jest --watchAll",
     "lint": "expo lint"
   },
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist",
+    "polyfills"
+  ],
   "jest": {
     "preset": "jest-expo"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
+    "@openfort/openfort-js": "./package72.tgz",
     "@react-navigation/bottom-tabs": "^7.0.0",
     "@react-navigation/native": "^7.0.0",
+    "events": "^3.3.0",
     "expo": "~52.0.20",
     "expo-blur": "~14.0.1",
     "expo-constants": "~17.0.3",
@@ -34,11 +42,15 @@
     "react-dom": "18.3.1",
     "react-native": "0.76.5",
     "react-native-gesture-handler": "~2.20.2",
+    "react-native-get-random-values": "^1.11.0",
+    "react-native-mmkv": "^3.2.0",
+    "react-native-randombytes": "^3.6.1",
     "react-native-reanimated": "~3.16.1",
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.1.0",
     "react-native-web": "~0.19.13",
-    "react-native-webview": "13.12.5"
+    "react-native-webview": "13.12.5",
+    "text-encoding": "^0.7.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
@@ -50,5 +62,6 @@
     "react-test-renderer": "18.3.1",
     "typescript": "^5.3.3"
   },
-  "private": true
+  "private": true,
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
