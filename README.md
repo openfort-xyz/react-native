@@ -53,7 +53,7 @@ export default function RootLayout() {
 
   return (
     <>
-	  <OpenfortCommunicationWebView />
+      <OpenfortCommunicationWebView />
       <Slot />
     </>
   );
