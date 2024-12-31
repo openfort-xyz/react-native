@@ -11,16 +11,18 @@ const injectedCode = `
 export default function Iframe({ customUri }: { customUri?: string }) {
 
   const webViewRef = useRef<WebView>(null);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fnCallbackRef = useRef<any>(null); // Ref to store the callback
 
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    global.openfortListener = (fn: ((event: MessageEvent<any>) => void)) => {
+    global.openfortListener = (fn: ((event: MessageEvent<unknown>) => void)) => {
       fnCallbackRef.current = fn; // Store the callback in the ref
     };
 
-    global.openfortPostMessage = (message: MessageEvent<any>) => {
+    global.openfortPostMessage = (message: MessageEvent<unknown>) => {
       webViewRef?.current?.postMessage(JSON.stringify(message))
       setLoaded(true);
     };
@@ -29,13 +31,14 @@ export default function Iframe({ customUri }: { customUri?: string }) {
   const handleMessage = (event: WebViewMessageEvent) => {
     // Trigger the stored callback, if any
     if (fnCallbackRef.current) {
-      fnCallbackRef.current({ origin: event.nativeEvent.url, data: event.nativeEvent.data });
+      const origin = event.nativeEvent.url.endsWith('/') ? event.nativeEvent.url.slice(0, -1) : event.nativeEvent.url;
+      fnCallbackRef.current({ origin, data: event.nativeEvent.data });
     }
   };
 
   if (!loaded) return null;
 
-  const uri = customUri ? customUri : "https://embedded.openfort.xyz/";
+  const uri = customUri ? customUri : "https://embedded.openfort.xyz";
 
   return (
     <View style={{ flex: 0 }}>

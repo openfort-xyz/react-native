@@ -57,7 +57,7 @@ const localStorage: Storage = {
   get length(): number {
     try {
       return MMKV.getAllKeys().length;
-    } catch (e) {
+    } catch {
       console.error('Error: localStorage.length is not supported');
       return -1;
     }
