@@ -17,15 +17,17 @@
     "react-native-mmkv": "^3.2.0",
     "react-native-randombytes": "^3.6.1",
     "react-native-webview": "13.12.5",
-    "text-encoding": "^0.7.0",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "react-native": "0.76.5"
+    "text-encoding": "^0.7.0"
   },
   "peerDependencies": {
-    "@openfort/openfort-js": "^0.8.15"
+    "@openfort/openfort-js": "^0.8.15",
+    "react": "*",
+    "react-native": "*"
   },
   "devDependencies": {
+    "@openfort/openfort-js": "^0.8.15",
+    "react": "18.3.1",
+    "react-native": "0.76.5",
     "@eslint/js": "^9.17.0",
     "@types/react": "~18.3.12",
     "@types/react-test-renderer": "^18.3.0",
