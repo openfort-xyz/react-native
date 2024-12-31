@@ -1,5 +1,4 @@
 import React from 'react';
-import Openfort from "@openfort/openfort-js";
 import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import WebView, { WebViewMessageEvent } from "react-native-webview";
@@ -36,8 +35,7 @@ export default function Iframe({ customUri }: { customUri?: string }) {
 
   if (!loaded) return null;
 
-  const uri = customUri ? customUri : "https://iframe.openfort.xyz/";
-  console.log("IFRAME customUri", uri);
+  const uri = customUri ? customUri : "https://embedded.openfort.xyz/";
 
   return (
     <View style={{ flex: 0 }}>

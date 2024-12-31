@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { polyfillGlobal } from "react-native/Libraries/Utilities/PolyfillFunctions"
 
 // This is a workaround to fix the issue with process.version
