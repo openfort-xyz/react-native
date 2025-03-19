@@ -1,4 +1,5 @@
 import { polyfillGlobal } from "react-native/Libraries/Utilities/PolyfillFunctions"
+import { KEYUTIL, KJUR } from 'jsrsasign';
 
 // This is a workaround to fix the issue with process.version
 if (process.version === undefined) {
@@ -10,6 +11,8 @@ if (process.version === undefined) {
 
 // Crypto module needs getRandomValues
 import 'react-native-get-random-values';
+
+crypto.randomUUID = require('uuid').v4;
 
 const MMKVStorage = require("react-native-mmkv").MMKV;
 
@@ -66,6 +69,13 @@ const localStorage: Storage = {
 
 global.localStorage = localStorage;
 global.sessionStorage = localStorage;
+
+global.JWK_UTILS = {
+  getKey: KEYUTIL.getKey,
+  parse: KJUR.jws.JWS.parse,
+  verifyJWT: KJUR.jws.JWS.verifyJWT,
+  getNow: KJUR.jws.IntDate.getNow,
+};
 
 // for TextEncoder and TextDecoder
 const applyGlobalPolyfills = () => {

@@ -3,13 +3,26 @@ import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import WebView, { WebViewMessageEvent } from "react-native-webview";
 
+const debugInjectedCode = `
+  console.log = function(...message) {
+    const safeMessage = JSON.stringify({ ...message, type: "log" });
+    window.ReactNativeWebView.postMessage(safeMessage);
+  };
+
+  console.warn = console.log;
+  console.error = console.log;
+  console.info = console.log;
+  console.debug = console.log;
+
+  console.log("injecting Code");
+`;
+
 const injectedCode = `
   window.parent = {};
-  window.parent.postMessage = (msg) =>  window.ReactNativeWebView.postMessage(JSON.stringify(msg))
-  `;
+  window.parent.postMessage = (msg) =>  {console.log("---", msg); window.ReactNativeWebView.postMessage(JSON.stringify(msg))}
+`;
 
-export default function Iframe({ customUri }: { customUri?: string }) {
-
+export default function Iframe({ customUri, debug, debugVisible }: { customUri?: string, debug?: boolean, debugVisible?: boolean }) {
   const webViewRef = useRef<WebView>(null);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,6 +37,10 @@ export default function Iframe({ customUri }: { customUri?: string }) {
 
     global.openfortPostMessage = (message: MessageEvent<unknown>) => {
       webViewRef?.current?.postMessage(JSON.stringify(message))
+
+      if (debug)
+        console.log("[Send message to web view]", message);
+
       setLoaded(true);
     };
   }, [webViewRef?.current]);
@@ -32,6 +49,23 @@ export default function Iframe({ customUri }: { customUri?: string }) {
     // Trigger the stored callback, if any
     if (fnCallbackRef.current) {
       const origin = event.nativeEvent.url.endsWith('/') ? event.nativeEvent.url.slice(0, -1) : event.nativeEvent.url;
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+        if (data?.type === "log") {
+
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { type, ...dataWithoutType } = data;
+
+          if (debug)
+            console.log("[Webview LOG]", Object.values(dataWithoutType).join(", "));
+        } else {
+          if (debug)
+            console.log("[Webview message received]", data);
+        }
+      } catch {
+        if (debug)
+          console.log("[Webview message received]", event.nativeEvent.data);
+      }
       fnCallbackRef.current({ origin, data: event.nativeEvent.data });
     }
   };
@@ -40,13 +74,19 @@ export default function Iframe({ customUri }: { customUri?: string }) {
 
   const uri = customUri ? customUri : "https://embedded.openfort.xyz";
 
+  const finalUri = new URL(uri);
+  if (debug) {
+    finalUri.searchParams.set('debug', 'true');
+  }
+  const uriWithParams = finalUri.toString();
+
   return (
-    <View style={{ flex: 0 }}>
+    <View style={{ flex: debugVisible ? 1 : 0 }}>
       <WebView
         ref={webViewRef}
-        source={{ uri: uri }}
+        source={{ uri: uriWithParams }}
         onMessage={handleMessage}
-        injectedJavaScript={injectedCode}
+        injectedJavaScript={injectedCode + (debug ? debugInjectedCode : "")}
       />
     </View>
   )
