@@ -18,7 +18,7 @@
     "react-native-get-random-values": "^1.11.0",
     "react-native-mmkv": "^3.2.0",
     "react-native-randombytes": "^3.6.1",
-    "react-native-webview": "13.12.5",
+    "react-native-webview": "^13.13.5",
     "text-encoding": "^0.7.0",
     "uuid": "^11.1.0"
   },
