@@ -20,6 +20,8 @@ const debugInjectedCode = `
 const injectedCode = `
   window.parent = {};
   window.parent.postMessage = (msg) =>  {console.log("---", msg); window.ReactNativeWebView.postMessage(JSON.stringify(msg))}
+
+  window.isAndroid = ${Platform.OS === 'android' ? 'true' : 'false'};
 `;
 
 export default function Iframe({ customUri, debug, debugVisible }: { customUri?: string, debug?: boolean, debugVisible?: boolean }) {
