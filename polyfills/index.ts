@@ -70,7 +70,8 @@ const localStorage: Storage = {
 global.localStorage = localStorage;
 global.sessionStorage = localStorage;
 
-global.JWK_UTILS = {
+global.openfort = {}
+global.openfort.jwk = {
   getKey: KEYUTIL.getKey,
   parse: KJUR.jws.JWS.parse,
   verifyJWT: KJUR.jws.JWS.verifyJWT,

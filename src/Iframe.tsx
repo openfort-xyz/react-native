@@ -1,6 +1,5 @@
-import React from 'react';
-import { useEffect, useRef, useState } from "react";
-import { View } from "react-native";
+import React, { useEffect, useRef, useState } from 'react';
+import { Platform, Text, View } from "react-native";
 import WebView, { WebViewMessageEvent } from "react-native-webview";
 
 const debugInjectedCode = `
@@ -33,17 +32,25 @@ export default function Iframe({ customUri, debug, debugVisible }: { customUri?:
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    global.openfortListener = (fn: ((event: MessageEvent<unknown>) => void)) => {
+    if (!global.openfort) throw new Error("Openfort SDK not initialized. Please make sure to add `import '@openfort/react-native/polyfills';` at the top of you app before using the SDK.");
+
+    global.openfort.iframeListener = (fn: ((event: MessageEvent<unknown>) => void)) => {
       fnCallbackRef.current = fn; // Store the callback in the ref
     };
 
-    global.openfortPostMessage = (message: MessageEvent<unknown>) => {
-      webViewRef?.current?.postMessage(JSON.stringify(message))
+    global.openfort.iframePostMessage = (message: MessageEvent<unknown>) => {
+      setLoaded(true);
+
+      if (!webViewRef.current) {
+        if (debug)
+          console.log("WebView is not initialized, trying to send message:", message);
+        return;
+      }
 
       if (debug)
         console.log("[Send message to web view]", message);
 
-      setLoaded(true);
+      webViewRef.current.postMessage(JSON.stringify(message))
     };
   }, [webViewRef?.current]);
 
@@ -84,6 +91,11 @@ export default function Iframe({ customUri, debug, debugVisible }: { customUri?:
 
   return (
     <View style={{ flex: debugVisible ? 1 : 0 }}>
+      {debugVisible &&
+        <Text>
+          Debug: {uriWithParams}
+        </Text>
+      }
       <WebView
         ref={webViewRef}
         source={{ uri: uriWithParams }}
