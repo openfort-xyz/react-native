@@ -1,7 +1,7 @@
 {
   "name": "@openfort/react-native",
   "main": "dist/index.js",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "license": "MIT",
   "scripts": {
     "build": "rimraf dist && tsc",
@@ -18,18 +18,17 @@
     "react-native-get-random-values": "^1.11.0",
     "react-native-mmkv": "^3.2.0",
     "react-native-randombytes": "^3.6.1",
-    "react-native-webview": "13.12.5",
+    "react-native-webview": "^13.13.5",
     "text-encoding": "^0.7.0",
     "uuid": "^11.1.0"
   },
   "peerDependencies": {
-    "@openfort/openfort-js": "^0.8.31",
+    "@openfort/openfort-js": "^0.8.42",
     "react": "*",
     "react-native": "*"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
-    "@openfort/openfort-js": "^0.8.31",
     "@types/jsrsasign": "^10.5.15",
     "@types/react": "~18.3.12",
     "@types/react-test-renderer": "^18.3.0",
