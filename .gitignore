@@ -36,3 +36,7 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+.claude/
+claude.md
+openfort-js-docs/
