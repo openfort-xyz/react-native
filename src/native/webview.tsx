@@ -6,14 +6,6 @@ import type { Openfort as OpenfortClient} from '@openfort/openfort-js';
 import { isSecureStorageMessage, handleSecureStorageMessage } from './storage';
 
 /**
- * Configuration for WebView used by embedded wallets
- */
-interface WebViewConfig {
-  /** Whether to use app-backed storage for the WebView */
-  shouldUseAppBackedStorage: boolean;
-}
-
-/**
  * Props for the EmbeddedWalletWebView component
  */
 interface EmbeddedWalletWebViewProps {
@@ -24,13 +16,6 @@ interface EmbeddedWalletWebViewProps {
   /** Callback when WebView proxy status changes */
   onProxyStatusChange?: (status: 'loading' | 'loaded' | 'reloading') => void;
 }
-
-/**
- * Default WebView configuration
- */
-const DEFAULT_WEBVIEW_CONFIG: WebViewConfig = {
-  shouldUseAppBackedStorage: true,
-};
 
 /**
  * WebView component for embedded wallet integration
@@ -50,7 +35,7 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
       if (nextAppState === 'active') {
         // Check if embedded wallet is still responsive
         try {
-          const isResponsive = await client.embeddedWallet.ping(500);
+          await client.embeddedWallet.ping(500);
           // if (!isResponsive) {
           //   onProxyStatusChange?.('reloading');
           //   // client.embeddedWallet.reload();
@@ -65,25 +50,6 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
     return () => subscription?.remove();
   }, [client, onProxyStatusChange]);
 
-  // Handle messages from WebView
-  const handleMessage = useCallback(async (event: WebViewMessageEvent) => {
-    try {
-      const messageData = JSON.parse(event.nativeEvent.data);
-
-      // Handle secure storage messages
-      if (isSecureStorageMessage(messageData)) {
-        const response = await handleSecureStorageMessage(messageData);
-        webViewRef.current?.postMessage(JSON.stringify(response));
-        return;
-      }
-
-      // Forward other messages to the embedded wallet
-      client.embeddedWallet.onMessage(messageData);
-    } catch (error) {
-      console.error('Failed to handle WebView message:', error);
-    }
-  }, [client]);
-
   // Handle WebView load events
   const handleLoad = useCallback(() => {
     onProxyStatusChange?.('loaded');
@@ -93,38 +59,87 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
     console.error('WebView error:', error);
   }, []);
 
-  // Set up WebView reference with client
+  // Set up WebView reference with client immediately when both are available
   useEffect(() => {
-    if (webViewRef.current && isClientReady) {
-      client.setMessagePoster(webViewRef.current);
+    if (webViewRef.current) {
+      console.log('[WebView] Setting message poster - WebView ref available, client ready:', isClientReady);
+      // Create a wrapper that logs outgoing messages and calls the global handler
+      const messagePoster = {
+        postMessage: (message: string) => {
+          console.log('[WebView] Sending message to iframe:', message);
+          // Use injectedJavaScript to call the global handler we created
+          const jsCode = `
+            if (window.handleReactNativeMessage) {
+              window.handleReactNativeMessage(${JSON.stringify(message)});
+            } else {
+              console.log('[WebView] handleReactNativeMessage not available yet');
+            }
+            true; // Return true to prevent errors
+          `;
+          webViewRef.current?.injectJavaScript(jsCode);
+        }
+      };
+      client.embeddedWallet.setMessagePoster(messagePoster);
     }
   }, [client, isClientReady]);
 
-  if (!isClientReady) {
-    return null;
-  }
+  // Clean message handler using the new penpal bridge
+  const handleMessage = useCallback(async (event: WebViewMessageEvent) => {
+    try {
+      const messageData = JSON.parse(event?.nativeEvent?.data);
+      if (!messageData) return;
+      
+      // Handle console log messages from iframe
+      if (messageData.type === 'CONSOLE_LOG') {
+        return;
+      }
+      
+      // Handle iframe error messages
+      if (messageData.type === 'IFRAME_ERROR') {
+        return;
+      }
+
+      // Handle secure storage messages
+      if (isSecureStorageMessage(messageData)) {
+        const response = await handleSecureStorageMessage(messageData);
+        webViewRef.current?.postMessage(JSON.stringify(response));
+        return;
+      }
+
+      // Forward all messages to the embedded wallet
+      // The EmbeddedWalletApi will handle routing penpal messages appropriately
+      client.embeddedWallet.onMessage(messageData);
+      
+    } catch (error) {
+      console.error('Failed to handle WebView message:', error);
+      // Don't crash the app on message handling errors
+    }
+  }, [client]);
+
+  // Ref callback to set up message poster immediately
+  const handleWebViewRef = useCallback((n: WebView | null) => {
+    if (n) {
+      client.embeddedWallet.setMessagePoster(n);
+    }
+  }, [client]);
 
   return (
-    <div style= {{ width: 0, height: 0, overflow: 'hidden' }}>
+    <View style={{ width: 0, height: 0, overflow: 'hidden' }}>
       <WebView
-        ref={ webViewRef }
-        style = {{ flex: 1 }}
-        source = {{ uri: client.embeddedWallet.getURL() }}
-        cacheEnabled = { false}
-        cacheMode = "LOAD_NO_CACHE"
-        injectedJavaScriptObject = { DEFAULT_WEBVIEW_CONFIG }
-        webviewDebuggingEnabled = { true }
-        onLoad = { handleLoad }
-        onError = { handleError }
-        onMessage = { handleMessage }
-        // Security settings
-        allowsInlineMediaPlayback = { false}
-        mediaPlaybackRequiresUserAction = { true}
-        allowsLinkPreview = { false}
-        // Performance settings
-        startInLoadingState = { true}
+        ref={handleWebViewRef}
+        source={{ 
+          uri: client.embeddedWallet.getURL(),
+        }}
+        webviewDebuggingEnabled={true}
+        cacheEnabled={false}
+        injectedJavaScriptObject={{shouldUseAppBackedStorage: true}}
+        cacheMode="LOAD_NO_CACHE"
+
+        onLoad={handleLoad}
+        onError={handleError}
+        onMessage={handleMessage}
       />
-    </div>
+    </View>
   );
 };
 

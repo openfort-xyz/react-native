@@ -1,82 +1,99 @@
 /**
- * Hook for email-based login functionality
+ * Hook for email-based authentication (login and signup)
  */
 import { useCallback, useRef } from 'react';
 import type { AuthPlayerResponse as OpenfortUser } from '@openfort/openfort-js';
 import { useOpenfortContext } from '../../core/context';
 import type {
-  PasswordLoginHookOptions,
-  PasswordLoginHookResult,
-  ErrorCallback,
-  AuthSuccessCallback,
+  EmailLoginHookOptions,
+  EmailLoginHookResult,
 } from '../../types';
 
-/**
- * Options for email login hook
- */
-export type LoginWithEmailOptions = PasswordLoginHookOptions<{
-  email: string;
-}>;
 
 /**
- * Result interface for email login hook
- */
-export type LoginWithEmailHookResult = PasswordLoginHookResult<
-  {
-    email: string;
-    password: string;
-  },
-  {
-    code: string;
-    email: string;
-    password: string;
-  }
->;
-
-/**
- * Hook for logging in users with email and OTP verification
+ * Hook for email-based authentication (login and signup)
+ * 
+ * This hook provides both login and signup functionality using email/password.
+ * It handles email verification when required and provides clear feedback.
  * 
  * @param opts - Configuration options including success/error callbacks
- * @returns Object with sendCode and loginWithCode functions plus current state
+ * @returns Object with login, signup functions and current password flow state
  * 
  * @example
  * ```tsx
- * const { sendCode, loginWithCode, state } = useLoginWithEmail({
- *   onSuccess: (user) => console.log('Login successful:', user),
- *   onError: (error) => console.error('Login failed:', error),
+ * const { login, signup, state } = useLoginWithEmail({
+ *   onSuccess: (user) => console.log('Authentication successful:', user),
+ *   onError: (error) => console.error('Authentication failed:', error),
  * });
  * 
- * // Send OTP code to email
- * await sendCode({ email: 'user@example.com' });
+ * // Sign up a new user
+ * try {
+ *   const user = await signup({ 
+ *     email: 'user@example.com',
+ *     password: 'user-password',
+ *     name: 'John Doe' // optional
+ *   });
+ *   
+ *   if (user) {
+ *     // Signup successful, user is authenticated
+ *   } else {
+ *     // Email verification required - check your email
+ *   }
+ * } catch (error) {
+ *   // Handle signup error (email already exists, weak password, etc.)
+ * }
  * 
- * // Verify code and complete login
- * await loginWithCode({ 
- *   code: '123456',
- *   email: 'user@example.com' 
- * });
+ * // Login existing user
+ * try {
+ *   const user = await login({ 
+ *     email: 'user@example.com',
+ *     password: 'user-password'
+ *   });
+ *   
+ *   if (user) {
+ *     // Login successful, user is authenticated
+ *   } else {
+ *     // Email verification required - check your email
+ *   }
+ * } catch (error) {
+ *   // Handle login error (invalid credentials, etc.)
+ * }
  * ```
  */
-export function useLoginWithEmail(opts?: LoginWithEmailOptions): LoginWithEmailHookResult {
-  const { client, passwordState, setPasswordState } = useOpenfortContext();
+export function useLoginWithEmail(opts?: EmailLoginHookOptions): EmailLoginHookResult {
+  const { client, passwordState, setPasswordState, _internal } = useOpenfortContext();
   const callbacksRef = useRef(opts);
   callbacksRef.current = opts;
 
-  const signUp = useCallback(
-    async (input: { email: string, password: string }) => {
+  const login = useCallback(
+    async (credentials: { email: string; password: string }): Promise<OpenfortUser | undefined> => {
       try {
-        setPasswordState({ status: 'sending-code' });
+        setPasswordState({ status: 'sending-verification-code' });
 
-        await client.auth.signUpWithEmailPassword({
-          email: input.email,
-          password: input.password,
+        // Login with email and password
+        const result = await client.auth.logInWithEmailPassword({
+          email: credentials.email,
+          password: credentials.password,
         });
 
-        setPasswordState({
-          status: 'awaiting-code-input',
-          email: input.email,
-        });
+        // Check if action is required (email verification)
+        if ('action' in result) {
+          setPasswordState({
+            status: 'awaiting-code-input',
+          });
+          // Return undefined as email verification is required
+          return undefined;
+        } else {
+          // Login successful
+          setPasswordState({ status: 'done' });
+          const user = result.player;
+          // Refresh user state in provider
+          await _internal.refreshUserState(user);
+          callbacksRef.current?.onSuccess?.(user, false);
+          return user;
+        }
       } catch (error) {
-        const errorObj = error instanceof Error ? error : new Error('Failed to send email code');
+        const errorObj = error instanceof Error ? error : new Error('Failed to login with email and password');
         setPasswordState({
           status: 'error',
           error: errorObj
@@ -85,33 +102,39 @@ export function useLoginWithEmail(opts?: LoginWithEmailOptions): LoginWithEmailH
         throw errorObj;
       }
     },
-    [client, setPasswordState]
+    [client, setPasswordState, _internal]
   );
 
-  const login = useCallback(
-    async (input: {
-      password: string;
-      email: string;
-    }): Promise<OpenfortUser> => {
+  const signup = useCallback(
+    async (credentials: { email: string; password: string; name?: string }): Promise<OpenfortUser | undefined> => {
       try {
-        setPasswordState({ status: 'submitting-code' });
+        setPasswordState({ status: 'sending-verification-code' });
 
-        const email = input.email || (passwordState.status === 'awaiting-code-input' ? passwordState.email : '');
-        if (!email) {
-          throw new Error('Email is required for login');
-        }
-
-        const result = await client.auth.logInWithEmailPassword({
-          email,
-          password: input.password,
+        // Sign up with email and password
+        const result = await client.auth.signUpWithEmailPassword({
+          email: credentials.email,
+          password: credentials.password,
+          ...(credentials.name && { name: credentials.name }),
         });
 
-        setPasswordState({ status: 'done' });
-        callbacksRef.current?.onSuccess?.(result.player);
-
-        return result.user;
+        // Check if action is required (email verification)
+        if ('action' in result) {
+          setPasswordState({
+            status: 'awaiting-code-input',
+          });
+          // Return undefined as email verification is required
+          return undefined;
+        } else {
+          // Signup successful
+          setPasswordState({ status: 'done' });
+          const user = result.player;
+          // Refresh user state in provider
+          await _internal.refreshUserState(user);
+          callbacksRef.current?.onSuccess?.(user, true); // true indicates new user
+          return user;
+        }
       } catch (error) {
-        const errorObj = error instanceof Error ? error : new Error('Failed to login with email');
+        const errorObj = error instanceof Error ? error : new Error('Failed to signup with email and password');
         setPasswordState({
           status: 'error',
           error: errorObj
@@ -120,12 +143,12 @@ export function useLoginWithEmail(opts?: LoginWithEmailOptions): LoginWithEmailH
         throw errorObj;
       }
     },
-    [client, passwordState, setPasswordState]
+    [client, setPasswordState, _internal]
   );
 
   return {
-    signUp,
     login,
+    signup,
     state: passwordState,
   };
 }

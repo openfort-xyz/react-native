@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+import { NativeStorageUtils } from '../native';
 
 // Define the StorageKeys enum values that match the Openfort SDK
 enum StorageKeys {
@@ -16,9 +17,17 @@ enum StorageKeys {
 // Create a proper Storage interface that matches what we need
 interface OpenfortStorage {
   get(key: StorageKeys): Promise<string | null>;
-  save(key: StorageKeys, value: string): void;
-  remove(key: StorageKeys): void;
+  save(key: StorageKeys, value: string): Promise<void>;
+  remove(key: StorageKeys): Promise<void>;
   flush(): void;
+
+  // Additional utility methods using native storage utilities
+  keyExists(key: StorageKeys): Promise<boolean>;
+  getStorageInfo(): Promise<{
+    isAvailable: boolean;
+    platform: string;
+    keychainAccessible: number;
+  }>;
 }
 
 /**
@@ -28,31 +37,45 @@ interface OpenfortStorage {
 export const SecureStorageAdapter: OpenfortStorage = {
   async get(key: StorageKeys): Promise<string | null> {
     try {
-      return await SecureStore.getItemAsync(normalizeKey(key), {
-        keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
-      });
+      const normalizedKey = normalizeKey(key);
+
+      const result = await SecureStore.getItemAsync(normalizedKey, NativeStorageUtils.getStorageOptions());
+
+      // If result is a string (as expected), return it
+      if (typeof result === 'string' || result === null) {
+        return result;
+      }
+
+      // Handle unexpected Promise-like objects (shouldn't happen according to docs)
+      if (result && typeof result === 'object' && '_j' in result) {
+        console.warn('WARNING: SecureStore returned a Promise-like object instead of a string');
+        const actualValue = (result as any)._j;
+        return typeof actualValue === 'string' ? actualValue : null;
+      }
+
+      // If we get here, something is wrong
+      console.error('Unexpected result type from SecureStore:', result);
+      return null;
     } catch (error) {
       console.warn('Failed to get item from secure store:', error);
       return null;
     }
   },
 
-  save(key: StorageKeys, value: string): void {
+  async save(key: StorageKeys, value: string): Promise<void> {
     try {
-      SecureStore.setItemAsync(normalizeKey(key), value, {
-        keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
-      });
+      const normalizedKey = normalizeKey(key);
+      await SecureStore.setItemAsync(normalizedKey, value, NativeStorageUtils.getStorageOptions());
     } catch (error) {
       console.warn('Failed to set item in secure store:', error);
       throw error;
     }
   },
 
-  remove(key: StorageKeys): void {
+  async remove(key: StorageKeys): Promise<void> {
     try {
-      SecureStore.deleteItemAsync(normalizeKey(key), {
-        keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
-      });
+      const normalizedKey = normalizeKey(key);
+      await SecureStore.deleteItemAsync(normalizedKey, NativeStorageUtils.getStorageOptions());
     } catch (error) {
       console.warn('Failed to delete item from secure store:', error);
       throw error;
@@ -62,6 +85,20 @@ export const SecureStorageAdapter: OpenfortStorage = {
   flush(): void {
     // SecureStore doesn't provide a way to list all keys
     // This is a no-op for secure store
+  },
+
+  // Additional utility methods using native storage utilities
+  async keyExists(key: StorageKeys): Promise<boolean> {
+    const normalizedKey = normalizeKey(key);
+    return await NativeStorageUtils.keyExists(normalizedKey);
+  },
+
+  async getStorageInfo(): Promise<{
+    isAvailable: boolean;
+    platform: string;
+    keychainAccessible: number;
+  }> {
+    return await NativeStorageUtils.getStorageInfo();
   },
 };
 
@@ -79,25 +116,35 @@ function normalizeKey(key: StorageKeys): string {
  */
 export function createNormalizedStorage(customStorage?: OpenfortStorage): import('@openfort/openfort-js').Storage {
   const baseStorage = customStorage || SecureStorageAdapter;
-  
+
   return {
-    get(key: unknown): Promise<string | null> {
+    async get(key: unknown): Promise<string | null> {
       // Convert the unknown key to our StorageKeys enum
       const storageKey = keyToStorageKeys(key);
-      return baseStorage.get(storageKey);
+      const result = await baseStorage.get(storageKey);
+      return result;
     },
-    
+
     save(key: unknown, value: string): void {
+      console.log('storage save:', key, value);
       const storageKey = keyToStorageKeys(key);
-      baseStorage.save(storageKey, value);
+      // Fire and forget - don't await as the SDK expects synchronous behavior
+      baseStorage.save(storageKey, value).catch(error => {
+        console.error('Failed to save to storage:', error);
+      });
     },
-    
+
     remove(key: unknown): void {
+      console.log('storage remove:', key);
       const storageKey = keyToStorageKeys(key);
-      baseStorage.remove(storageKey);
+      // Fire and forget - don't await as the SDK expects synchronous behavior
+      baseStorage.remove(storageKey).catch(error => {
+        console.error('Failed to remove from storage:', error);
+      });
     },
-    
+
     flush(): void {
+      console.log('storage flush');
       baseStorage.flush();
     },
   };
@@ -114,7 +161,7 @@ function keyToStorageKeys(key: unknown): StorageKeys {
       return storageKey as StorageKeys;
     }
   }
-  
+
   // If it's an enum-like object, try to get its value
   if (typeof key === 'object' && key !== null && 'toString' in key) {
     const keyString = key.toString();
@@ -123,7 +170,7 @@ function keyToStorageKeys(key: unknown): StorageKeys {
       return storageKey as StorageKeys;
     }
   }
-  
+
   // Fallback: throw an error for unknown keys
   throw new Error(`Unknown storage key: ${key}. Expected one of: ${Object.values(StorageKeys).join(', ')}`);
 }

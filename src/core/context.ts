@@ -1,6 +1,7 @@
 import React from 'react';
-import type { Openfort as OpenfortClient } from '@openfort/openfort-js';
+import type { Openfort as OpenfortClient, EmbeddedState } from '@openfort/openfort-js';
 import { OAuthFlowState, PasswordFlowState, RecoveryFlowState, SiweFlowState } from '../types';
+import type { Chain, EmbeddedWalletConfiguration } from './provider';
 
 /**
  * Core Openfort context interface containing all SDK state and methods
@@ -14,6 +15,12 @@ export interface OpenfortContextValue {
   isReady: boolean;
   /** Any error encountered during SDK initialization */
   error: Error | null;
+  /** Supported chains configuration */
+  supportedChains?: [Chain, ...Chain[]];
+  /** Embedded wallet configuration for Shield integration */
+  embeddedWallet?: EmbeddedWalletConfiguration;
+  /** Current embedded wallet state */
+  embeddedState: EmbeddedState;
 
   // Flow states
   /** Password (email/SMS) authentication flow state */
@@ -36,6 +43,12 @@ export interface OpenfortContextValue {
   logout: () => Promise<void>;
   /** Gets the current authenticated user's access token */
   getAccessToken: () => Promise<string | null>;
+
+  // Internal methods (not exposed to consumers)
+  /** @internal Refreshes user state after authentication changes */
+  _internal: {
+    refreshUserState: (user?: import('@openfort/openfort-js').AuthPlayerResponse) => Promise<import('@openfort/openfort-js').AuthPlayerResponse | null>;
+  };
 }
 
 /**
@@ -78,6 +91,8 @@ export function isOpenfortContextValue(value: unknown): value is OpenfortContext
     'client' in value &&
     'isReady' in value &&
     'logout' in value &&
-    'getAccessToken' in value
+    'getAccessToken' in value &&
+    'embeddedState' in value &&
+    '_internal' in value
   );
 }

@@ -46,6 +46,7 @@ export function isSecureStorageMessage(message: unknown): message is SecureStora
 export async function handleSecureStorageMessage(
   message: SecureStorageMessage
 ): Promise<SecureStorageResponse> {
+  console.log('Handling secure storage message:', message);
   switch (message.event) {
     case 'app:secure-storage:get': {
       const { key } = message.data;
@@ -105,6 +106,46 @@ export async function handleSecureStorageMessage(
         };
       } catch (error) {
         console.warn('Failed to remove the value from secure store', error);
+        return {
+          event: message.event,
+          id: message.id,
+          data: { success: false },
+        };
+      }
+    }
+
+    case 'app:secure-storage:flush': {
+      const { origin } = message.data;
+      try {
+        // Systematically delete all known storage keys for this origin
+        // These are the keys used by the iframe signature service
+        const storageKeys = [
+          'playerID', 'chainId', 'deviceID', 'accountType', 'address', 
+          'ownerAddress', 'share', 'account', 'chainType', 'signerId'
+        ];
+        
+        const deletePromises = storageKeys.map(async (key) => {
+          const fullKey = normalizeKey(`${origin}:${key}`);
+          try {
+            await SecureStore.deleteItemAsync(fullKey, {
+              keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
+            });
+          } catch (error) {
+            // Ignore errors for keys that don't exist
+            console.debug(`Key ${fullKey} not found during flush:`, error);
+          }
+        });
+        
+        await Promise.all(deletePromises);
+        console.log('Flushed secure storage for origin:', origin);
+
+        return {
+          event: message.event,
+          id: message.id,
+          data: { success: true },
+        };
+      } catch (error) {
+        console.warn('Failed to flush secure store', error);
         return {
           event: message.event,
           id: message.id,

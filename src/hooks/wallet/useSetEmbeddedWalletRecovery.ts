@@ -2,10 +2,10 @@
  * Hook for setting embedded wallet recovery methods
  */
 import { useCallback } from 'react';
+import { RecoveryMethod, type EmbeddedAccount } from '@openfort/openfort-js';
 import { useOpenfortContext } from '../../core/context';
 import type {
   SetRecoveryParams,
-  UseSetEmbeddedWalletRecoveryResult,
   UseSetEmbeddedWalletRecovery,
 } from '../../types';
 
@@ -18,52 +18,50 @@ import type {
  * ```tsx
  * const { setRecovery } = useSetEmbeddedWalletRecovery();
  * 
- * // Set user passcode recovery
+ * // Set password recovery
  * const { user } = await setRecovery({
- *   recoveryMethod: 'user-passcode',
+ *   recoveryMethod: 'password',
  *   password: 'secure-password-123'
  * });
  * 
- * // Set Google Drive recovery
- * const result = await setRecovery({
- *   recoveryMethod: 'google-drive'
- * });
- * // Note: result.user may be null if flow is deferred for Google Drive
  * 
- * // Set iCloud recovery
+ * // Set automatic recovery
  * await setRecovery({
- *   recoveryMethod: 'icloud'
- * });
- * 
- * // Set recovery encryption key
- * await setRecovery({
- *   recoveryMethod: 'recovery-encryption-key',
- *   recoveryKey: 'user-generated-key'
- * });
- * 
- * // Set Openfort recovery
- * await setRecovery({
- *   recoveryMethod: 'Openfort'
+ *   recoveryMethod: 'automatic'
  * });
  * ```
  */
 export function useSetEmbeddedWalletRecovery(): UseSetEmbeddedWalletRecovery {
-  const { client } = useOpenfortContext();
+  const { client, _internal } = useOpenfortContext();
 
   const setRecovery = useCallback(
-    async (params: SetRecoveryParams): Promise<UseSetEmbeddedWalletRecoveryResult> => {
+    async (params: SetRecoveryParams): Promise<EmbeddedAccount> => {
       try {
-        const result = await client.embedded.wallet.setRecovery(params);
+        // Set embedded wallet recovery method
+        if (params.recoveryMethod === 'password') {
+          await client.embeddedWallet.setEmbeddedRecovery({
+            recoveryMethod: RecoveryMethod.PASSWORD,
+            recoveryPassword: params.password
+          });
+        } else {
+          await client.embeddedWallet.setEmbeddedRecovery({
+            recoveryMethod: RecoveryMethod.AUTOMATIC
+          });
+        }
 
-        return {
-          user: result.user || null,
-        };
+        // Get the updated embedded account
+        const embeddedAccount = await client.embeddedWallet.get();
+
+        // Refresh user state to reflect recovery changes
+        await _internal.refreshUserState();
+
+        return embeddedAccount;
       } catch (error) {
         const errorObj = error instanceof Error ? error : new Error('Failed to set wallet recovery');
         throw errorObj;
       }
     },
-    [client]
+    [client, _internal]
   );
 
   return {

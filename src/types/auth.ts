@@ -1,9 +1,7 @@
-import type { ExternalWallet, OpenfortError } from '@openfort/openfort-js';
-import type { AuthPlayerResponse as OpenfortUser } from '@openfort/openfort-js';
-import type { OpenfortSuccessObject } from '@Openfort-io/public-api';
+import type { OpenfortError, AuthPlayerResponse as OpenfortUser } from '@openfort/openfort-js';
 
 /**
- * Password (One-Time Password) authentication flow state
+ * Password authentication flow state
  */
 export type PasswordFlowState = {
   status: 'initial';
@@ -78,40 +76,37 @@ export type AuthLinkSuccessCallback = (user: OpenfortUser) => void;
 export type ErrorCallback = (error: OpenfortError | Error) => void;
 
 /**
- * Password login hook options
+ * Email login hook options
  */
-export type PasswordLoginHookOptions<AuthSourceArgs> = {
+export interface EmailLoginHookOptions {
   onError?: ErrorCallback;
-  onSendCodeSuccess?: (args: AuthSourceArgs) => void;
-  onLoginSuccess?: AuthSuccessCallback;
-};
+  onSuccess?: AuthSuccessCallback;
+}
 
 /**
- * Password link hook options
+ * Email link hook options
  */
-export type PasswordLinkHookOptions<AuthSourceArgs> = {
+export interface EmailLinkHookOptions {
   onError?: ErrorCallback;
-  onSendCodeSuccess?: (args: AuthSourceArgs) => void;
-  onLinkSuccess?: AuthLinkSuccessCallback;
-};
+  onSuccess?: AuthLinkSuccessCallback;
+}
 
 /**
- * Password login hook result
+ * Email login hook result
  */
-export type PasswordLoginHookResult<SendArgs, LoginArgs> = {
-  sendCode: (args: SendArgs) => Promise<OpenfortSuccessObject>;
-  loginWithCode: (args: LoginArgs) => Promise<OpenfortUser | undefined>;
+export interface EmailLoginHookResult {
+  login: (credentials: { email: string; password: string }) => Promise<OpenfortUser | undefined>;
+  signup: (credentials: { email: string; password: string; name?: string }) => Promise<OpenfortUser | undefined>;
   state: PasswordFlowState;
-};
+}
 
 /**
- * Password link hook result
+ * Email link hook result
  */
-export type PasswordLinkHookResult<SendArgs, LinkArgs> = {
-  sendCode: (args: SendArgs) => Promise<OpenfortSuccessObject>;
-  linkWithCode: (args: LinkArgs) => Promise<OpenfortUser | undefined>;
+export interface EmailLinkHookResult {
+  link: (credentials: { email: string; password: string }) => Promise<OpenfortUser | undefined>;
   state: PasswordFlowState;
-};
+}
 
 /**
  * SIWE message generation response
@@ -123,7 +118,7 @@ export type GenerateSiweMessageResponse = Promise<string>;
  */
 export type GenerateSiweMessage = (opts: {
   /** Wallet to request a Sign-In With Ethereum signature from */
-  wallet: ExternalWallet;
+  wallet: any; // External wallet interface
   /**
    * Required fields that describe origin of Sign-In With Ethereum signature request
    */
@@ -134,3 +129,48 @@ export type GenerateSiweMessage = (opts: {
     uri: string;
   };
 }) => GenerateSiweMessageResponse;
+
+/**
+ * SIWE login hook options
+ */
+export interface SiweLoginHookOptions {
+  onError?: ErrorCallback;
+  onSuccess?: AuthSuccessCallback;
+  onGenerateMessage?: (message: string) => void;
+}
+
+/**
+ * SIWE link hook options
+ */
+export interface SiweLinkHookOptions {
+  onError?: ErrorCallback;
+  onSuccess?: AuthLinkSuccessCallback;
+  onGenerateMessage?: (message: string) => void;
+}
+
+/**
+ * SIWE login hook result
+ */
+export interface SiweLoginHookResult {
+  generateSiweMessage: GenerateSiweMessage;
+  state: SiweFlowState;
+  loginWithSiwe: (opts: {
+    signature: string;
+    walletAddress: string;
+    messageOverride?: string;
+    disableSignup?: boolean;
+  }) => Promise<OpenfortUser>;
+}
+
+/**
+ * SIWE link hook result
+ */
+export interface SiweLinkHookResult {
+  generateSiweMessage: GenerateSiweMessage;
+  state: SiweFlowState;
+  linkWithSiwe: (opts: {
+    signature: string;
+    messageOverride?: string;
+    walletAddress: string;
+  }) => Promise<OpenfortUser>;
+}

@@ -45,7 +45,7 @@ export interface UseCreateGuestAccount {
  * ```
  */
 export function useCreateGuestAccount(opts?: UseCreateGuestAccountOptions): UseCreateGuestAccount {
-  const { client } = useOpenfortContext();
+  const { client, _internal } = useOpenfortContext();
   const callbacksRef = useRef(opts);
   callbacksRef.current = opts;
 
@@ -53,6 +53,9 @@ export function useCreateGuestAccount(opts?: UseCreateGuestAccountOptions): UseC
     async (): Promise<OpenfortUser> => {
       try {
         const result = await client.auth.signUpGuest();
+
+        // Refresh user state to reflect guest account creation
+        await _internal.refreshUserState(result.player);
 
         callbacksRef.current?.onSuccess?.(result.player);
 
@@ -63,7 +66,7 @@ export function useCreateGuestAccount(opts?: UseCreateGuestAccountOptions): UseC
         throw errorObj;
       }
     },
-    [client]
+    [client, _internal]
   );
 
   return {

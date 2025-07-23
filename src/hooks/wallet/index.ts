@@ -5,14 +5,9 @@
  */
 
 // Embedded wallet hooks
-export { useEmbeddedWallet } from './useEmbeddedWallet';
-
 export { useEmbeddedEthereumWallet } from './useEmbeddedEthereumWallet';
-
 export { useEmbeddedSolanaWallet } from './useEmbeddedSolanaWallet';
 
-
 // Wallet recovery hooks
-export { useSetEmbeddedWalletRecovery } from './useSetEmbeddedWalletRecovery';
-
 export { useRecoverEmbeddedWallet } from './useRecoverEmbeddedWallet';
+export { useSetEmbeddedWalletRecovery } from './useSetEmbeddedWalletRecovery';

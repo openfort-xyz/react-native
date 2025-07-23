@@ -8,8 +8,7 @@
     "build": "rimraf dist && tsc",
     "lint": "eslint . --ignore-pattern dist",
     "link": "yarn link",
-    "unlink": "yarn unlink",
-    "prepare": "yarn build"
+    "unlink": "yarn unlink"
   },
   "types": "dist/types/index.d.ts",
   "files": [
@@ -23,7 +22,7 @@
     }
   },
   "dependencies": {
-    "@openfort/openfort-js": "file:../openfort-js/sdk/dist"
+    "@openfort/openfort-js": "file:openfort-v0.9.0.tgz"
   },
   "peerDependencies": {
     "expo-apple-authentication": "*",

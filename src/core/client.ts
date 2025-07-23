@@ -41,7 +41,7 @@ export function createOpenfortClient({
       crypto: {
         digest: digest as any,
       },
-      storage: createNormalizedStorage(overrides?.storage ?? SecureStorageAdapter)
+      storage: createNormalizedStorage(SecureStorageAdapter)
     },
     shieldConfiguration
   });

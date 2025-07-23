@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { OpenfortConfiguration, ShieldConfiguration, RecoveryMethod, SDKOverrides, EmbeddedState } from '@openfort/openfort-js';
 import { OpenfortContext, type OpenfortContextValue } from './context';
 import { createOpenfortClient, setDefaultClient } from './client';
+import { EmbeddedWalletWebView, WebViewUtils } from '../native';
 
 /**
  * Custom auth configuration
@@ -92,7 +93,7 @@ type BlockExplorer = {
 /** A subset of WAGMI's chain type
  * https://github.com/wagmi-dev/references/blob/6aea7ee9c65cfac24f33173ab3c98176b8366f05/packages/chains/src/types.ts#L8
  */
-type Chain = {
+export type Chain = {
     /** Id in number form */
     id: number;
     /** Human readable name */
@@ -189,6 +190,7 @@ export const OpenfortProvider: React.FC<OpenfortProviderProps> = ({
 
     try {
       const state = await client.embeddedWallet.getEmbeddedState();
+      console.log('Current embedded state:', state);
       setEmbeddedState(state);
     } catch (error) {
       console.error('Error checking embedded state with Openfort:', error);
@@ -199,7 +201,7 @@ export const OpenfortProvider: React.FC<OpenfortProviderProps> = ({
   const startPollingEmbeddedState = useCallback(() => {
 
     if (!!pollingRef.current) return;
-    pollingRef.current = setInterval(pollEmbeddedState, 300);
+    pollingRef.current = setInterval(pollEmbeddedState, 1000);
   }, [pollEmbeddedState]);
 
   const stopPollingEmbeddedState = useCallback(() => {
@@ -223,8 +225,15 @@ export const OpenfortProvider: React.FC<OpenfortProviderProps> = ({
   const [isClientReady, setIsClientReady] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
+  // Flow states
+  const [passwordState, setPasswordState] = useState<import('../types').PasswordFlowState>({ status: 'initial' });
+  const [oAuthState, setOAuthState] = useState<import('../types').OAuthFlowState>({ status: 'initial' });
+  const [siweState, setSiweState] = useState<import('../types').SiweFlowState>({ status: 'initial' });
+  const [recoveryFlowState, setRecoveryFlowState] = useState<import('../types').RecoveryFlowState>({ status: 'initial' });
+
   // User state management
   const handleUserChange = useCallback((newUser: import('@openfort/openfort-js').AuthPlayerResponse | null) => {
+    console.log('User state changed:', newUser);
     setUser(newUser);
     if (newUser) {
       setError(null);
@@ -248,8 +257,10 @@ export const OpenfortProvider: React.FC<OpenfortProviderProps> = ({
 
   // Initialize client and user
   useEffect(() => {
+    console.log('Initializing Openfort client and user state',isUserInitialized);
     if (!isUserInitialized) {
       (async () => {
+        console.log('Initializing Openfort client');
         try {
           // Openfort client doesn't need explicit initialization
           setIsClientReady(true);
@@ -258,8 +269,8 @@ export const OpenfortProvider: React.FC<OpenfortProviderProps> = ({
         }
 
         try {
-          const currentUser = await client.user.get();
-          handleUserChange(currentUser);
+          console.log('Refreshing user state on initial load');
+          await refreshUserState()
         } catch (err) {
           // User not logged in, which is fine
           handleUserChange(null);
@@ -268,7 +279,29 @@ export const OpenfortProvider: React.FC<OpenfortProviderProps> = ({
         }
       })();
     }
-  }, [client, isUserInitialized]);
+  }, [client, isUserInitialized, handleUserChange]);
+
+  // Internal refresh function for auth hooks to use
+  const refreshUserState = useCallback(async (user?: import('@openfort/openfort-js').AuthPlayerResponse) => {
+    try {
+      console.log('Refreshing user state', user);
+      // If user is provided, use it directly instead of fetching from API
+      if (user !== undefined) {
+        handleUserChange(user);
+        return user;
+      }
+      
+      // Otherwise, fetch from API
+      const currentUser = await client.user.get();
+      console.log('Refreshed user state:', currentUser);
+      handleUserChange(currentUser);
+      return currentUser;
+    } catch (err) {
+      console.log('Failed to refresh user state:', err);
+      handleUserChange(null);
+      return null;
+    }
+  }, [client, handleUserChange]);
 
 
   // Custom auth state management
@@ -283,9 +316,9 @@ export const OpenfortProvider: React.FC<OpenfortProviderProps> = ({
           const customToken = await getCustomAccessToken();
           
           if (customToken) {
-            // TODO: Implement custom auth sync
-            // This would need proper SIWE parameters
-            console.debug('Custom token available, but SIWE sync not implemented yet');
+            // Custom auth sync implementation would go here
+            // This would typically handle SIWE authentication with the custom token
+            console.debug('Custom token available for authentication sync');
           }
         } catch (err) {
           console.error('Custom auth sync failed:', err);
@@ -306,22 +339,63 @@ export const OpenfortProvider: React.FC<OpenfortProviderProps> = ({
     user,
     isReady,
     error,
+    supportedChains,
+    embeddedWallet,
+    embeddedState,
+    
+    // Flow states
+    passwordState,
+    oAuthState,
+    siweState,
+    recoveryFlowState,
+    
+    // State setters
+    setPasswordState,
+    setOAuthState,
+    setSiweState,
+    setRecoveryFlowState,
     
     // Core methods
     logout,
     getAccessToken,
+    
+    // Internal methods
+    _internal: {
+      refreshUserState,
+    },
   }), [
     client,
     user,
     isReady,
     error,
+    supportedChains,
+    embeddedWallet,
+    embeddedState,
+    passwordState,
+    oAuthState,
+    siweState,
+    recoveryFlowState,
     logout,
     getAccessToken,
+    refreshUserState,
   ]);
 
   return (
     <OpenfortContext.Provider value={contextValue}>
       {children}
+      {/* Hidden WebView for embedded wallet communication */}
+      {client && isReady && WebViewUtils.isSupported() && (
+        <EmbeddedWalletWebView
+          client={client}
+          isClientReady={isReady}
+          onProxyStatusChange={(status) => {
+            // Handle WebView status changes for debugging
+            if (process.env.NODE_ENV === 'development') {
+              console.debug('WebView status changed:', status);
+            }
+          }}
+        />
+      )}
     </OpenfortContext.Provider>
   );
 };
