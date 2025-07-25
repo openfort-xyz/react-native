@@ -62,21 +62,10 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
   // Set up WebView reference with client immediately when both are available
   useEffect(() => {
     if (webViewRef.current) {
-      console.log('[WebView] Setting message poster - WebView ref available, client ready:', isClientReady);
-      // Create a wrapper that logs outgoing messages and calls the global handler
+      // Simple message poster that uses WebView's postMessage directly
       const messagePoster = {
         postMessage: (message: string) => {
-          console.log('[WebView] Sending message to iframe:', message);
-          // Use injectedJavaScript to call the global handler we created
-          const jsCode = `
-            if (window.handleReactNativeMessage) {
-              window.handleReactNativeMessage(${JSON.stringify(message)});
-            } else {
-              console.log('[WebView] handleReactNativeMessage not available yet');
-            }
-            true; // Return true to prevent errors
-          `;
-          webViewRef.current?.injectJavaScript(jsCode);
+          webViewRef.current?.postMessage(message);
         }
       };
       client.embeddedWallet.setMessagePoster(messagePoster);
@@ -89,25 +78,13 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
       const messageData = JSON.parse(event?.nativeEvent?.data);
       if (!messageData) return;
       
-      // Handle console log messages from iframe
-      if (messageData.type === 'CONSOLE_LOG') {
-        return;
-      }
-      
-      // Handle iframe error messages
-      if (messageData.type === 'IFRAME_ERROR') {
-        return;
-      }
-
       // Handle secure storage messages
       if (isSecureStorageMessage(messageData)) {
         const response = await handleSecureStorageMessage(messageData);
         webViewRef.current?.postMessage(JSON.stringify(response));
         return;
       }
-
       // Forward all messages to the embedded wallet
-      // The EmbeddedWalletApi will handle routing penpal messages appropriately
       client.embeddedWallet.onMessage(messageData);
       
     } catch (error) {
@@ -117,9 +94,17 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
   }, [client]);
 
   // Ref callback to set up message poster immediately
-  const handleWebViewRef = useCallback((n: WebView | null) => {
-    if (n) {
-      client.embeddedWallet.setMessagePoster(n);
+  const handleWebViewRef = useCallback((ref: WebView | null) => {
+    if (webViewRef.current !== ref) {
+      (webViewRef as React.MutableRefObject<WebView | null>).current = ref;
+    }
+    if (ref) {
+      const messagePoster = {
+        postMessage: (message: string) => {
+          ref.postMessage(message);
+        }
+      };
+      client.embeddedWallet.setMessagePoster(messagePoster);
     }
   }, [client]);
 
