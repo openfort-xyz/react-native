@@ -36,7 +36,7 @@ export type CustomAuthProviderConfig = {
 /**
  * Create guest account interface
  */
-export interface UseCreateGuestAccount {
+export interface UseGuestAuth {
     create: () => Promise<import('@openfort/openfort-js').AuthPlayerResponse>;
 }
 

@@ -84,7 +84,7 @@ export type {
 // Configuration and utility types
 export type {
     CustomAuthProviderConfig,
-    UseCreateGuestAccount,
+    UseGuestAuth,
     UseOnEmbeddedWalletStateChange,
     SetRecoveryParams,
     UseSetEmbeddedWalletRecoveryResult,

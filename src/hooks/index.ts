@@ -40,7 +40,7 @@ export const auth = {
     useLinkEmail: () => import('./auth/useLinkEmail').then(m => m.useLinkEmail),
     useLinkWithOAuth: () => import('./auth/useLinkWithOAuth').then(m => m.useLinkWithOAuth),
     useLinkWithSiwe: () => import('./auth/useLinkWithSiwe').then(m => m.useLinkWithSiwe),
-    useCreateGuestAccount: () => import('./auth/useCreateGuestAccount').then(m => m.useCreateGuestAccount),
+    useGuestAuth: () => import('./auth/useGuestAuth').then(m => m.useGuestAuth),
 };
 
 export const wallet = {

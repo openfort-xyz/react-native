@@ -2,7 +2,7 @@
  * Hook for embedded Ethereum wallet functionality
  */
 import { useCallback, useRef, useState, useEffect } from 'react';
-import { ShieldAuthentication, ShieldAuthType, EmbeddedState, type EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js';
+import { ShieldAuthentication, ShieldAuthType, EmbeddedState, type EmbeddedAccount, RecoveryMethod, ChainTypeEnum } from '@openfort/openfort-js';
 import { useOpenfortContext } from '../../core/context';
 import type {
   EmbeddedEthereumWalletState,
@@ -66,7 +66,7 @@ export function useEmbeddedEthereumWallet(props?: UseEmbeddedEthereumWallet): Em
 
   // Extract Ethereum wallets from embedded accounts
   const wallets: ConnectedEmbeddedEthereumWallet[] = embeddedAccounts
-    .filter(account => account.chainType === 'ethereum')
+    .filter(account => account.chainType === ChainTypeEnum.EVM)
     .map((account, index) => ({
       address: account.address,
       implementationType: account.implementationType,

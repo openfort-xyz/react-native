@@ -3,7 +3,7 @@
  */
 import { useCallback, useRef, useState, useEffect } from 'react';
 import type { ShieldAuthentication, EmbeddedAccount } from '@openfort/openfort-js';
-import { ShieldAuthType, EmbeddedState, RecoveryMethod } from '@openfort/openfort-js';
+import { ShieldAuthType, EmbeddedState, RecoveryMethod, ChainTypeEnum } from '@openfort/openfort-js';
 import { useOpenfortContext } from '../../core/context';
 import type {
   EmbeddedSolanaWalletState,
@@ -67,7 +67,7 @@ export function useEmbeddedSolanaWallet(props?: UseEmbeddedSolanaWallet): Embedd
 
   // Extract Solana wallets from embedded accounts
   const wallets: ConnectedEmbeddedSolanaWallet[] = embeddedAccounts
-    .filter(account => account.chainType === 'solana')
+    .filter(account => account.chainType === ChainTypeEnum.SVM)
     .map((account, index) => ({
       address: account.address,
       walletIndex: index,

@@ -20,4 +20,4 @@ export { useLinkWithSiwe } from './useLinkWithSiwe';
 
 
 // Guest accounts
-export { useCreateGuestAccount } from './useCreateGuestAccount';
+export { useGuestAuth } from './useGuestAuth';

@@ -5,17 +5,22 @@ import type { AuthSuccessCallback, ErrorCallback } from './auth';
  * OAuth authentication flow state
  */
 export type OAuthFlowState = {
-    status: 'initial';
-} | {
-    status: 'loading';
-} | {
-    status: 'awaiting-redirect';
-} | {
-    status: 'done';
+    status: 'initial' | 'loading' | 'awaiting-redirect' | 'done' ;
+    error?: never;
 } | {
     status: 'error';
     error: Error | null;
 };
+
+export const mapStatus = (status: OAuthFlowState) => {
+  return {
+    isLoading: status.status === 'loading',
+    isError: status.status === 'error',
+    isSuccess: status.status === 'done',
+    error: status.error
+  }
+}
+
 
 /**
  * OAuth tokens interface
