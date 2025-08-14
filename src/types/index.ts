@@ -58,13 +58,6 @@ export type {
     CreateSolanaEmbeddedWalletOpts,
     RecoverSolanaEmbeddedWalletOpts,
     EmbeddedEthereumWalletActions,
-    EmbeddedEthereumWalletConnectedState,
-    EmbeddedEthereumWalletConnectingState,
-    EmbeddedEthereumWalletReconnectingState,
-    EmbeddedEthereumWalletDisconnectedState,
-    EmbeddedEthereumWalletNeedsRecoveryState,
-    EmbeddedEthereumWalletCreatingState,
-    EmbeddedEthereumWalletErrorState,
     EmbeddedEthereumWalletState,
     EmbeddedWalletStatus,
     ConnectedEmbeddedSolanaWallet,
@@ -79,6 +72,7 @@ export type {
     EmbeddedSolanaWalletState,
     EmbeddedSolanaWalletStatus,
     ConnectedEmbeddedEthereumWallet,
+    UserWallet,
 } from './wallet';
 
 // Configuration and utility types

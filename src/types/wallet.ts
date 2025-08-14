@@ -28,7 +28,9 @@ export interface OpenfortSolanaEmbeddedWalletAccount {
     walletIndex: number;
 }
 
+import { ChainTypeEnum } from '@openfort/openfort-js';
 import type { ErrorCallback } from './auth';
+import { Hex } from './hex';
 
 /**
  * Openfort embedded wallet account union type
@@ -77,13 +79,22 @@ export type RecoverSolanaEmbeddedWalletOpts =
     | { recoveryMethod: 'automatic' }
     | { recoveryMethod: 'password'; password: string }
 
+export type UserWallet = {
+    address: Hex;
+    ownerAddress?: string;
+    implementationType?: string;
+    chainType: ChainTypeEnum;
+    isActive?: boolean;
+    isConnecting?: boolean;
+    getProvider: () => Promise<OpenfortEmbeddedEthereumWalletProvider>;
+};
 /**
  * Connected embedded wallet state
  */
 interface IEmbeddedEthereumWalletConnectedState {
     status: 'connected';
     provider: OpenfortEmbeddedEthereumWalletProvider;
-    account: OpenfortEthereumEmbeddedWalletAccount;
+    activeWallet: UserWallet;
 }
 
 /**
@@ -91,7 +102,7 @@ interface IEmbeddedEthereumWalletConnectedState {
  */
 interface IEmbeddedEthereumWalletConnectingState {
     status: 'connecting';
-    account: OpenfortEthereumEmbeddedWalletAccount;
+    activeWallet: UserWallet;
 }
 
 /**
@@ -99,7 +110,7 @@ interface IEmbeddedEthereumWalletConnectingState {
  */
 interface IEmbeddedEthereumWalletReconnectingState {
     status: 'reconnecting';
-    account: OpenfortEthereumEmbeddedWalletAccount;
+    activeWallet: UserWallet;
 }
 
 /**
@@ -107,7 +118,7 @@ interface IEmbeddedEthereumWalletReconnectingState {
  */
 interface IEmbeddedEthereumWalletDisconnectedState {
     status: 'disconnected';
-    account: null;
+    activeWallet: null;
 }
 
 /**
@@ -115,7 +126,7 @@ interface IEmbeddedEthereumWalletDisconnectedState {
  */
 interface IEmbeddedEthereumWalletNeedsRecoveryState {
     status: 'needs-recovery';
-    account: OpenfortEthereumEmbeddedWalletAccount;
+    activeWallet: UserWallet;
 }
 
 /**
@@ -123,7 +134,7 @@ interface IEmbeddedEthereumWalletNeedsRecoveryState {
  */
 interface IEmbeddedEthereumWalletCreatingState {
     status: 'creating';
-    account: null;
+    activeWallet: null;
 }
 
 /**
@@ -131,7 +142,7 @@ interface IEmbeddedEthereumWalletCreatingState {
  */
 interface IEmbeddedEthereumWalletErrorState {
     status: 'error';
-    account: OpenfortEthereumEmbeddedWalletAccount | null;
+    activeWallet: UserWallet | null;
     error: string;
 }
 
@@ -151,25 +162,27 @@ export type EmbeddedEthereumWalletActions = {
 };
 
 // Combined embedded wallet state types
-export type EmbeddedEthereumWalletConnectedState = EmbeddedEthereumWalletActions & IEmbeddedEthereumWalletConnectedState;
-export type EmbeddedEthereumWalletConnectingState = EmbeddedEthereumWalletActions & IEmbeddedEthereumWalletConnectingState;
-export type EmbeddedEthereumWalletReconnectingState = EmbeddedEthereumWalletActions & IEmbeddedEthereumWalletReconnectingState;
-export type EmbeddedEthereumWalletDisconnectedState = EmbeddedEthereumWalletActions & IEmbeddedEthereumWalletDisconnectedState;
-export type EmbeddedEthereumWalletNeedsRecoveryState = EmbeddedEthereumWalletActions & IEmbeddedEthereumWalletNeedsRecoveryState;
-export type EmbeddedEthereumWalletCreatingState = EmbeddedEthereumWalletActions & IEmbeddedEthereumWalletCreatingState;
-export type EmbeddedEthereumWalletErrorState = EmbeddedEthereumWalletActions & IEmbeddedEthereumWalletErrorState;
+// export type EmbeddedEthereumWalletConnectedState = EmbeddedEthereumWalletActions & IEmbeddedEthereumWalletConnectedState;
+// export type EmbeddedEthereumWalletConnectingState = EmbeddedEthereumWalletActions & IEmbeddedEthereumWalletConnectingState;
+// export type EmbeddedEthereumWalletReconnectingState = EmbeddedEthereumWalletActions & IEmbeddedEthereumWalletReconnectingState;
+// export type EmbeddedEthereumWalletDisconnectedState = EmbeddedEthereumWalletActions & IEmbeddedEthereumWalletDisconnectedState;
+// export type EmbeddedEthereumWalletNeedsRecoveryState = EmbeddedEthereumWalletActions & IEmbeddedEthereumWalletNeedsRecoveryState;
+// export type EmbeddedEthereumWalletCreatingState = EmbeddedEthereumWalletActions & IEmbeddedEthereumWalletCreatingState;
+// export type EmbeddedEthereumWalletErrorState = EmbeddedEthereumWalletActions & IEmbeddedEthereumWalletErrorState;
+
+export type EthereumWalletState =
+    | IEmbeddedEthereumWalletConnectedState
+    | IEmbeddedEthereumWalletConnectingState
+    | IEmbeddedEthereumWalletReconnectingState
+    | IEmbeddedEthereumWalletDisconnectedState
+    | IEmbeddedEthereumWalletNeedsRecoveryState
+    | IEmbeddedEthereumWalletCreatingState
+    | IEmbeddedEthereumWalletErrorState;
 
 /**
  * Main embedded wallet state union
  */
-export type EmbeddedEthereumWalletState =
-    | EmbeddedEthereumWalletConnectedState
-    | EmbeddedEthereumWalletConnectingState
-    | EmbeddedEthereumWalletReconnectingState
-    | EmbeddedEthereumWalletDisconnectedState
-    | EmbeddedEthereumWalletNeedsRecoveryState
-    | EmbeddedEthereumWalletCreatingState
-    | EmbeddedEthereumWalletErrorState;
+export type EmbeddedEthereumWalletState = EthereumWalletState & EmbeddedEthereumWalletActions
 
 /**
  * Embedded wallet status
@@ -183,7 +196,7 @@ export type EmbeddedWalletStatus = EmbeddedEthereumWalletState['status'];
  */
 interface IEmbeddedSolanaWalletConnectedState {
     status: 'connected';
-    account: OpenfortSolanaEmbeddedWalletAccount;
+    activeWallet: OpenfortSolanaEmbeddedWalletAccount;
     provider: OpenfortEmbeddedEthereumWalletProvider;
 }
 
@@ -199,7 +212,7 @@ interface IEmbeddedSolanaWalletConnectingState {
  */
 interface IEmbeddedSolanaWalletReconnectingState {
     status: 'reconnecting';
-    account: OpenfortSolanaEmbeddedWalletAccount;
+    activeWallet: OpenfortSolanaEmbeddedWalletAccount;
 }
 
 /**
@@ -207,7 +220,7 @@ interface IEmbeddedSolanaWalletReconnectingState {
  */
 interface IEmbeddedSolanaWalletDisconnectedState {
     status: 'disconnected';
-    account: null;
+    activeWallet: null;
 }
 
 /**
@@ -215,7 +228,7 @@ interface IEmbeddedSolanaWalletDisconnectedState {
  */
 interface IEmbeddedSolanaWalletNeedsRecoveryState {
     status: 'needs-recovery';
-    account: OpenfortSolanaEmbeddedWalletAccount;
+    activeWallet: OpenfortSolanaEmbeddedWalletAccount;
 }
 
 /**
@@ -223,7 +236,7 @@ interface IEmbeddedSolanaWalletNeedsRecoveryState {
  */
 interface IEmbeddedSolanaWalletCreatingState {
     status: 'creating';
-    account: null;
+    activeWallet: null;
 }
 
 /**
@@ -231,7 +244,7 @@ interface IEmbeddedSolanaWalletCreatingState {
  */
 interface IEmbeddedSolanaWalletErrorState {
     status: 'error';
-    account: OpenfortSolanaEmbeddedWalletAccount | null;
+    activeWallet: OpenfortSolanaEmbeddedWalletAccount | null;
     error: string;
 }
 

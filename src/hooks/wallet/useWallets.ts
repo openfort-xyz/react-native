@@ -1,0 +1,472 @@
+/**
+ * Hook for embedded Ethereum wallet functionality
+ */
+import { AccountTypeEnum, ChainTypeEnum, EmbeddedState, Provider, RecoveryMethod, ShieldAuthentication, ShieldAuthType, type EmbeddedAccount } from '@openfort/openfort-js';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useOpenfortContext } from '../../core/context';
+import { onError, onSuccess } from '../../lib/hookConsistency';
+import { BaseFlowState } from '../../types/baseFlowState';
+import { Hex } from '../../types/hex';
+import { OpenfortHookOptions } from '../../types/hookOption';
+import { OpenfortError, OpenfortErrorType } from '../../types/openfortError';
+import { UserWallet } from '../../types/wallet';
+
+
+type SetActiveWalletResult = {
+  error?: OpenfortError,
+  wallet?: UserWallet,
+  provider?: Provider,
+}
+
+type SetActiveWalletOptions = {
+  address?: Hex | undefined;
+  chainId?: number;
+  recoveryPassword?: string;
+} & OpenfortHookOptions<SetActiveWalletResult>
+
+type CreateWalletResult = SetActiveWalletResult
+
+type CreateWalletOptions = {
+  chainType?: ChainTypeEnum;
+  chainId?: number;
+  policyId?: string
+  recoveryPassword?: string;
+} & OpenfortHookOptions<CreateWalletResult>
+
+type RecoverEmbeddedWalletResult = SetActiveWalletResult
+
+type SetRecoveryOptions = {
+  recoveryMethod: RecoveryMethod;
+  recoveryPassword?: string;
+} & OpenfortHookOptions<CreateWalletResult>
+
+type WalletOptions = OpenfortHookOptions<SetActiveWalletResult | CreateWalletResult>;
+
+type WalletFlowStatus = BaseFlowState | {
+  status: "creating" | "connecting" | "disconnected";
+  address?: Hex;
+  error?: never;
+}
+
+const mapWalletStatus = (status: WalletFlowStatus) => {
+  return {
+    error: status.error,
+    isError: status.status === 'error',
+    isSuccess: status.status === 'success',
+    isCreating: status.status === 'creating',
+    isConnecting: status.status === 'connecting',
+  }
+}
+/**
+ * Hook for interacting with embedded Ethereum wallets
+ * 
+ * This hook manages embedded Ethereum wallets based on the user's state from the provider.
+ * Wallet state is determined by polling in the provider, not by local state management.
+ * 
+ * @param props - Optional configuration with callback functions
+ * @returns Current embedded Ethereum wallet state with actions
+ * 
+ * @example
+ * ```tsx
+ * const ethereumWallet = useEmbeddedEthereumWallet({
+ *   onCreateWalletSuccess: (provider) => console.log('Ethereum wallet created:', provider),
+ *   onCreateWalletError: (error) => console.error('Ethereum wallet creation failed:', error),
+ * });
+ * 
+ * // Check wallet status and create if needed
+ * if (ethereumWallet.status === 'disconnected') {
+ *   await ethereumWallet.create(); // Uses default chain
+ *   // Or with specific chain: await ethereumWallet.create({ chainId: 1 });
+ * }
+ * 
+ * // Use connected wallets
+ * if (ethereumWallet.status === 'connected' && ethereumWallet.wallets.length > 0) {
+ *   const provider = await ethereumWallet.wallets[0].getProvider();
+ *   // Use provider for Ethereum transactions
+ * }
+ * ```
+ */
+export function useWallets(hookOptions: WalletOptions = {}) {
+  const { client, user, supportedChains, walletConfig, embeddedState, _internal } = useOpenfortContext();
+  const [embeddedAccounts, setEmbeddedAccounts] = useState<EmbeddedAccount[]>([]);
+  const recoverPromiseRef = useRef<Promise<SetActiveWalletResult> | null>(null);
+  const [activeWalletId, setActiveWalletId] = useState<string | null>(null); // OPENFORT-JS Should provide this
+
+  const [status, setStatus] = useState<WalletFlowStatus>({
+    status: "idle",
+  })
+
+  const activeWallet = useMemo((): UserWallet | null => {
+    if (!activeWalletId || !embeddedAccounts) return null;
+    const account = embeddedAccounts.find(acc => acc.id === activeWalletId);
+    if (!account) return null;
+    return {
+      address: account.address as Hex,
+      implementationType: account.implementationType,
+      ownerAddress: account.ownerAddress,
+      chainType: account.chainType,
+      isActive: true,
+      isConnecting: false,
+      getProvider: async () => {
+        return await client.embeddedWallet.getEthereumProvider({ announceProvider: false });
+      },
+    };
+  }, [activeWalletId, embeddedAccounts, client.embeddedWallet]);
+
+  const setActiveWallet = useCallback(
+    async (options?: SetActiveWalletOptions): Promise<SetActiveWalletResult> => {
+      // If there's already a recovery in progress, return the existing promise
+      if (recoverPromiseRef.current) {
+        return recoverPromiseRef.current;
+      }
+      if (wallets.length === 0) {
+        return onError({
+          hookOptions,
+          options,
+          error: new OpenfortError('No embedded wallets available to set as active', OpenfortErrorType.WALLET_ERROR),
+        });
+      }
+
+      setStatus({
+        status: 'connecting',
+        address: options?.address,
+      });
+
+      // Create and store the recovery promise
+      recoverPromiseRef.current = (async (): Promise<SetActiveWalletResult> => {
+        try {
+          // Validate chainId if provided
+          let chainId: number | undefined;
+          if (options?.chainId) {
+            if (!supportedChains || !supportedChains.some(chain => chain.id === options.chainId)) {
+              throw new OpenfortError(
+                `Chain ID ${options.chainId} is not supported. Supported chains: ${supportedChains?.map(c => c.id).join(', ') || 'none'}`,
+                OpenfortErrorType.WALLET_ERROR
+              );
+            }
+            chainId = options.chainId;
+          } else if (supportedChains && supportedChains.length > 0) {
+            // Use the first supported chain as default
+            chainId = supportedChains[0].id;
+          }
+
+          // Create shield authentication object
+          let shieldAuthentication: ShieldAuthentication | null = null;
+          console.log('Using walletConfig:', walletConfig);
+          if (walletConfig) {
+            const accessToken = await client.getAccessToken();
+            if (!accessToken) {
+              throw new OpenfortError('Access token is required for shield authentication', OpenfortErrorType.WALLET_ERROR);
+            }
+
+            // Get encryption session from embedded wallet configuration
+            let encryptionSession: string | undefined;
+            if ('getEncryptionSession' in walletConfig && walletConfig.getEncryptionSession) {
+              encryptionSession = await walletConfig.getEncryptionSession();
+            }
+
+            shieldAuthentication = {
+              auth: ShieldAuthType.OPENFORT,
+              token: accessToken,
+              ...(encryptionSession && { encryptionSession }),
+            };
+          }
+
+          const address = options?.address || wallets[0]?.address;
+
+          const embeddedAccountToRecover = embeddedAccounts.find(account => account.chainId === chainId && account.address === address);
+
+          let embeddedAccount: EmbeddedAccount | undefined;
+          if (!embeddedAccountToRecover) {
+            // Different chain maybe?
+            // if (embeddedAccounts.some(account => account.address === address)) {
+            // create wallet with new chain
+            // embeddedAccount = await client.embeddedWallet.create({
+            //   chainId: chainId!,
+            //   accountType: AccountTypeEnum.SMART_ACCOUNT,
+            //   chainType: ChainTypeEnum.EVM,
+            //   shieldAuthentication: shieldAuthentication ?? undefined,
+            //   recoveryParams: options?.recoveryPassword ? { password: options.recoveryPassword, recoveryMethod: RecoveryMethod.PASSWORD } : undefined
+            // });
+            // } else {
+            throw new OpenfortError(`No embedded account found for address ${address} on chain ID ${chainId}`, OpenfortErrorType.WALLET_ERROR);
+            // }
+          } else {
+            // Recover the embedded wallet with shield authentication
+            embeddedAccount = await client.embeddedWallet.recover({
+              account: embeddedAccountToRecover.id,
+              shieldAuthentication: shieldAuthentication ?? undefined,
+              recoveryParams: options?.recoveryPassword ? { password: options.recoveryPassword, recoveryMethod: RecoveryMethod.PASSWORD } : undefined
+            });
+          }
+          const wallet: UserWallet = {
+            address: embeddedAccount.address as Hex,
+            implementationType: embeddedAccount.implementationType,
+            ownerAddress: embeddedAccount.ownerAddress,
+            chainType: embeddedAccount.chainType,
+            isActive: true,
+            isConnecting: false,
+            getProvider: async () => {
+              return await client.embeddedWallet.getEthereumProvider({ announceProvider: false });
+            },
+          }
+
+          recoverPromiseRef.current = null;
+          setStatus({
+            status: 'success',
+          });
+          setActiveWalletId(embeddedAccount.id);
+          return onSuccess({
+            options,
+            hookOptions,
+            data: {
+              wallet,
+            }
+          });
+        } catch (e) {
+          recoverPromiseRef.current = null;
+          const error = e instanceof OpenfortError ? e : new OpenfortError('Failed to recover embedded wallet', OpenfortErrorType.WALLET_ERROR);
+          setStatus({
+            status: 'error',
+            error,
+          });
+          return onError({
+            options,
+            hookOptions,
+            error,
+          });
+        }
+      })();
+
+      return recoverPromiseRef.current;
+    },
+    [client, supportedChains, walletConfig, _internal, embeddedAccounts, hookOptions]
+  );
+
+  // Fetch embedded wallets using embeddedWallet.list()
+  const fetchEmbeddedWallets = useCallback(async () => {
+    if (!client || embeddedState === EmbeddedState.NONE || embeddedState === EmbeddedState.UNAUTHENTICATED) {
+      setEmbeddedAccounts([]);
+      return;
+    }
+
+    try {
+      const accounts = await client.embeddedWallet.list();
+      setEmbeddedAccounts(accounts);
+    } catch (error) {
+      setEmbeddedAccounts([]);
+    }
+  }, [client, embeddedState, user]);
+
+  useEffect(() => {
+    fetchEmbeddedWallets();
+  }, [fetchEmbeddedWallets]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const embeddedAccount = await client.embeddedWallet.get();
+        setActiveWalletId(embeddedAccount.id);
+      } catch {
+        setActiveWalletId(null);
+      }
+    })();
+  }, [setActiveWalletId, client])
+
+  // Extract Ethereum wallets from embedded accounts
+  const wallets: UserWallet[] = useMemo(() => (
+    embeddedAccounts
+      .reduce((acc, account) => {
+        if (!acc.some(a => a.address === account.address)) {
+          acc.push(account);
+        }
+        return acc;
+      }, [] as EmbeddedAccount[])
+      .map((account) => ({
+        address: account.address as Hex,
+        implementationType: account.implementationType,
+        ownerAddress: account.ownerAddress,
+        chainType: account.chainType,
+        isActive: activeWalletId === account.id,
+        isConnecting: status.status === "connecting" && status.address === account.address,
+        getProvider: async () => {
+          return await client.embeddedWallet.getEthereumProvider({ announceProvider: false });
+        },
+      }))
+  ), [embeddedAccounts, activeWalletId, status.status === "connecting", client.embeddedWallet]);
+
+  const create = useCallback(
+    async (options?: CreateWalletOptions): Promise<CreateWalletResult> => {
+      console.log('Creating Ethereum wallet with options:', options);
+      try {
+        setStatus({
+          status: 'creating',
+        });
+
+        // Validate chainId if provided
+        let chainId: number;
+        if (options?.chainId) {
+          if (!supportedChains || !supportedChains.some(chain => chain.id === options.chainId)) {
+            throw new OpenfortError(
+              `Chain ID ${options.chainId} is not supported. Supported chains: ${supportedChains?.map(c => c.id).join(', ') || 'none'}`,
+              OpenfortErrorType.WALLET_ERROR
+            );
+          }
+          chainId = options.chainId!;
+        } else if (supportedChains && supportedChains.length > 0) {
+          // Use the first supported chain as default
+          chainId = supportedChains[0].id;
+        } else {
+          throw new OpenfortError('No supported chains available for wallet creation', OpenfortErrorType.WALLET_ERROR);
+        }
+        console.log('Using chain ID for wallet creation:', chainId);
+
+        // Create shield authentication object
+        let shieldAuthentication: ShieldAuthentication | null = null;
+        if (walletConfig) {
+          const accessToken = await client.getAccessToken();
+          if (!accessToken) {
+            throw new Error('Access token is required for shield authentication');
+          }
+          console.log('Access token for shield authentication:', accessToken);
+
+          // Get encryption session from embedded wallet configuration
+          let encryptionSession: string | undefined;
+          if ('getEncryptionSession' in walletConfig && walletConfig.getEncryptionSession) {
+            encryptionSession = await walletConfig.getEncryptionSession();
+            console.log('Encryption session for shield authentication:', encryptionSession);
+          }
+
+          shieldAuthentication = {
+            auth: ShieldAuthType.OPENFORT,
+            token: accessToken,
+            ...(encryptionSession && { encryptionSession }),
+          };
+        }
+        console.log('Shield authentication object:', shieldAuthentication);
+
+        // Configure embedded wallet with shield authentication
+        const embeddedAccount = await client.embeddedWallet.create({
+          chainId,
+          accountType: AccountTypeEnum.SMART_ACCOUNT,
+          chainType: options?.chainType || ChainTypeEnum.EVM,
+          shieldAuthentication: shieldAuthentication ?? undefined,
+          recoveryParams: options?.recoveryPassword ? { password: options.recoveryPassword, recoveryMethod: RecoveryMethod.PASSWORD } : undefined
+        });
+        console.log('Embedded wallet configured with shield authentication');
+
+        // Get the Ethereum provider
+        const provider = await client.embeddedWallet.getEthereumProvider({
+          announceProvider: false,
+          ...(options?.policyId && { policy: options.policyId }),
+        });
+
+        // Refetch the list of wallets to ensure the state is up to date
+        await fetchEmbeddedWallets();
+        setActiveWalletId(embeddedAccount.id);
+
+        setStatus({
+          status: 'success',
+        });
+
+        return onSuccess({
+          hookOptions,
+          options,
+          data: {
+            provider,
+            wallet: {
+              address: embeddedAccount.address as Hex,
+              implementationType: embeddedAccount.implementationType,
+              ownerAddress: embeddedAccount.ownerAddress,
+              chainType: embeddedAccount.chainType,
+              isActive: true,
+              isConnecting: false,
+              getProvider: async () => {
+                return await client.embeddedWallet.getEthereumProvider();
+              },
+            }
+          }
+        })
+      } catch (e) {
+        const error = e instanceof OpenfortError ? e : new OpenfortError('Failed to create Ethereum wallet', OpenfortErrorType.WALLET_ERROR, { error: e });
+        setStatus({
+          status: 'error',
+          error,
+        });
+        return onError({
+          hookOptions,
+          options,
+          error
+        })
+      }
+    },
+    [client, supportedChains, walletConfig, _internal, user]
+  );
+
+
+  const setRecovery = useCallback(
+    async (params: SetRecoveryOptions): Promise<RecoverEmbeddedWalletResult> => {
+      try {
+        setStatus({
+          status: 'loading',
+        });
+
+        // Set embedded wallet recovery method
+        if (params.recoveryMethod === 'password') {
+          await client.embeddedWallet.setEmbeddedRecovery({
+            recoveryMethod: RecoveryMethod.PASSWORD,
+            recoveryPassword: params.recoveryPassword
+          });
+        } else {
+          await client.embeddedWallet.setEmbeddedRecovery({
+            recoveryMethod: RecoveryMethod.AUTOMATIC
+          });
+        }
+
+        // Get the updated embedded account
+        const embeddedAccount = await client.embeddedWallet.get();
+
+        // Refresh user state to reflect recovery changes
+        await _internal.refreshUserState();
+
+        setStatus({ status: 'success' });
+        return onSuccess({
+          hookOptions,
+          options: params,
+          data: {
+            wallet: {
+              address: embeddedAccount.address as Hex,
+              implementationType: embeddedAccount.implementationType,
+              ownerAddress: embeddedAccount.ownerAddress,
+              chainType: embeddedAccount.chainType,
+              isActive: true,
+              isConnecting: false,
+              getProvider: async () => {
+                return await client.embeddedWallet.getEthereumProvider({ announceProvider: false });
+              }
+            }
+          }
+        });
+      } catch (error) {
+        const errorObj = error instanceof Error ? error : new Error('Failed to set wallet recovery');
+        return onError({
+          hookOptions,
+          options: params,
+          error: new OpenfortError('Failed to set wallet recovery', OpenfortErrorType.WALLET_ERROR, { error: errorObj }),
+        });
+      }
+    },
+    [client, _internal]
+  );
+
+
+  return {
+    wallets,
+    activeWallet,
+    setRecovery,
+    setActiveWallet,
+    createWallet: create,
+    ...mapWalletStatus(status),
+    exportPrivateKey: client.embeddedWallet.exportPrivateKey,
+  }
+}

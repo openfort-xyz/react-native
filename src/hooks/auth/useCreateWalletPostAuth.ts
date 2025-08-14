@@ -1,5 +1,4 @@
-import { RecoveryMethod } from "@openfort/openfort-js"
-import { useCallback } from "react"
+import { useCallback } from "react";
 
 export type CreateWalletPostAuthOptions = {
   /**

@@ -1,12 +1,5 @@
 import type {
   EmbeddedEthereumWalletState,
-  EmbeddedEthereumWalletConnectedState,
-  EmbeddedEthereumWalletConnectingState,
-  EmbeddedEthereumWalletReconnectingState,
-  EmbeddedEthereumWalletDisconnectedState,
-  EmbeddedEthereumWalletNeedsRecoveryState,
-  EmbeddedEthereumWalletCreatingState,
-  EmbeddedEthereumWalletErrorState,
   EmbeddedSolanaWalletState,
   EmbeddedSolanaWalletConnectedState,
   EmbeddedSolanaWalletConnectingState,
@@ -20,7 +13,6 @@ import type {
 /**
  * Type guard to check if embedded wallet is connected
  */
-export function isConnected(s: EmbeddedEthereumWalletState): s is EmbeddedEthereumWalletConnectedState;
 export function isConnected(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletConnectedState;
 export function isConnected(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
   return s.status === 'connected';
@@ -29,7 +21,6 @@ export function isConnected(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalle
 /**
  * Type guard to check if embedded wallet is reconnecting
  */
-export function isReconnecting(s: EmbeddedEthereumWalletState): s is EmbeddedEthereumWalletReconnectingState;
 export function isReconnecting(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletReconnectingState;
 export function isReconnecting(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
   return s.status === 'reconnecting';
@@ -38,7 +29,6 @@ export function isReconnecting(s: EmbeddedEthereumWalletState | EmbeddedSolanaWa
 /**
  * Type guard to check if embedded wallet is connecting
  */
-export function isConnecting(s: EmbeddedEthereumWalletState): s is EmbeddedEthereumWalletConnectingState;
 export function isConnecting(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletConnectingState;
 export function isConnecting(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
   return s.status === 'connecting';
@@ -47,7 +37,6 @@ export function isConnecting(s: EmbeddedEthereumWalletState | EmbeddedSolanaWall
 /**
  * Type guard to check if embedded wallet is disconnected
  */
-export function isDisconnected(s: EmbeddedEthereumWalletState): s is EmbeddedEthereumWalletDisconnectedState;
 export function isDisconnected(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletDisconnectedState;
 export function isDisconnected(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
   return s.status === 'disconnected';
@@ -56,7 +45,6 @@ export function isDisconnected(s: EmbeddedEthereumWalletState | EmbeddedSolanaWa
 /**
  * Type guard to check if embedded wallet is not created
  */
-export function isNotCreated(s: EmbeddedEthereumWalletState): s is EmbeddedEthereumWalletDisconnectedState;
 export function isNotCreated(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletDisconnectedState;
 export function isNotCreated(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
   return s.status === 'disconnected';
@@ -65,7 +53,6 @@ export function isNotCreated(s: EmbeddedEthereumWalletState | EmbeddedSolanaWall
 /**
  * Type guard to check if embedded wallet is being created
  */
-export function isCreating(s: EmbeddedEthereumWalletState): s is EmbeddedEthereumWalletCreatingState;
 export function isCreating(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletCreatingState;
 export function isCreating(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
   return s.status === 'creating';
@@ -74,7 +61,6 @@ export function isCreating(s: EmbeddedEthereumWalletState | EmbeddedSolanaWallet
 /**
  * Type guard to check if embedded wallet has an error
  */
-export function hasError(s: EmbeddedEthereumWalletState): s is EmbeddedEthereumWalletErrorState;
 export function hasError(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletErrorState;
 export function hasError(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
   return s.status === 'error';
@@ -83,7 +69,6 @@ export function hasError(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletSt
 /**
  * Type guard to check if embedded wallet needs recovery
  */
-export function needsRecovery(s: EmbeddedEthereumWalletState): s is EmbeddedEthereumWalletNeedsRecoveryState;
 export function needsRecovery(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletNeedsRecoveryState;
 export function needsRecovery(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
   return s.status === 'needs-recovery';

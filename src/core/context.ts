@@ -18,7 +18,7 @@ export interface OpenfortContextValue {
   /** Supported chains configuration */
   supportedChains?: [Chain, ...Chain[]];
   /** Embedded wallet configuration for Shield integration */
-  embeddedWallet?: EmbeddedWalletConfiguration;
+  walletConfig?: EmbeddedWalletConfiguration;
   /** Current embedded wallet state */
   embeddedState: EmbeddedState;
 

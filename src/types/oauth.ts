@@ -12,7 +12,7 @@ export type OAuthFlowState = {
     error: Error | null;
 };
 
-export const mapStatus = (status: OAuthFlowState) => {
+export const mapOAuthStatus = (status: OAuthFlowState) => {
   return {
     isLoading: status.status === 'loading',
     isError: status.status === 'error',

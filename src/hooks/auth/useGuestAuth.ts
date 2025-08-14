@@ -5,29 +5,10 @@ import type { AuthPlayerResponse as OpenfortUser } from '@openfort/openfort-js';
 import { useCallback, useState } from 'react';
 import { useOpenfortContext } from '../../core/context';
 import { onError, onSuccess } from '../../lib/hookConsistency';
-import type {
-  AuthSuccessCallback,
-  ErrorCallback,
-} from '../../types';
 import { BaseFlowState, mapStatus } from '../../types/baseFlowState';
 import { OpenfortHookOptions } from '../../types/hookOption';
 import { OpenfortError, OpenfortErrorType } from '../../types/openfortError';
 import { CreateWalletPostAuthOptions } from './useCreateWalletPostAuth';
-
-/**
- * Options for guest account creation hook
- */
-export interface UseGuestAuthOptions {
-  onSuccess?: AuthSuccessCallback;
-  onError?: ErrorCallback;
-}
-
-/**
- * Result interface for guest account creation hook
- */
-export interface UseGuestAuth {
-  create: () => Promise<OpenfortUser>;
-}
 
 /**
  * Hook for creating guest accounts
@@ -55,13 +36,13 @@ export type GuestHookResult = {
   // wallet?: UserWallet;
 };
 
-export type GuestHookOptions = OpenfortHookOptions<OpenfortUser> & CreateWalletPostAuthOptions;
+export type GuestHookOptions = OpenfortHookOptions<GuestHookResult> & CreateWalletPostAuthOptions;
 
 export const useGuestAuth = (hookOptions: GuestHookOptions = {}) => {
 
   const { client, _internal } = useOpenfortContext();
   const { refreshUserState: updateUser } = _internal;
-  
+
   const [status, setStatus] = useState<BaseFlowState>({
     status: "idle",
   });
@@ -90,7 +71,7 @@ export const useGuestAuth = (hookOptions: GuestHookOptions = {}) => {
       onSuccess({
         hookOptions,
         options,
-        data: user,
+        data: { user },
       });
 
       return { user, /* wallet */ };

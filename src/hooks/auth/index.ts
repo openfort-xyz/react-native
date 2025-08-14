@@ -5,19 +5,13 @@
  */
 
 // Email authentication
-export { useLoginWithEmail } from './useLoginWithEmail';
-
-export { useLinkEmail } from './useLinkEmail';
+export { useEmailAuth } from './useEmailAuth';
 
 // OAuth authentication
-export { useLoginWithOAuth } from './useLoginWithOAuth';
-export { useLinkWithOAuth } from './useLinkWithOAuth';
+export { useOAuth } from './useOAuth';
 
 // Wallet-based authentication (SIWE)
-export { useLoginWithSiwe } from './useLoginWithSiwe';
-
-export { useLinkWithSiwe } from './useLinkWithSiwe';
-
+export { useWalletAuth } from './useWalletAuth';
 
 // Guest accounts
 export { useGuestAuth } from './useGuestAuth';

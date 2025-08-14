@@ -77,43 +77,43 @@ export type EmbeddedWalletConfiguration = CommonEmbeddedWalletConfiguration & (
  * we need interop in the future.
  */
 type RpcUrls = {
-    http: readonly string[];
-    webSocket?: readonly string[];
+  http: readonly string[];
+  webSocket?: readonly string[];
 };
 type NativeCurrency = {
-    name: string;
-    /** 2-6 characters long */
-    symbol: string;
-    decimals: number;
+  name: string;
+  /** 2-6 characters long */
+  symbol: string;
+  decimals: number;
 };
 type BlockExplorer = {
-    name: string;
-    url: string;
+  name: string;
+  url: string;
 };
 /** A subset of WAGMI's chain type
  * https://github.com/wagmi-dev/references/blob/6aea7ee9c65cfac24f33173ab3c98176b8366f05/packages/chains/src/types.ts#L8
  */
 export type Chain = {
-    /** Id in number form */
-    id: number;
-    /** Human readable name */
-    name: string;
-    /** Internal network name */
-    network?: string;
-    /** Currency used by chain */
-    nativeCurrency: NativeCurrency;
-    /** Collection of block explorers */
-    blockExplorers?: {
-        [key: string]: BlockExplorer;
-        default: BlockExplorer;
-    };
-    /** Collection of RPC endpoints */
-    rpcUrls: {
-        [key: string]: RpcUrls;
-        default: RpcUrls;
-    };
-    /** Flag for test networks */
-    testnet?: boolean;
+  /** Id in number form */
+  id: number;
+  /** Human readable name */
+  name: string;
+  /** Internal network name */
+  network?: string;
+  /** Currency used by chain */
+  nativeCurrency: NativeCurrency;
+  /** Collection of block explorers */
+  blockExplorers?: {
+    [key: string]: BlockExplorer;
+    default: BlockExplorer;
+  };
+  /** Collection of RPC endpoints */
+  rpcUrls: {
+    [key: string]: RpcUrls;
+    default: RpcUrls;
+  };
+  /** Flag for test networks */
+  testnet?: boolean;
 };
 
 
@@ -132,7 +132,7 @@ export interface OpenfortProviderProps {
   /**
    * Embedded signer configuration for Shield integration
    */
-  embeddedWallet?: EmbeddedWalletConfiguration;
+  walletConfig?: EmbeddedWalletConfiguration;
   /**
    * SDK overrides configuration for advanced customization
    */
@@ -143,14 +143,14 @@ export interface OpenfortProviderProps {
  * Main provider component that wraps the entire application and provides
  * Openfort SDK functionality through React context
  */
-export const OpenfortProvider: React.FC<OpenfortProviderProps> = ({
+export const OpenfortProvider = ({
   children,
   publishableKey,
   customAuth,
   supportedChains,
-  embeddedWallet,
+  walletConfig,
   overrides,
-}) => {
+}: OpenfortProviderProps) => {
   // Prevent multiple OpenfortProvider instances
   const existingContext = React.useContext(OpenfortContext);
   if (existingContext) {
@@ -166,19 +166,19 @@ export const OpenfortProvider: React.FC<OpenfortProviderProps> = ({
       baseConfiguration: new OpenfortConfiguration({
         publishableKey: publishableKey,
       }),
-      shieldConfiguration: embeddedWallet ? new ShieldConfiguration({
-        shieldPublishableKey: embeddedWallet.shieldPublishableKey,
-        shieldEncryptionKey: 'shieldEncryptionKey' in embeddedWallet ? embeddedWallet.shieldEncryptionKey : undefined,
-        shieldDebug: embeddedWallet.debug,
+      shieldConfiguration: walletConfig ? new ShieldConfiguration({
+        shieldPublishableKey: walletConfig.shieldPublishableKey,
+        shieldEncryptionKey: 'shieldEncryptionKey' in walletConfig ? walletConfig.shieldEncryptionKey : undefined,
+        shieldDebug: walletConfig.debug,
       }) : undefined,
       overrides: {
         ...overrides,
       },
     });
-    
+
     setDefaultClient(newClient);
     return newClient;
-  }, [publishableKey, embeddedWallet, overrides]);
+  }, [publishableKey, walletConfig, overrides]);
 
 
   // Embedded state
@@ -257,7 +257,7 @@ export const OpenfortProvider: React.FC<OpenfortProviderProps> = ({
 
   // Initialize client and user
   useEffect(() => {
-    console.log('Initializing Openfort client and user state',isUserInitialized);
+    console.log('Initializing Openfort client and user state', isUserInitialized);
     if (!isUserInitialized) {
       (async () => {
         console.log('Initializing Openfort client');
@@ -290,7 +290,7 @@ export const OpenfortProvider: React.FC<OpenfortProviderProps> = ({
         handleUserChange(user);
         return user;
       }
-      
+
       // Otherwise, fetch from API
       const currentUser = await client.user.get();
       console.log('Refreshed user state:', currentUser);
@@ -310,11 +310,11 @@ export const OpenfortProvider: React.FC<OpenfortProviderProps> = ({
       (async () => {
         try {
           const { getCustomAccessToken, isLoading } = customAuth!;
-          
+
           if (isLoading) return;
 
           const customToken = await getCustomAccessToken();
-          
+
           if (customToken) {
             // Custom auth sync implementation would go here
             // This would typically handle SIWE authentication with the custom token
@@ -340,25 +340,25 @@ export const OpenfortProvider: React.FC<OpenfortProviderProps> = ({
     isReady,
     error,
     supportedChains,
-    embeddedWallet,
+    embeddedWallet: walletConfig,
     embeddedState,
-    
+
     // Flow states
     passwordState,
     oAuthState,
     siweState,
     recoveryFlowState,
-    
+
     // State setters
     setPasswordState,
     setOAuthState,
     setSiweState,
     setRecoveryFlowState,
-    
+
     // Core methods
     logout,
     getAccessToken,
-    
+
     // Internal methods
     _internal: {
       refreshUserState,
@@ -369,7 +369,7 @@ export const OpenfortProvider: React.FC<OpenfortProviderProps> = ({
     isReady,
     error,
     supportedChains,
-    embeddedWallet,
+    walletConfig,
     embeddedState,
     passwordState,
     oAuthState,
