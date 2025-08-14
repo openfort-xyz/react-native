@@ -118,6 +118,7 @@ export type GenerateSiweMessageResponse = Promise<string>;
  */
 export type GenerateSiweMessage = (opts: {
   /** Wallet to request a Sign-In With Ethereum signature from */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   wallet: any; // External wallet interface
   /**
    * Required fields that describe origin of Sign-In With Ethereum signature request

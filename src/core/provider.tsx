@@ -200,7 +200,7 @@ export const OpenfortProvider = ({
 
   const startPollingEmbeddedState = useCallback(() => {
 
-    if (!!pollingRef.current) return;
+    if (pollingRef.current) return;
     pollingRef.current = setInterval(pollEmbeddedState, 1000);
   }, [pollEmbeddedState]);
 
@@ -271,7 +271,7 @@ export const OpenfortProvider = ({
         try {
           console.log('Refreshing user state on initial load');
           await refreshUserState()
-        } catch (err) {
+        } catch {
           // User not logged in, which is fine
           handleUserChange(null);
         } finally {

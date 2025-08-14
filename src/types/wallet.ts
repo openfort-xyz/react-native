@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Embedded wallet provider types
 export interface OpenfortEmbeddedEthereumWalletProvider {
     request: (args: { method: string; params?: any[] }) => Promise<any>;

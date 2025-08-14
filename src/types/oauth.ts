@@ -26,6 +26,7 @@ export const mapOAuthStatus = (status: OAuthFlowState) => {
  * OAuth tokens interface
  */
 export interface OAuthTokens {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
 }
 

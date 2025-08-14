@@ -39,6 +39,7 @@ export function createOpenfortClient({
     overrides: {
       ...overrides,
       crypto: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         digest: digest as any,
       },
       storage: createNormalizedStorage(SecureStorageAdapter)

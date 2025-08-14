@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useRef, useCallback, useEffect } from 'react';
 import { AppState, Platform, View } from 'react-native';
 import WebView from 'react-native-webview';

@@ -5,6 +5,7 @@ export enum OpenfortErrorType {
 }
 
 interface Data {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
 export class OpenfortError extends Error {

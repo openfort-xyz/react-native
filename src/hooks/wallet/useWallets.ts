@@ -253,7 +253,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
     try {
       const accounts = await client.embeddedWallet.list();
       setEmbeddedAccounts(accounts);
-    } catch (error) {
+    } catch {
       setEmbeddedAccounts([]);
     }
   }, [client, embeddedState, user]);
