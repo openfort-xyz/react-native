@@ -1,43 +1,57 @@
 {
   "name": "@openfort/react-native",
   "main": "dist/index.js",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "license": "MIT",
+  "description": "React Native SDK for Openfort platform integration",
   "scripts": {
     "build": "rimraf dist && tsc",
-    "lint": "eslint . --ignore-pattern dist"
+    "lint": "eslint . --ignore-pattern dist",
+    "link": "yarn link",
+    "unlink": "yarn unlink"
   },
   "types": "dist/types/index.d.ts",
   "files": [
-    "dist",
-    "polyfills"
+    "dist"
   ],
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "types": "./dist/types/index.d.ts"
+    }
+  },
   "dependencies": {
-    "events": "^3.3.0",
-    "jsrsasign": "^11.1.0",
-    "react-native-get-random-values": "^1.11.0",
-    "react-native-mmkv": "^3.2.0",
-    "react-native-randombytes": "^3.6.1",
-    "react-native-webview": "^13.13.5",
-    "text-encoding": "^0.7.0",
-    "uuid": "^11.1.0"
+    "@openfort/openfort-js": "^0.9.8"
   },
   "peerDependencies": {
-    "@openfort/openfort-js": "^0.8.42",
+    "expo-apple-authentication": "*",
+    "expo-crypto": "*",
+    "expo-linking": "*",
+    "expo-secure-store": "*",
+    "expo-web-browser": "*",
     "react": "*",
-    "react-native": "*"
+    "expo-application": "*",
+    "react-native": "*",
+    "react-native-webview": "*"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
-    "@types/jsrsasign": "^10.5.15",
     "@types/react": "~18.3.12",
     "@types/react-test-renderer": "^18.3.0",
+    "buffer": "^5.4.3",
     "eslint": "^9.17.0",
     "eslint-plugin-react": "^7.37.3",
-    "globals": "^15.14.0",
-    "react": "18.3.1",
-    "react-native": "0.76.5",
-    "typescript": "^5.3.3",
+    "expo-apple-authentication": "^7.2.4",
+    "expo-application": "^6.1.4",
+    "expo-crypto": "14.0.2",
+    "expo-linking": "^7.1.5",
+    "expo-secure-store": "^14.2.3",
+    "expo-web-browser": "^14.1.6",
+    "react": "^18.3.1",
+    "react-native": "0.77.1",
+    "react-native-webview": "^13.15.0",
+    "typescript": "^5.5.3",
     "typescript-eslint": "^8.19.0"
   },
   "private": false,
