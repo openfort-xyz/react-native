@@ -6,6 +6,7 @@ import { onError, onSuccess } from '../../lib/hookConsistency';
 import { OpenfortHookOptions } from '../../types/hookOption';
 import { OpenfortError, OpenfortErrorType } from '../../types/openfortError';
 import { CreateWalletPostAuthOptions } from './useCreateWalletPostAuth';
+import { PasswordFlowState } from '../../types';
 
 
 export type EmailAuthResult = {
@@ -60,8 +61,18 @@ export type UseEmailHookOptions = {
 } & OpenfortHookOptions<EmailAuthResult | EmailVerificationResult> & CreateWalletPostAuthOptions;
 
 
+const mapStatus = (status: PasswordFlowState) => {
+  return {
+    isLoading: status.status === 'submitting-code' || status.status === 'sending-verification-code',
+    isError: status.status === 'error',
+    isSuccess: status.status === 'done',
+    requiresEmailVerification: status.status === 'awaiting-code-input',
+    error: "error" in status ? status.error : null,
+  }
+}
+
 export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
-  const { client, setPasswordState, _internal } = useOpenfortContext();
+  const { client, setPasswordState, _internal, passwordState } = useOpenfortContext();
 
   const signInEmail = useCallback(async (options: SignInEmailOptions): Promise<EmailAuthResult> => {
     try {
@@ -233,8 +244,6 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
     requestResetPassword,
     resetPassword,
     reset,
-    // ...mapStatus(passwordState),
-    // requiresEmailVerification,
-    // isAwaitingInput: status.status === 'awaiting-input',
+    ...mapStatus(passwordState),
   };
 }

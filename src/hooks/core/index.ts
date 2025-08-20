@@ -10,5 +10,3 @@ export { useOpenfort } from './useOpenfort';
 export { useOpenfortClient } from './useOpenfortClient';
 
 export { useUser } from './useUser';
-
-export { useSignOut } from './useSignOut';

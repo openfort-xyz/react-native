@@ -204,7 +204,7 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
     [client, setOAuthState, _internal]
   );
 
-  const link = useCallback(
+  const linkOauth = useCallback(
     async (options: InitializeOAuthOptions): Promise<InitOAuthReturnType> => {
       try {
         setOAuthState({ status: 'loading' });
@@ -347,7 +347,7 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
 
   return {
     initOAuth,
-    link,
+    linkOauth,
     storeCredentials,
     ...mapOAuthStatus(oAuthState),
   };

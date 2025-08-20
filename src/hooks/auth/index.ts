@@ -15,3 +15,6 @@ export { useWalletAuth } from './useWalletAuth';
 
 // Guest accounts
 export { useGuestAuth } from './useGuestAuth';
+
+
+export { useSignOut } from './useSignOut';

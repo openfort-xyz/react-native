@@ -7,6 +7,7 @@ import { useOpenfortContext } from '../../core/context';
 import { onError, onSuccess } from '../../lib/hookConsistency';
 import { OpenfortHookOptions } from '../../types/hookOption';
 import { OpenfortError, OpenfortErrorType } from '../../types/openfortError';
+import { SiweFlowState } from '../..';
 
 export type WalletHookResult = {
   error?: OpenfortError;
@@ -40,6 +41,18 @@ type GenerateSiweMessageOptions = {
 type GenerateSiweMessageResult = {
   error?: OpenfortError;
   message?: string;
+};
+
+const mapStatus = (status: SiweFlowState) => {
+  return {
+    isLoading: status.status === 'generating-message' || status.status === 'awaiting-signature' || status.status === 'submitting-signature',
+    isError: status.status === 'error',
+    isSuccess: status.status === 'done',
+    error: "error" in status ? status.error : null,
+    isAwaitingSignature: status.status === 'awaiting-signature',
+    isGeneratingMessage: status.status === 'generating-message',
+    isSubmittingSignature: status.status === 'submitting-signature',
+  };
 };
 
 export function useWalletAuth(hookOptions?: WalletHookOptions) {
@@ -84,7 +97,7 @@ export function useWalletAuth(hookOptions?: WalletHookOptions) {
     [client, setSiweState]
   );
 
-  const linkWithSiwe = useCallback(async (opts: LinkSiweOptions): Promise<WalletHookResult> => {
+  const linkSiwe = useCallback(async (opts: LinkSiweOptions): Promise<WalletHookResult> => {
     try {
       setSiweState({ status: 'submitting-signature' });
 
@@ -180,7 +193,7 @@ export function useWalletAuth(hookOptions?: WalletHookOptions) {
   return {
     generateSiweMessage,
     signInWithSiwe,
-    linkWithSiwe,
-    state: siweState,
+    linkSiwe,
+    ...mapStatus(siweState),
   };
 }
