@@ -13,8 +13,7 @@
 export type {
     AuthPlayerResponse,
     OpenfortError,
-    ShieldAuthentication,
-    ShieldAuthType,
+    RecoveryMethod,
     Openfort as OpenfortClient,
     Provider,
     OpenfortConfiguration,

@@ -1,7 +1,7 @@
 /**
  * Hook for embedded Ethereum wallet functionality
  */
-import { AccountTypeEnum, ChainTypeEnum, EmbeddedState, Provider, RecoveryMethod, ShieldAuthentication, ShieldAuthType, type EmbeddedAccount } from '@openfort/openfort-js';
+import { AccountTypeEnum, ChainTypeEnum, EmbeddedState, Provider, RecoveryMethod, RecoveryParams, type EmbeddedAccount } from '@openfort/openfort-js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useOpenfortContext } from '../../core/context';
 import { onError, onSuccess } from '../../lib/hookConsistency';
@@ -31,13 +31,14 @@ type CreateWalletOptions = {
   chainId?: number;
   policyId?: string
   recoveryPassword?: string;
+  accountType?: AccountTypeEnum;
 } & OpenfortHookOptions<CreateWalletResult>
 
 type RecoverEmbeddedWalletResult = SetActiveWalletResult
 
 type SetRecoveryOptions = {
-  recoveryMethod: RecoveryMethod;
-  recoveryPassword?: string;
+  previousRecovery: RecoveryParams,
+  newRecovery: RecoveryParams,
 } & OpenfortHookOptions<CreateWalletResult>
 
 type WalletOptions = OpenfortHookOptions<SetActiveWalletResult | CreateWalletResult>;
@@ -150,28 +151,6 @@ export function useWallets(hookOptions: WalletOptions = {}) {
             chainId = supportedChains[0].id;
           }
 
-          // Create shield authentication object
-          let shieldAuthentication: ShieldAuthentication | null = null;
-          console.log('Using walletConfig:', walletConfig);
-          if (walletConfig) {
-            const accessToken = await client.getAccessToken();
-            if (!accessToken) {
-              throw new OpenfortError('Access token is required for shield authentication', OpenfortErrorType.WALLET_ERROR);
-            }
-
-            // Get encryption session from embedded wallet configuration
-            let encryptionSession: string | undefined;
-            if ('getEncryptionSession' in walletConfig && walletConfig.getEncryptionSession) {
-              encryptionSession = await walletConfig.getEncryptionSession();
-            }
-
-            shieldAuthentication = {
-              auth: ShieldAuthType.OPENFORT,
-              token: accessToken,
-              ...(encryptionSession && { encryptionSession }),
-            };
-          }
-
           const address = options?.address || wallets[0]?.address;
 
           const embeddedAccountToRecover = embeddedAccounts.find(account => account.chainId === chainId && account.address === address);
@@ -192,11 +171,27 @@ export function useWallets(hookOptions: WalletOptions = {}) {
             throw new OpenfortError(`No embedded account found for address ${address} on chain ID ${chainId}`, OpenfortErrorType.WALLET_ERROR);
             // }
           } else {
+            let recoveryParams: RecoveryParams;;
+            if (options?.recoveryPassword) {
+              recoveryParams = {
+                recoveryMethod: RecoveryMethod.PASSWORD,
+                password: options.recoveryPassword,
+              }
+            } else {
+              if (!walletConfig?.getEncryptionSession) {
+                throw new OpenfortError('Encryption session is required for automatic recovery', OpenfortErrorType.WALLET_ERROR);
+              }
+
+              recoveryParams = {
+                recoveryMethod: RecoveryMethod.AUTOMATIC,
+                encryptionSession: await walletConfig.getEncryptionSession()
+              };
+            }
+
             // Recover the embedded wallet with shield authentication
             embeddedAccount = await client.embeddedWallet.recover({
               account: embeddedAccountToRecover.id,
-              shieldAuthentication: shieldAuthentication ?? undefined,
-              recoveryParams: options?.recoveryPassword ? { password: options.recoveryPassword, recoveryMethod: RecoveryMethod.PASSWORD } : undefined
+              recoveryParams,
             });
           }
           const wallet: UserWallet = {
@@ -321,37 +316,29 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         }
         console.log('Using chain ID for wallet creation:', chainId);
 
-        // Create shield authentication object
-        let shieldAuthentication: ShieldAuthentication | null = null;
-        if (walletConfig) {
-          const accessToken = await client.getAccessToken();
-          if (!accessToken) {
-            throw new Error('Access token is required for shield authentication');
+        let recoveryParams: RecoveryParams;;
+        if (options?.recoveryPassword) {
+          recoveryParams = {
+            recoveryMethod: RecoveryMethod.PASSWORD,
+            password: options.recoveryPassword,
           }
-          console.log('Access token for shield authentication:', accessToken);
-
-          // Get encryption session from embedded wallet configuration
-          let encryptionSession: string | undefined;
-          if ('getEncryptionSession' in walletConfig && walletConfig.getEncryptionSession) {
-            encryptionSession = await walletConfig.getEncryptionSession();
-            console.log('Encryption session for shield authentication:', encryptionSession);
+        } else {
+          if (!walletConfig?.getEncryptionSession) {
+            throw new OpenfortError('Encryption session is required for automatic recovery', OpenfortErrorType.WALLET_ERROR);
           }
 
-          shieldAuthentication = {
-            auth: ShieldAuthType.OPENFORT,
-            token: accessToken,
-            ...(encryptionSession && { encryptionSession }),
+          recoveryParams = {
+            recoveryMethod: RecoveryMethod.AUTOMATIC,
+            encryptionSession: await walletConfig.getEncryptionSession()
           };
         }
-        console.log('Shield authentication object:', shieldAuthentication);
 
         // Configure embedded wallet with shield authentication
         const embeddedAccount = await client.embeddedWallet.create({
           chainId,
-          accountType: AccountTypeEnum.SMART_ACCOUNT,
+          accountType: options?.accountType || walletConfig?.accountType || AccountTypeEnum.SMART_ACCOUNT,
           chainType: options?.chainType || ChainTypeEnum.EVM,
-          shieldAuthentication: shieldAuthentication ?? undefined,
-          recoveryParams: options?.recoveryPassword ? { password: options.recoveryPassword, recoveryMethod: RecoveryMethod.PASSWORD } : undefined
+          recoveryParams,
         });
         console.log('Embedded wallet configured with shield authentication');
 
@@ -403,7 +390,6 @@ export function useWallets(hookOptions: WalletOptions = {}) {
     [client, supportedChains, walletConfig, _internal, user]
   );
 
-
   const setRecovery = useCallback(
     async (params: SetRecoveryOptions): Promise<RecoverEmbeddedWalletResult> => {
       try {
@@ -412,22 +398,10 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         });
 
         // Set embedded wallet recovery method
-        if (params.recoveryMethod === 'password') {
-          await client.embeddedWallet.setEmbeddedRecovery({
-            recoveryMethod: RecoveryMethod.PASSWORD,
-            recoveryPassword: params.recoveryPassword
-          });
-        } else {
-          await client.embeddedWallet.setEmbeddedRecovery({
-            recoveryMethod: RecoveryMethod.AUTOMATIC
-          });
-        }
+        await client.embeddedWallet.setRecoveryMethod(params.previousRecovery, params.newRecovery);
 
         // Get the updated embedded account
         const embeddedAccount = await client.embeddedWallet.get();
-
-        // Refresh user state to reflect recovery changes
-        await _internal.refreshUserState();
 
         setStatus({ status: 'success' });
         return onSuccess({
@@ -456,9 +430,8 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         });
       }
     },
-    [client, _internal]
+    [client, setStatus, hookOptions]
   );
-
 
   return {
     wallets,

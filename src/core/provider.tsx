@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { OpenfortConfiguration, ShieldConfiguration, RecoveryMethod, SDKOverrides, EmbeddedState } from '@openfort/openfort-js';
+import { OpenfortConfiguration, ShieldConfiguration, RecoveryMethod, SDKOverrides, EmbeddedState, AccountTypeEnum } from '@openfort/openfort-js';
 import { OpenfortContext, type OpenfortContextValue } from './context';
 import { createOpenfortClient, setDefaultClient } from './client';
 import { EmbeddedWalletWebView, WebViewUtils } from '../native';
@@ -19,6 +19,7 @@ export type CommonEmbeddedWalletConfiguration = {
   /** Policy ID (pol_...) for the embedded signer */
   ethereumProviderPolicyId?: string;
   debug?: boolean;
+  accountType?: AccountTypeEnum;
 }
 
 export type EncryptionSession =

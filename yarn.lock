@@ -1279,10 +1279,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@openfort/openfort-js@^0.9.8":
-  version "0.9.8"
-  resolved "https://registry.yarnpkg.com/@openfort/openfort-js/-/openfort-js-0.9.8.tgz#c5548e515f85eaadcd0c66a62dcdb3621bf4db45"
-  integrity sha512-buOyaejgOyHm8T5h9bTS5B6t9WmdBbICZo86atwq3MqeRNM3+zIJXO3iZ9LOpJW9A8QZ2TbxhqBbOgmCT1aPsQ==
+"@openfort/openfort-js@^0.10.1":
+  version "0.10.1"
+  resolved "https://registry.yarnpkg.com/@openfort/openfort-js/-/openfort-js-0.10.1.tgz#9883f0de68ee7e4695d5213f297e4f371c152081"
+  integrity sha512-ej97KGorVI5HoPa/bUdAXEZI7KJS7CZaPNsha6aUR9ModPe55s9+mRMwb7wNVidM6mkVUZrycGpK5pVJcAHH/A==
   dependencies:
     "@ethersproject/abi" "^5.8.0"
     "@ethersproject/bytes" "^5.8.0"
@@ -5146,6 +5146,7 @@ stream-buffers@2.2.x:
   integrity sha512-uyQK/mx5QjHun80FLJTfaWE7JtwfRMKBLkMne6udYOmvH0CawotVa7TfgYHzAnpphn4+TweIx1QKMnRIbipmUg==
 
 "string-width-cjs@npm:string-width@^4.2.0", string-width@^4.1.0, string-width@^4.2.0, string-width@^4.2.3:
+  name string-width-cjs
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"
   integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
@@ -5223,6 +5224,7 @@ string.prototype.trimstart@^1.0.8:
     es-object-atoms "^1.0.0"
 
 "strip-ansi-cjs@npm:strip-ansi@^6.0.1", strip-ansi@^6.0.0, strip-ansi@^6.0.1:
+  name strip-ansi-cjs
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
   integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
@@ -5588,6 +5590,7 @@ word-wrap@^1.2.5:
   integrity sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==
 
 "wrap-ansi-cjs@npm:wrap-ansi@^7.0.0", wrap-ansi@^7.0.0:
+  name wrap-ansi-cjs
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-7.0.0.tgz#67e145cff510a6a6984bdf1152911d69d2eb9e43"
   integrity sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==
