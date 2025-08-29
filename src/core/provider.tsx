@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { OpenfortConfiguration, ShieldConfiguration, RecoveryMethod, SDKOverrides, EmbeddedState, AccountTypeEnum } from '@openfort/openfort-js';
+import { OpenfortConfiguration, ShieldConfiguration, RecoveryMethod, SDKOverrides, EmbeddedState, AccountTypeEnum, ThirdPartyAuthConfiguration } from '@openfort/openfort-js';
 import { OpenfortContext, type OpenfortContextValue } from './context';
 import { createOpenfortClient, setDefaultClient } from './client';
 import { EmbeddedWalletWebView, WebViewUtils } from '../native';
@@ -138,6 +138,10 @@ export interface OpenfortProviderProps {
    * SDK overrides configuration for advanced customization
    */
   overrides?: SDKOverrides;
+  /**
+   * Third party auth configuration for integrating with external auth providers
+   */
+  thirdPartyAuth?: ThirdPartyAuthConfiguration;
 }
 
 /**
@@ -151,6 +155,7 @@ export const OpenfortProvider = ({
   supportedChains,
   walletConfig,
   overrides,
+  thirdPartyAuth,
 }: OpenfortProviderProps) => {
   // Prevent multiple OpenfortProvider instances
   const existingContext = React.useContext(OpenfortContext);
@@ -172,9 +177,8 @@ export const OpenfortProvider = ({
         shieldEncryptionKey: 'shieldEncryptionKey' in walletConfig ? walletConfig.shieldEncryptionKey : undefined,
         shieldDebug: walletConfig.debug,
       }) : undefined,
-      overrides: {
-        ...overrides,
-      },
+      overrides,
+      thirdPartyAuth,
     });
 
     setDefaultClient(newClient);

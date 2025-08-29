@@ -10,7 +10,7 @@
  */
 
 // Re-export commonly used types from @openfort/openfort-js
-export type {
+export {
     AuthPlayerResponse,
     OpenfortError,
     RecoveryMethod,
