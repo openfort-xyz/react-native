@@ -180,7 +180,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
               }
             } else {
               if (!walletConfig?.getEncryptionSession) {
-                throw new OpenfortError('Encryption session is required for automatic recovery', OpenfortErrorType.WALLET_ERROR);
+                throw new OpenfortError('Encryption session (walletConfig.getEncryptionSession) is required for automatic recovery', OpenfortErrorType.WALLET_ERROR);
               }
 
               recoveryParams = {
@@ -325,7 +325,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
           }
         } else {
           if (!walletConfig?.getEncryptionSession) {
-            throw new OpenfortError('Encryption session is required for automatic recovery', OpenfortErrorType.WALLET_ERROR);
+            throw new OpenfortError('Encryption session (walletConfig.getEncryptionSession) is required for automatic recovery', OpenfortErrorType.WALLET_ERROR);
           }
 
           recoveryParams = {
