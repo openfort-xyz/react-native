@@ -2,6 +2,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { NativeStorageUtils } from '../native';
 import { logger } from '../lib/logger';
+import { Storage } from '@openfort/openfort-js';
 
 // Define the StorageKeys enum values that match the Openfort SDK
 enum StorageKeys {
@@ -116,7 +117,7 @@ function normalizeKey(key: StorageKeys): string {
  * Creates a type-safe storage adapter that bridges between the Openfort SDK's 
  * expected Storage interface and our React Native implementation
  */
-export function createNormalizedStorage(customStorage?: OpenfortStorage): import('@openfort/openfort-js').Storage {
+export function createNormalizedStorage(customStorage?: OpenfortStorage): Storage {
   const baseStorage = customStorage || SecureStorageAdapter;
 
   return {
@@ -128,7 +129,7 @@ export function createNormalizedStorage(customStorage?: OpenfortStorage): import
     },
 
     save(key: unknown, value: string): void {
-      logger.info('storage save', key, value);
+      logger.info(`Saving to storage key: ${key}, value: ${value}`);
       const storageKey = keyToStorageKeys(key);
       // Fire and forget - don't await as the SDK expects synchronous behavior
       baseStorage.save(storageKey, value).catch(error => {
@@ -137,7 +138,7 @@ export function createNormalizedStorage(customStorage?: OpenfortStorage): import
     },
 
     remove(key: unknown): void {
-      logger.info('storage remove', key);
+      logger.info(`Removing from storage key: ${key}`);
       const storageKey = keyToStorageKeys(key);
       // Fire and forget - don't await as the SDK expects synchronous behavior
       baseStorage.remove(storageKey).catch(error => {
@@ -146,7 +147,7 @@ export function createNormalizedStorage(customStorage?: OpenfortStorage): import
     },
 
     flush(): void {
-      logger.info('storage flush');
+      logger.info('Flushing storage');
       baseStorage.flush();
     },
   };
