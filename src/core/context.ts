@@ -1,6 +1,6 @@
 import React from 'react';
-import type { Openfort as OpenfortClient, EmbeddedState } from '@openfort/openfort-js';
-import { OAuthFlowState, PasswordFlowState, RecoveryFlowState, SiweFlowState } from '../types';
+import type { Openfort as OpenfortClient, EmbeddedState, OAuthProvider } from '@openfort/openfort-js';
+import { OAuthFlowState, PasswordFlowState, RecoveryFlowState, SiweFlowState, UserWallet } from '../types';
 import type { Chain, EmbeddedWalletConfiguration } from './provider';
 
 /**
@@ -43,6 +43,50 @@ export interface OpenfortContextValue {
   logout: () => Promise<void>;
   /** Gets the current authenticated user's access token */
   getAccessToken: () => Promise<string | null>;
+
+  // OAuth provider functionality
+  /** Check if a specific OAuth provider is currently loading */
+  isProviderLoading: (provider: OAuthProvider) => boolean;
+  /** Check if a specific OAuth provider is linked to the current user */
+  isProviderLinked: (provider: string) => boolean;
+  /** Link an OAuth provider to the current user account */
+  linkProvider: (provider: OAuthProvider) => Promise<void>;
+
+  // Authentication functionality
+  /** Sign up as a guest user */
+  signUpGuest: () => Promise<import('@openfort/openfort-js').AuthPlayerResponse>;
+  /** Sign in with an OAuth provider */
+  signInWithProvider: (provider: OAuthProvider, redirectUri?: string) => Promise<import('@openfort/openfort-js').AuthPlayerResponse>;
+  /** Whether any authentication process is currently running */
+  isAuthenticating: boolean;
+  /** Any authentication error that occurred */
+  authError: Error | null;
+  /** Sign out the current user */
+  signOut: () => Promise<void>;
+
+  // User functionality
+  /** Whether user is ready (authenticated and SDK is initialized) */
+  isUserReady: boolean;
+  /** Any user-related error */
+  userError: Error | null;
+
+  // Wallet functionality
+  /** Array of user's wallets */
+  wallets: UserWallet[] | null;
+  /** Set the active wallet for transactions */
+  setActiveWallet: (params: { address: string; chainId: number; onSuccess?: () => void; onError?: (error: Error) => void }) => Promise<void>;
+  /** Create a new wallet for the user */
+  createWallet: (callbacks?: { onSuccess?: (wallet: UserWallet) => void; onError?: (error: Error) => void }) => Promise<any>;
+  /** The currently active wallet */
+  activeWallet: UserWallet | null;
+  /** Whether a wallet is currently being created */
+  isCreatingWallet: boolean;
+  /** Sign a message with a wallet */
+  signMessage: (wallet: UserWallet, message: string) => Promise<string>;
+  /** Switch chain for a wallet */
+  switchChain: (wallet: UserWallet, chainId: string) => Promise<void>;
+  /** Whether a chain switch is currently in progress */
+  isSwitchingChain: boolean;
 
   // Internal methods (not exposed to consumers)
   /** @internal Refreshes user state after authentication changes */

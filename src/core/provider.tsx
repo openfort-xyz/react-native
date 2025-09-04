@@ -10,13 +10,15 @@ import {
   AccountTypeEnum,
   ThirdPartyAuthConfiguration,
   Openfort as OpenfortClient,
+  OAuthProvider
 } from '@openfort/openfort-js';
 
 import type {
   PasswordFlowState,
   OAuthFlowState,
   SiweFlowState,
-  RecoveryFlowState
+  RecoveryFlowState,
+  UserWallet
 } from '../types';
 
 import { OpenfortContext, type OpenfortContextValue } from './context';
@@ -277,6 +279,16 @@ export const OpenfortProvider = ({
   const [siweState, setSiweState] = useState<SiweFlowState>({ status: 'initial' });
   const [recoveryFlowState, setRecoveryFlowState] = useState<RecoveryFlowState>({ status: 'initial' });
 
+  // OAuth provider states
+  const [loadingProvider, setLoadingProvider] = useState<OAuthProvider | null>(null);
+  const [linkedProviders, setLinkedProviders] = useState<string[]>([]);
+
+  // Wallet states
+  const [wallets, setWallets] = useState<UserWallet[] | null>(null);
+  const [activeWallet, setActiveWalletState] = useState<UserWallet | null>(null);
+  const [isCreatingWallet, setIsCreatingWallet] = useState<boolean>(false);
+  const [isSwitchingChain, setIsSwitchingChain] = useState<boolean>(false);
+
   // User state management
   const handleUserChange = useCallback((newUser: AuthPlayerResponse | null) => {
     if (newUser === null) {
@@ -287,6 +299,10 @@ export const OpenfortProvider = ({
       logger.error('User state changed to user in wrong format:', newUser);
     }
 
+    // Update linked providers when user changes
+    const linkedAccounts = (newUser as AuthPlayerResponse).linkedAccounts || [];
+    setLinkedProviders(linkedAccounts.map((acc: any) => acc.provider));
+
     setUser(newUser);
     if (newUser) {
       setError(null);
@@ -296,6 +312,9 @@ export const OpenfortProvider = ({
   // Core methods
   const logout = useCallback(async () => {
     handleUserChange(null);
+    setWallets(null);
+    setActiveWalletState(null);
+    setLinkedProviders([]);
     return client.auth.logout();
   }, [client, handleUserChange]);
 
@@ -307,6 +326,28 @@ export const OpenfortProvider = ({
       return null;
     }
   }, [client]);
+
+  // Wallet management functions
+  const refreshWallets = useCallback(async () => {
+    if (!user) {
+      setWallets(null);
+      setActiveWalletState(null);
+      return;
+    }
+
+    try {
+      const userWallets = await client.embeddedWallet.getWallets();
+      setWallets(userWallets);
+      
+      // Set active wallet if none is set and wallets exist
+      if (userWallets.length > 0 && !activeWallet) {
+        setActiveWalletState(userWallets[0]);
+      }
+    } catch (err) {
+      logger.warn('Failed to refresh wallets', err);
+      setWallets([]);
+    }
+  }, [client, user, activeWallet]);
 
   // Internal refresh function for auth hooks to use
   const refreshUserState = useCallback(async (user?: AuthPlayerResponse) => {
@@ -322,6 +363,7 @@ export const OpenfortProvider = ({
       // If user is provided, use it directly instead of fetching from API
       if (user !== undefined) {
         handleUserChange(user);
+        await refreshWallets();
         return user;
       }
 
@@ -329,13 +371,16 @@ export const OpenfortProvider = ({
       const currentUser = await client.user.get();
       logger.info('Refreshed user state', currentUser);
       handleUserChange(currentUser);
+      await refreshWallets();
       return currentUser;
     } catch (err) {
       logger.warn('Failed to refresh user state', err);
       handleUserChange(null);
+      setWallets(null);
+      setActiveWalletState(null);
       return null;
     }
-  }, [client, handleUserChange]);
+  }, [client, handleUserChange, refreshWallets]);
 
   // Initialize client and user
   useEffect(() => {
@@ -393,11 +438,150 @@ export const OpenfortProvider = ({
     }
   }, [client, customAuth, isUserInitialized, isClientReady]);
 
+  // OAuth provider functions
+  const isProviderLoading = useCallback((provider: OAuthProvider) => {
+    return loadingProvider === provider;
+  }, [loadingProvider]);
+
+  const isProviderLinked = useCallback((provider: string) => {
+    return linkedProviders.includes(provider);
+  }, [linkedProviders]);
+
+  const linkProvider = useCallback(async (provider: OAuthProvider) => {
+    try {
+      setLoadingProvider(provider);
+      setOAuthState({ status: 'loading' });
+      await client.auth.linkOauth({ provider });
+      setOAuthState({ status: 'done' });
+      // Refresh user state to update linked providers
+      await refreshUserState();
+    } catch (error) {
+      logger.error('Failed to link OAuth provider', error);
+      setOAuthState({ status: 'error', error: error as Error });
+      setError(error as Error);
+      throw error;
+    } finally {
+      setLoadingProvider(null);
+    }
+  }, [client, refreshUserState]);
+
+  // Authentication functions
+  const signUpGuest = useCallback(async () => {
+    try {
+      setOAuthState({ status: 'loading' });
+      const result = await client.auth.signUpGuest();
+      setOAuthState({ status: 'done' });
+      await refreshUserState(result);
+      return result;
+    } catch (error) {
+      logger.error('Guest signup failed', error);
+      setOAuthState({ status: 'error', error: error as Error });
+      setError(error as Error);
+      throw error;
+    }
+  }, [client, refreshUserState]);
+
+  const signInWithProvider = useCallback(async (provider: OAuthProvider, redirectUri?: string) => {
+    try {
+      setLoadingProvider(provider);
+      setOAuthState({ status: 'loading' });
+      const result = await client.auth.initOAuth({ provider, redirectUri });
+      setOAuthState({ status: 'done' });
+      await refreshUserState(result);
+      return result;
+    } catch (error) {
+      logger.error('OAuth signin failed', error);
+      setOAuthState({ status: 'error', error: error as Error });
+      setError(error as Error);
+      throw error;
+    } finally {
+      setLoadingProvider(null);
+    }
+  }, [client, refreshUserState]);
+
+  const signOut = useCallback(async () => {
+    await logout();
+  }, [logout]);
+
+  // Wallet functions
+  const setActiveWallet = useCallback(async (params: { address: string; chainId: number; onSuccess?: () => void; onError?: (error: Error) => void }) => {
+    const { address, chainId, onSuccess, onError } = params;
+    try {
+      const wallet = wallets?.find((w: UserWallet) => w.address === address);
+      if (!wallet) {
+        throw new Error('Wallet not found');
+      }
+      await client.embeddedWallet.setActiveWallet({ address: address as `0x${string}`, chainId });
+      setActiveWalletState(wallet);
+      onSuccess?.();
+    } catch (error) {
+      logger.error('Failed to set active wallet', error);
+      onError?.(error as Error);
+      throw error;
+    }
+  }, [client, wallets]);
+
+  const createWallet = useCallback(async (callbacks?: { onSuccess?: (wallet: UserWallet) => void; onError?: (error: Error) => void }) => {
+    try {
+      setIsCreatingWallet(true);
+      const result = await client.embeddedWallet.createWallet();
+      await refreshWallets();
+      callbacks?.onSuccess?.(result.wallet);
+      return result;
+    } catch (error) {
+      logger.error('Wallet creation failed', error);
+      callbacks?.onError?.(error as Error);
+      throw error;
+    } finally {
+      setIsCreatingWallet(false);
+    }
+  }, [client, refreshWallets]);
+
+  const signMessage = useCallback(async (wallet: UserWallet, message: string): Promise<string> => {
+    const provider = await wallet.getProvider();
+    return await provider.request({
+      method: "personal_sign",
+      params: [message, wallet.address],
+    });
+  }, []);
+
+  const switchChain = useCallback(async (wallet: UserWallet, chainId: string): Promise<void> => {
+    setIsSwitchingChain(true);
+    try {
+      const provider = await wallet.getProvider();
+      await provider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: "0x" + Number(chainId).toString(16) }],
+      });
+    } finally {
+      setIsSwitchingChain(false);
+    }
+  }, []);
+
   // Determine if SDK is ready
   const isReady = useMemo(() => {
     const customAuthReady = !customAuth?.enabled || !customAuth.isLoading;
     return isUserInitialized && isClientReady && customAuthReady;
   }, [isUserInitialized, isClientReady, customAuth?.enabled, customAuth?.isLoading]);
+
+  // Computed states
+  const isAuthenticating = useMemo(() => {
+    return oAuthState.status === 'loading' || passwordState.status === 'loading';
+  }, [oAuthState.status, passwordState.status]);
+
+  const authError = useMemo(() => {
+    return oAuthState.status === 'error' ? oAuthState.error : 
+           passwordState.status === 'error' ? passwordState.error :
+           error;
+  }, [oAuthState, passwordState, error]);
+
+  const isUserReady = useMemo(() => {
+    return isReady && user !== null;
+  }, [isReady, user]);
+
+  const userError = useMemo(() => {
+    return error;
+  }, [error]);
 
   // Context value
   const contextValue: OpenfortContextValue = useMemo(() => ({
@@ -425,6 +609,32 @@ export const OpenfortProvider = ({
     logout,
     getAccessToken,
 
+    // OAuth provider functionality
+    isProviderLoading,
+    isProviderLinked,
+    linkProvider,
+
+    // Authentication functionality
+    signUpGuest,
+    signInWithProvider,
+    isAuthenticating,
+    authError,
+    signOut,
+
+    // User functionality
+    isUserReady,
+    userError,
+
+    // Wallet functionality
+    wallets,
+    setActiveWallet,
+    createWallet,
+    activeWallet,
+    isCreatingWallet,
+    signMessage,
+    switchChain,
+    isSwitchingChain,
+
     // Internal methods
     _internal: {
       refreshUserState,
@@ -443,8 +653,33 @@ export const OpenfortProvider = ({
     recoveryFlowState,
     logout,
     getAccessToken,
+    isProviderLoading,
+    isProviderLinked,
+    linkProvider,
+    signUpGuest,
+    signInWithProvider,
+    isAuthenticating,
+    authError,
+    signOut,
+    isUserReady,
+    userError,
+    wallets,
+    setActiveWallet,
+    createWallet,
+    activeWallet,
+    isCreatingWallet,
+    signMessage,
+    switchChain,
+    isSwitchingChain,
     refreshUserState,
   ]);
+
+  // Refresh wallets when user changes
+  useEffect(() => {
+    if (user) {
+      refreshWallets();
+    }
+  }, [user, refreshWallets]);
 
   return (
     <OpenfortContext.Provider value={contextValue}>
