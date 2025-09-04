@@ -260,7 +260,14 @@ export const OpenfortProvider = ({
 
   // User state management
   const handleUserChange = useCallback((newUser: import('@openfort/openfort-js').AuthPlayerResponse | null) => {
-    logger.info('User state changed', newUser);
+    if (newUser === null) {
+      logger.info('User not authenticated. User state changed to: null');
+    } else if ('id' in newUser) {
+      logger.info('User authenticated. User state changed to user with id:', newUser.id);
+    } else {
+      logger.error('User state changed to user in wrong format:', newUser);
+    }
+
     setUser(newUser);
     if (newUser) {
       setError(null);
