@@ -2,6 +2,7 @@ import { Openfort as OpenfortClient, OpenfortSDKConfiguration } from '@openfort/
 import { digest } from 'expo-crypto';
 import { applicationId } from 'expo-application';
 import { SecureStorageAdapter, createNormalizedStorage } from './storage';
+import { logger } from '../lib/logger';
 
 
 /**
@@ -22,7 +23,7 @@ export function createOpenfortClient({
   shieldConfiguration,
 }: OpenfortSDKConfiguration): OpenfortClient {
   const nativeAppId = getNativeApplicationId();
-  console.log('Creating Openfort client with native app ID:', nativeAppId);
+  logger.info('Creating Openfort client with native app ID', nativeAppId);
   // appId,
   // clientId,
   // supportedChains,

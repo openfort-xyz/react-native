@@ -3,6 +3,7 @@ import { OpenfortConfiguration, ShieldConfiguration, RecoveryMethod, SDKOverride
 import { OpenfortContext, type OpenfortContextValue } from './context';
 import { createOpenfortClient, setDefaultClient } from './client';
 import { EmbeddedWalletWebView, WebViewUtils } from '../native';
+import { logger } from '../lib/logger';
 
 /**
  * Custom auth configuration
@@ -195,10 +196,10 @@ export const OpenfortProvider = ({
 
     try {
       const state = await client.embeddedWallet.getEmbeddedState();
-      console.log('Current embedded state:', state);
+      logger.info('Current embedded state', state);
       setEmbeddedState(state);
     } catch (error) {
-      console.error('Error checking embedded state with Openfort:', error);
+      logger.error('Error checking embedded state with Openfort', error);
       if (pollingRef.current) clearInterval(pollingRef.current);
     }
   }, [client]);
@@ -238,7 +239,7 @@ export const OpenfortProvider = ({
 
   // User state management
   const handleUserChange = useCallback((newUser: import('@openfort/openfort-js').AuthPlayerResponse | null) => {
-    console.log('User state changed:', newUser);
+    logger.info('User state changed', newUser);
     setUser(newUser);
     if (newUser) {
       setError(null);
@@ -255,17 +256,17 @@ export const OpenfortProvider = ({
     try {
       return await client.getAccessToken();
     } catch (err) {
-      console.debug('Failed to get access token:', err);
+      logger.debug('Failed to get access token', err);
       return null;
     }
   }, [client]);
 
   // Initialize client and user
   useEffect(() => {
-    console.log('Initializing Openfort client and user state', isUserInitialized);
+    logger.info('Initializing Openfort client and user state', isUserInitialized);
     if (!isUserInitialized) {
       (async () => {
-        console.log('Initializing Openfort client');
+        logger.info('Initializing Openfort client');
         try {
           // Openfort client doesn't need explicit initialization
           setIsClientReady(true);
@@ -274,7 +275,7 @@ export const OpenfortProvider = ({
         }
 
         try {
-          console.log('Refreshing user state on initial load');
+          logger.info('Refreshing user state on initial load');
           await refreshUserState()
         } catch {
           // User not logged in, which is fine
@@ -289,7 +290,7 @@ export const OpenfortProvider = ({
   // Internal refresh function for auth hooks to use
   const refreshUserState = useCallback(async (user?: import('@openfort/openfort-js').AuthPlayerResponse) => {
     try {
-      console.log('Refreshing user state', user);
+      logger.info('Refreshing user state', user);
       // If user is provided, use it directly instead of fetching from API
       if (user !== undefined) {
         handleUserChange(user);
@@ -298,11 +299,11 @@ export const OpenfortProvider = ({
 
       // Otherwise, fetch from API
       const currentUser = await client.user.get();
-      console.log('Refreshed user state:', currentUser);
+      logger.info('Refreshed user state', currentUser);
       handleUserChange(currentUser);
       return currentUser;
     } catch (err) {
-      console.log('Failed to refresh user state:', err);
+      logger.warn('Failed to refresh user state', err);
       handleUserChange(null);
       return null;
     }
@@ -323,10 +324,10 @@ export const OpenfortProvider = ({
           if (customToken) {
             // Custom auth sync implementation would go here
             // This would typically handle SIWE authentication with the custom token
-            console.debug('Custom token available for authentication sync');
+            logger.debug('Custom token available for authentication sync');
           }
         } catch (err) {
-          console.error('Custom auth sync failed:', err);
+          logger.error('Custom auth sync failed', err);
         }
       })();
     }
@@ -396,7 +397,7 @@ export const OpenfortProvider = ({
           onProxyStatusChange={(status) => {
             // Handle WebView status changes for debugging
             if (process.env.NODE_ENV === 'development') {
-              console.debug('WebView status changed:', status);
+              logger.debug('WebView status changed', status);
             }
           }}
         />

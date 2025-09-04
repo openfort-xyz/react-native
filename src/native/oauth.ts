@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
+import { logger } from '../lib/logger';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { OAuthProvider as OAuthProviderType } from '@openfort/openfort-js';
 
@@ -147,7 +148,7 @@ export function parseOAuthUrl(url: string): {
 } {
   try {
     const { queryParams } = Linking.parse(url);
-    console.log('Parsed OAuth URL:', queryParams);
+    logger.info('Parsed OAuth URL', queryParams);
 
     return {
       access_token: queryParams?.access_token as string,
@@ -157,7 +158,7 @@ export function parseOAuthUrl(url: string): {
       errorDescription: queryParams?.error_description as string,
     };
   } catch (error) {
-    console.warn('Failed to parse OAuth URL:', error);
+    logger.warn('Failed to parse OAuth URL', error);
     return {};
   }
 }

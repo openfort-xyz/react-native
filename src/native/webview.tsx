@@ -5,6 +5,7 @@ import WebView from 'react-native-webview';
 import type { WebViewMessageEvent } from 'react-native-webview';
 import type { Openfort as OpenfortClient} from '@openfort/openfort-js';
 import { isSecureStorageMessage, handleSecureStorageMessage } from './storage';
+import { logger } from '../lib/logger';
 
 /**
  * Props for the EmbeddedWalletWebView component
@@ -42,7 +43,7 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
           //   // client.embeddedWallet.reload();
           // }
         } catch (error) {
-          console.warn('Failed to ping embedded wallet:', error);
+          logger.warn('Failed to ping embedded wallet', error);
         }
       }
     };
@@ -57,7 +58,7 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
   }, [onProxyStatusChange]);
 
   const handleError = useCallback((error: any) => {
-    console.error('WebView error:', error);
+    logger.error('WebView error', error);
   }, []);
 
   // Set up WebView reference with client immediately when both are available
@@ -89,7 +90,7 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
       client.embeddedWallet.onMessage(messageData);
       
     } catch (error) {
-      console.error('Failed to handle WebView message:', error);
+      logger.error('Failed to handle WebView message', error);
       // Don't crash the app on message handling errors
     }
   }, [client]);

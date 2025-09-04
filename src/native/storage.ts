@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { logger } from '../lib/logger';
 
 /**
  * Interface for secure storage message handling in WebView
@@ -47,7 +48,7 @@ export function isSecureStorageMessage(message: unknown): message is SecureStora
 export async function handleSecureStorageMessage(
   message: SecureStorageMessage
 ): Promise<SecureStorageResponse> {
-  console.log('Handling secure storage message:', message);
+  logger.info('Handling secure storage message', message);
   switch (message.event) {
     case 'app:secure-storage:get': {
       const { key } = message.data;
@@ -62,7 +63,7 @@ export async function handleSecureStorageMessage(
           data: { value },
         };
       } catch (error) {
-        console.warn('Failed to get the value from secure store', error);
+        logger.warn('Failed to get the value from secure store', error);
         return {
           event: message.event,
           id: message.id,
@@ -84,7 +85,7 @@ export async function handleSecureStorageMessage(
           data: { success: true },
         };
       } catch (error) {
-        console.warn('Failed to write the value to secure store', error);
+        logger.warn('Failed to write the value to secure store', error);
         return {
           event: message.event,
           id: message.id,
@@ -106,7 +107,7 @@ export async function handleSecureStorageMessage(
           data: { success: true },
         };
       } catch (error) {
-        console.warn('Failed to remove the value from secure store', error);
+        logger.warn('Failed to remove the value from secure store', error);
         return {
           event: message.event,
           id: message.id,
@@ -133,12 +134,12 @@ export async function handleSecureStorageMessage(
             });
           } catch (error) {
             // Ignore errors for keys that don't exist
-            console.debug(`Key ${fullKey} not found during flush:`, error);
+            logger.debug(`Key ${fullKey} not found during flush`, error);
           }
         });
         
         await Promise.all(deletePromises);
-        console.log('Flushed secure storage for origin:', origin);
+        logger.info('Flushed secure storage for origin', origin);
 
         return {
           event: message.event,
@@ -146,7 +147,7 @@ export async function handleSecureStorageMessage(
           data: { success: true },
         };
       } catch (error) {
-        console.warn('Failed to flush secure store', error);
+        logger.warn('Failed to flush secure store', error);
         return {
           event: message.event,
           id: message.id,

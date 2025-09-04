@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as SecureStore from 'expo-secure-store';
 import { NativeStorageUtils } from '../native';
+import { logger } from '../lib/logger';
 
 // Define the StorageKeys enum values that match the Openfort SDK
 enum StorageKeys {
@@ -49,16 +50,16 @@ export const SecureStorageAdapter: OpenfortStorage = {
 
       // Handle unexpected Promise-like objects (shouldn't happen according to docs)
       if (result && typeof result === 'object' && '_j' in result) {
-        console.warn('WARNING: SecureStore returned a Promise-like object instead of a string');
+        logger.warn('WARNING: SecureStore returned a Promise-like object instead of a string');
         const actualValue = (result as any)._j;
         return typeof actualValue === 'string' ? actualValue : null;
       }
 
       // If we get here, something is wrong
-      console.error('Unexpected result type from SecureStore:', result);
+      logger.error('Unexpected result type from SecureStore', result);
       return null;
     } catch (error) {
-      console.warn('Failed to get item from secure store:', error);
+      logger.warn('Failed to get item from secure store', error);
       return null;
     }
   },
@@ -68,7 +69,7 @@ export const SecureStorageAdapter: OpenfortStorage = {
       const normalizedKey = normalizeKey(key);
       await SecureStore.setItemAsync(normalizedKey, value, NativeStorageUtils.getStorageOptions());
     } catch (error) {
-      console.warn('Failed to set item in secure store:', error);
+      logger.warn('Failed to set item in secure store', error);
       throw error;
     }
   },
@@ -78,7 +79,7 @@ export const SecureStorageAdapter: OpenfortStorage = {
       const normalizedKey = normalizeKey(key);
       await SecureStore.deleteItemAsync(normalizedKey, NativeStorageUtils.getStorageOptions());
     } catch (error) {
-      console.warn('Failed to delete item from secure store:', error);
+      logger.warn('Failed to delete item from secure store', error);
       throw error;
     }
   },
@@ -127,25 +128,25 @@ export function createNormalizedStorage(customStorage?: OpenfortStorage): import
     },
 
     save(key: unknown, value: string): void {
-      console.log('storage save:', key, value);
+      logger.info('storage save', key, value);
       const storageKey = keyToStorageKeys(key);
       // Fire and forget - don't await as the SDK expects synchronous behavior
       baseStorage.save(storageKey, value).catch(error => {
-        console.error('Failed to save to storage:', error);
+        logger.error('Failed to save to storage', error);
       });
     },
 
     remove(key: unknown): void {
-      console.log('storage remove:', key);
+      logger.info('storage remove', key);
       const storageKey = keyToStorageKeys(key);
       // Fire and forget - don't await as the SDK expects synchronous behavior
       baseStorage.remove(storageKey).catch(error => {
-        console.error('Failed to remove from storage:', error);
+        logger.error('Failed to remove from storage', error);
       });
     },
 
     flush(): void {
-      console.log('storage flush');
+      logger.info('storage flush');
       baseStorage.flush();
     },
   };

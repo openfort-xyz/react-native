@@ -10,6 +10,7 @@ import { Hex } from '../../types/hex';
 import { OpenfortHookOptions } from '../../types/hookOption';
 import { OpenfortError, OpenfortErrorType } from '../../types/openfortError';
 import { UserWallet } from '../../types/wallet';
+import { logger } from '../../lib/logger';
 
 
 type SetActiveWalletResult = {
@@ -292,7 +293,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
   const create = useCallback(
     async (options?: CreateWalletOptions): Promise<CreateWalletResult> => {
-      console.log('Creating Ethereum wallet with options:', options);
+      logger.info('Creating Ethereum wallet with options', options);
       try {
         setStatus({
           status: 'creating',
@@ -314,7 +315,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         } else {
           throw new OpenfortError('No supported chains available for wallet creation', OpenfortErrorType.WALLET_ERROR);
         }
-        console.log('Using chain ID for wallet creation:', chainId);
+        logger.info('Using chain ID for wallet creation', chainId);
 
         let recoveryParams: RecoveryParams;;
         if (options?.recoveryPassword) {
@@ -340,7 +341,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
           chainType: options?.chainType || ChainTypeEnum.EVM,
           recoveryParams,
         });
-        console.log('Embedded wallet configured with shield authentication');
+        logger.info('Embedded wallet configured with shield authentication');
 
         // Get the Ethereum provider
         const provider = await client.embeddedWallet.getEthereumProvider({
