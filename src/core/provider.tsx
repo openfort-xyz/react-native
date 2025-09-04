@@ -143,6 +143,10 @@ export interface OpenfortProviderProps {
    * Third party auth configuration for integrating with external auth providers
    */
   thirdPartyAuth?: ThirdPartyAuthConfiguration;
+  /**
+   * Enable verbose logging for debugging purposes
+   */
+  verbose?: boolean;
 }
 
 /**
@@ -157,6 +161,7 @@ export const OpenfortProvider = ({
   walletConfig,
   overrides,
   thirdPartyAuth,
+  verbose = false,
 }: OpenfortProviderProps) => {
   // Prevent multiple OpenfortProvider instances
   const existingContext = React.useContext(OpenfortContext);
@@ -165,6 +170,11 @@ export const OpenfortProvider = ({
       'Found multiple instances of OpenfortProvider. Ensure there is only one mounted in your application tree.'
     );
   }
+
+  // Set logger verbose mode
+  useEffect(() => {
+    logger.setVerbose(verbose);
+  }, [verbose]);
 
   // Create or use provided client
   const client = useMemo(() => {
