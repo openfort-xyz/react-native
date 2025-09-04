@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { OpenfortConfiguration, ShieldConfiguration, RecoveryMethod, SDKOverrides, EmbeddedState, AccountTypeEnum, ThirdPartyAuthConfiguration } from '@openfort/openfort-js';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { OpenfortConfiguration, ShieldConfiguration, RecoveryMethod, SDKOverrides, EmbeddedState, AccountTypeEnum, ThirdPartyAuthConfiguration, Openfort as OpenfortClient } from '@openfort/openfort-js';
 import { OpenfortContext, type OpenfortContextValue } from './context';
 import { createOpenfortClient, setDefaultClient } from './client';
 import { EmbeddedWalletWebView, WebViewUtils } from '../native';
@@ -121,6 +121,41 @@ export type Chain = {
 
 
 /**
+ * Starts polling the embedded wallet state and calls onChange only when the
+ * state actually changes. Returns a cleanup function to stop polling.
+ */
+function startEmbeddedStatePolling(
+  client: OpenfortClient,
+  onChange: (state: EmbeddedState) => void,
+  intervalMs: number = 1000,
+): () => void {
+  let lastState: EmbeddedState | null = null;
+  let stopped = false;
+
+  const check = async () => {
+    if (stopped) return;
+    try {
+      const state = await client.embeddedWallet.getEmbeddedState();
+      if (state !== lastState) {
+        lastState = state;
+        onChange(state);
+      }
+    } catch (error) {
+      logger.error('Error checking embedded state with Openfort', error);
+    }
+  };
+
+  const intervalId: ReturnType<typeof setInterval> = setInterval(check, intervalMs);
+  // Run once immediately so we don't wait for the first interval tick
+  void check();
+
+  return () => {
+    stopped = true;
+    clearInterval(intervalId as unknown as number);
+  };
+}
+
+/**
  * Props for the OpenfortProvider component
  */
 export interface OpenfortProviderProps {
@@ -200,40 +235,15 @@ export const OpenfortProvider = ({
 
   // Embedded state
   const [embeddedState, setEmbeddedState] = useState<EmbeddedState>(EmbeddedState.NONE);
-  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
-  const pollEmbeddedState = useCallback(async () => {
-    if (!client) return;
-
-    try {
-      const state = await client.embeddedWallet.getEmbeddedState();
-      logger.info('Current embedded state', getEmbeddedStateName(state));
-      setEmbeddedState(state);
-    } catch (error) {
-      logger.error('Error checking embedded state with Openfort', error);
-      if (pollingRef.current) clearInterval(pollingRef.current);
-    }
-  }, [client]);
-
-  const startPollingEmbeddedState = useCallback(() => {
-
-    if (pollingRef.current) return;
-    pollingRef.current = setInterval(pollEmbeddedState, 1000);
-  }, [pollEmbeddedState]);
-
-  const stopPollingEmbeddedState = useCallback(() => {
-    clearInterval(pollingRef.current || undefined);
-    pollingRef.current = null;
-  }, []);
-
+  // Start polling embedded state: only update and log when state changes
   useEffect(() => {
     if (!client) return;
-
-    startPollingEmbeddedState();
-
-    return () => {
-      stopPollingEmbeddedState();
-    };
+    const stop = startEmbeddedStatePolling(client, (state) => {
+      setEmbeddedState(state);
+      logger.info('Current state of the embedded wallet:', getEmbeddedStateName(state));
+    }, 1000);
+    return stop;
   }, [client]);
 
   // Core state
