@@ -311,7 +311,14 @@ export const OpenfortProvider = ({
   // Internal refresh function for auth hooks to use
   const refreshUserState = useCallback(async (user?: import('@openfort/openfort-js').AuthPlayerResponse) => {
     try {
-      logger.info('Refreshing user state', user);
+      if (user === undefined) {
+        logger.info('Refreshing user state, no user provided');
+      } else if ('id' in user) {
+        logger.info('Refreshing user state, user provided with id:', user.id);
+      } else {
+        logger.error('Refreshing user state, user provided is in wrong format:', user);
+      }
+
       // If user is provided, use it directly instead of fetching from API
       if (user !== undefined) {
         handleUserChange(user);
