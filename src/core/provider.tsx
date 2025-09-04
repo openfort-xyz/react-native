@@ -1,5 +1,24 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { OpenfortConfiguration, ShieldConfiguration, RecoveryMethod, SDKOverrides, EmbeddedState, AccountTypeEnum, ThirdPartyAuthConfiguration, Openfort as OpenfortClient } from '@openfort/openfort-js';
+
+import {
+  AuthPlayerResponse,
+  OpenfortConfiguration,
+  ShieldConfiguration,
+  RecoveryMethod,
+  SDKOverrides,
+  EmbeddedState,
+  AccountTypeEnum,
+  ThirdPartyAuthConfiguration,
+  Openfort as OpenfortClient,
+} from '@openfort/openfort-js';
+
+import type {
+  PasswordFlowState,
+  OAuthFlowState,
+  SiweFlowState,
+  RecoveryFlowState
+} from '../types';
+
 import { OpenfortContext, type OpenfortContextValue } from './context';
 import { createOpenfortClient, setDefaultClient } from './client';
 import { EmbeddedWalletWebView, WebViewUtils } from '../native';
@@ -247,19 +266,19 @@ export const OpenfortProvider = ({
   }, [client]);
 
   // Core state
-  const [user, setUser] = useState<import('@openfort/openfort-js').AuthPlayerResponse | null>(null);
+  const [user, setUser] = useState<AuthPlayerResponse | null>(null);
   const [isUserInitialized, setIsUserInitialized] = useState(false);
   const [isClientReady, setIsClientReady] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   // Flow states
-  const [passwordState, setPasswordState] = useState<import('../types').PasswordFlowState>({ status: 'initial' });
-  const [oAuthState, setOAuthState] = useState<import('../types').OAuthFlowState>({ status: 'initial' });
-  const [siweState, setSiweState] = useState<import('../types').SiweFlowState>({ status: 'initial' });
-  const [recoveryFlowState, setRecoveryFlowState] = useState<import('../types').RecoveryFlowState>({ status: 'initial' });
+  const [passwordState, setPasswordState] = useState<PasswordFlowState>({ status: 'initial' });
+  const [oAuthState, setOAuthState] = useState<OAuthFlowState>({ status: 'initial' });
+  const [siweState, setSiweState] = useState<SiweFlowState>({ status: 'initial' });
+  const [recoveryFlowState, setRecoveryFlowState] = useState<RecoveryFlowState>({ status: 'initial' });
 
   // User state management
-  const handleUserChange = useCallback((newUser: import('@openfort/openfort-js').AuthPlayerResponse | null) => {
+  const handleUserChange = useCallback((newUser: AuthPlayerResponse | null) => {
     if (newUser === null) {
       logger.info('User not authenticated. User state changed to: null');
     } else if ('id' in newUser) {
@@ -289,34 +308,8 @@ export const OpenfortProvider = ({
     }
   }, [client]);
 
-  // Initialize client and user
-  useEffect(() => {
-    logger.info('Initializing Openfort client and user state', isUserInitialized);
-    if (!isUserInitialized) {
-      (async () => {
-        logger.info('Initializing Openfort client');
-        try {
-          // Openfort client doesn't need explicit initialization
-          setIsClientReady(true);
-        } catch (err) {
-          setError(err instanceof Error ? err : new Error(String(err)));
-        }
-
-        try {
-          logger.info('Refreshing user state on initial load');
-          await refreshUserState()
-        } catch {
-          // User not logged in, which is fine
-          handleUserChange(null);
-        } finally {
-          setIsUserInitialized(true);
-        }
-      })();
-    }
-  }, [client, isUserInitialized, handleUserChange]);
-
   // Internal refresh function for auth hooks to use
-  const refreshUserState = useCallback(async (user?: import('@openfort/openfort-js').AuthPlayerResponse) => {
+  const refreshUserState = useCallback(async (user?: AuthPlayerResponse) => {
     try {
       if (user === undefined) {
         logger.info('Refreshing user state, no user provided');
@@ -344,6 +337,38 @@ export const OpenfortProvider = ({
     }
   }, [client, handleUserChange]);
 
+  // Initialize client and user
+  useEffect(() => {
+    if (isUserInitialized) {
+      logger.info('Openfort client and user state already initialized. isUserInitialized:', isUserInitialized);
+      return;
+    }
+
+    let cancelled = false;
+
+    const initialize = async () => {
+      logger.info('Initializing Openfort client and user state');
+
+      // No explicit client initialization required
+      setIsClientReady(true);
+
+      try {
+        logger.info('Refreshing user state on initial load');
+        await refreshUserState();
+      } catch (err) {
+        // User not logged in or fetch failed; treat as unauthenticated
+        handleUserChange(null);
+      } finally {
+        if (!cancelled) setIsUserInitialized(true);
+      }
+    };
+
+    void initialize();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [client, isUserInitialized, handleUserChange, refreshUserState]);
 
   // Custom auth state management
   useEffect(() => {
@@ -429,9 +454,9 @@ export const OpenfortProvider = ({
         <EmbeddedWalletWebView
           client={client}
           isClientReady={isReady}
-          onProxyStatusChange={(status) => {
+          onProxyStatusChange={(status: 'loading' | 'loaded' | 'reloading') => {
             // Handle WebView status changes for debugging
-            if (process.env.NODE_ENV === 'development') {
+            if (verbose) {
               logger.debug('WebView status changed', status);
             }
           }}
