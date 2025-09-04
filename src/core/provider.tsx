@@ -3,7 +3,7 @@ import { OpenfortConfiguration, ShieldConfiguration, RecoveryMethod, SDKOverride
 import { OpenfortContext, type OpenfortContextValue } from './context';
 import { createOpenfortClient, setDefaultClient } from './client';
 import { EmbeddedWalletWebView, WebViewUtils } from '../native';
-import { logger } from '../lib/logger';
+import { logger, getEmbeddedStateName } from '../lib/logger';
 
 /**
  * Custom auth configuration
@@ -207,7 +207,7 @@ export const OpenfortProvider = ({
 
     try {
       const state = await client.embeddedWallet.getEmbeddedState();
-      logger.info('Current embedded state', state);
+      logger.info('Current embedded state', getEmbeddedStateName(state));
       setEmbeddedState(state);
     } catch (error) {
       logger.error('Error checking embedded state with Openfort', error);

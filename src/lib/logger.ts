@@ -1,6 +1,8 @@
 // Lightweight logger with standardized prefix
 // Usage: logger.info('message', optionalData)
 
+import { EmbeddedState } from '@openfort/openfort-js';
+
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 const PREFIX = '[OPENFORT_PROVIDER]';
@@ -53,6 +55,23 @@ export const logger = {
       'Verbose mode is enabled. Debug and info logs will be printed. To disable, set the "verbose" prop on OpenfortProvider to false.'
     );
   },
+};
+
+export const getEmbeddedStateName = (state: EmbeddedState): string => {
+  switch (state) {
+    case EmbeddedState.NONE:
+      return 'NONE';
+    case EmbeddedState.UNAUTHENTICATED:
+      return 'UNAUTHENTICATED';
+    case EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED:
+      return 'EMBEDDED_SIGNER_NOT_CONFIGURED';
+    case EmbeddedState.CREATING_ACCOUNT:
+      return 'CREATING_ACCOUNT';
+    case EmbeddedState.READY:
+      return 'READY';
+    default:
+      return `STATE: ${String(state)}`;
+  }
 };
 
 export type { LogLevel };
