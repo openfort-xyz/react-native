@@ -173,6 +173,7 @@ export const OpenfortProvider = ({
 
   // Set logger verbose mode
   useEffect(() => {
+    if (verbose) logger.printVerboseWarning();
     logger.setVerbose(verbose);
   }, [verbose]);
 

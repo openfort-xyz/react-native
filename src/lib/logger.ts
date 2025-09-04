@@ -47,6 +47,12 @@ export const logger = {
   setVerbose: (verbose: boolean) => {
     verboseMode = verbose;
   },
+  printVerboseWarning: () => {
+    log(
+      'warn',
+      'Verbose mode is enabled. Debug and info logs will be printed. To disable, set the "verbose" prop on OpenfortProvider to false.'
+    );
+  },
 };
 
 export type { LogLevel };
