@@ -6,7 +6,7 @@ export function useUser() {
 
   return {
     user,
-    isAuthenticated: embeddedState !== EmbeddedState.NONE && embeddedState !== EmbeddedState.UNAUTHENTICATED,
+    isAuthenticated: !!user && (embeddedState !== EmbeddedState.NONE && embeddedState !== EmbeddedState.UNAUTHENTICATED),
     getAccessToken,
   };
 }
