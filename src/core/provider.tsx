@@ -4,7 +4,6 @@ import {
   AuthPlayerResponse,
   OpenfortConfiguration,
   ShieldConfiguration,
-  RecoveryMethod,
   SDKOverrides,
   EmbeddedState,
   AccountTypeEnum,
@@ -38,44 +37,21 @@ export type CommonEmbeddedWalletConfiguration = {
   shieldPublishableKey: string;
   /** Policy ID (pol_...) for the embedded signer */
   ethereumProviderPolicyId?: string;
-  debug?: boolean;
   accountType?: AccountTypeEnum;
+  debug?: boolean;
 }
 
 export type EncryptionSession =
   | {
     /** Function to retrieve an encryption session using a session ID */
-    getEncryptionSession: () => Promise<string>;
+    getEncryptionSession?: () => Promise<string>;
     createEncryptedSessionEndpoint?: never;
   }
   | {
     /** API endpoint for creating an encrypted session */
-    createEncryptedSessionEndpoint: string;
+    createEncryptedSessionEndpoint?: string;
     getEncryptionSession?: never;
   };
-
-/**
- * Configuration for automatic recovery, which requires an encryption session.
- */
-export type AutomaticRecoveryEmbeddedWalletConfiguration = {
-  /** Specifies that the recovery method is automatic */
-  recoveryMethod: RecoveryMethod.AUTOMATIC;
-} & EncryptionSession;
-
-export type PasswordRecoveryEmbeddedWalletConfiguration = {
-  /** Specifies that the recovery method is password-based */
-  recoveryMethod: RecoveryMethod.PASSWORD;
-} & (
-    | (EncryptionSession & {
-      shieldEncryptionKey?: never;
-    })
-    | {
-      /** Required shield encryption key when no encryption session is used */
-      shieldEncryptionKey: string;
-      createEncryptedSessionEndpoint?: never;
-      getEncryptionSession?: never;
-    }
-  );
 
 /**
  * Configuration for automatic recovery.
@@ -89,9 +65,7 @@ export type PasswordRecoveryEmbeddedWalletConfiguration = {
  * - `createEncryptedSessionEndpoint` as a string, OR
  * - `getEncryptionSession.` as a function that returns a promise.
  */
-export type EmbeddedWalletConfiguration = CommonEmbeddedWalletConfiguration & (
-  AutomaticRecoveryEmbeddedWalletConfiguration | PasswordRecoveryEmbeddedWalletConfiguration
-);
+export type EmbeddedWalletConfiguration = CommonEmbeddedWalletConfiguration & EncryptionSession
 
 /**
  * These types are fully compatible with WAGMI chain types, in case
@@ -240,7 +214,6 @@ export const OpenfortProvider = ({
       }),
       shieldConfiguration: walletConfig ? new ShieldConfiguration({
         shieldPublishableKey: walletConfig.shieldPublishableKey,
-        shieldEncryptionKey: 'shieldEncryptionKey' in walletConfig ? walletConfig.shieldEncryptionKey : undefined,
         shieldDebug: walletConfig.debug,
       }) : undefined,
       overrides,
@@ -356,6 +329,7 @@ export const OpenfortProvider = ({
         logger.info('Refreshing user state on initial load');
         await refreshUserState();
       } catch (err) {
+        logger.error('Failed to initialize user state', err);
         // User not logged in or fetch failed; treat as unauthenticated
         handleUserChange(null);
       } finally {

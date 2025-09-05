@@ -21,8 +21,10 @@
       "types": "./dist/types/index.d.ts"
     }
   },
+  "dependencies": {
+    "@openfort/openfort-js": "^0.10.8"
+  },
   "peerDependencies": {
-    "@openfort/openfort-js": "^0.10.4",
     "expo-apple-authentication": "*",
     "expo-crypto": "*",
     "expo-linking": "*",
@@ -35,7 +37,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
-    "@openfort/openfort-js": "^0.10.4",
     "@types/react": "~18.3.12",
     "@types/react-test-renderer": "^18.3.0",
     "buffer": "^5.4.3",

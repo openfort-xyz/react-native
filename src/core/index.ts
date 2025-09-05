@@ -16,8 +16,6 @@ export type {
   EmbeddedWalletConfiguration,
   CommonEmbeddedWalletConfiguration,
   EncryptionSession,
-  AutomaticRecoveryEmbeddedWalletConfiguration,
-  PasswordRecoveryEmbeddedWalletConfiguration
 } from './provider';
 
 // Storage adapters
