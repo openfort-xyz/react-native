@@ -1279,10 +1279,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@openfort/openfort-js@^0.10.8":
-  version "0.10.8"
-  resolved "https://registry.yarnpkg.com/@openfort/openfort-js/-/openfort-js-0.10.8.tgz#f7c382cc120f71d52cb4795a6047f6c5f392608d"
-  integrity sha512-zyuTAoLrn8o/sXdpPXWy2snLn6+AIJo/Fm/2XMuPZc6GOAoCWqTY84PYQ2KtbiNsUMsl1QD0rc0b3txEZ8ZEIA==
+"@openfort/openfort-js@^0.10.9":
+  version "0.10.12"
+  resolved "https://registry.yarnpkg.com/@openfort/openfort-js/-/openfort-js-0.10.12.tgz#767e3f66b95dbeb6e8c892cd4a61302493d1aaa5"
+  integrity sha512-+eIkO/D5PhIAH2gvZ++HGgceh3JZdzGGoXic0yHr671Zk6r1TDzB8HtXT4cbzwXaj0OHZ0tckk2tgj54fP13Zw==
   dependencies:
     "@ethersproject/abi" "^5.8.0"
     "@ethersproject/bytes" "^5.8.0"
@@ -1294,6 +1294,7 @@
     axios "^1.8.2"
     axios-retry "^4.5.0"
     eventemitter3 "5.0.1"
+    human-id "^4.1.1"
     jose "^5.2.2"
 
 "@openfort/shield-js@^0.1.14":
@@ -3315,6 +3316,11 @@ http-errors@2.0.0:
     setprototypeof "1.2.0"
     statuses "2.0.1"
     toidentifier "1.0.1"
+
+human-id@^4.1.1:
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/human-id/-/human-id-4.1.1.tgz#2801fbd61b9a5c1c9170f332802db6408a39a4b0"
+  integrity sha512-3gKm/gCSUipeLsRYZbbdA1BD83lBoWUkZ7G9VFrhWPAU76KwYo5KR8V28bpoPm/ygy0x5/GCbpRQdY7VLYCoIg==
 
 ieee754@^1.1.13:
   version "1.2.1"
