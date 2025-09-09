@@ -380,7 +380,7 @@ export const OpenfortProvider = ({
     isReady,
     error,
     supportedChains,
-    embeddedWallet: walletConfig,
+    walletConfig,
     embeddedState,
 
     // Flow states
