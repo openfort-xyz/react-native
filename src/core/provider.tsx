@@ -381,6 +381,7 @@ export const OpenfortProvider = ({
     error,
     supportedChains,
     walletConfig,
+    embeddedWallet: walletConfig,
     embeddedState,
 
     // Flow states
