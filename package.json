@@ -1,14 +1,15 @@
 {
   "name": "@openfort/react-native",
   "main": "dist/index.js",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "license": "MIT",
   "description": "React Native SDK for Openfort platform integration",
   "scripts": {
     "build": "rimraf dist && tsc",
     "lint": "eslint . --ignore-pattern dist",
     "link": "yarn link",
-    "unlink": "yarn unlink"
+    "unlink": "yarn unlink",
+    "docs:build": "typedoc"
   },
   "types": "dist/types/index.d.ts",
   "files": [
@@ -22,7 +23,7 @@
     }
   },
   "dependencies": {
-    "@openfort/openfort-js": "^0.10.9"
+    "@openfort/openfort-js": "^0.10.16"
   },
   "peerDependencies": {
     "expo-apple-authentication": "*",
@@ -51,6 +52,7 @@
     "react": "^18.3.1",
     "react-native": "0.77.1",
     "react-native-webview": "^13.15.0",
+    "typedoc": "^0.26.5",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.19.0"
   },

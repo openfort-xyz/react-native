@@ -6,7 +6,7 @@
  * for building decentralized applications on React Native.
  * 
  * @author Openfort
- * @version 0.1.0
+ * @version 0.1.8
  */
 
 // Re-export commonly used types from @openfort/openfort-js

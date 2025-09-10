@@ -1,0 +1,12 @@
+{
+  "entryPoints": ["./src/index.ts"],
+  "name": "@openfort/react-native",
+  "excludeReferences": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "includeVersion": true,
+  "cleanOutputDir": true,
+  "out": "./docs",
+  "readme": "./README.md",
+  "tsconfig": "./tsconfig.json"
+}
