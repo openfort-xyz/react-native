@@ -11,7 +11,23 @@ import { OpenfortHookOptions } from '../../types/hookOption';
 import { OpenfortError, OpenfortErrorType } from '../../types/openfortError';
 import { UserWallet } from '../../types/wallet';
 import { logger } from '../../lib/logger';
+import type { Chain } from '../../core/provider';
 
+/**
+ * Converts supportedChains configuration to the format expected by getEthereumProvider
+ * @param supportedChains - Array of chain configurations
+ * @returns Record mapping chain IDs to RPC URLs, or undefined if no chains provided
+ */
+const buildChainsConfig = (supportedChains?: [Chain, ...Chain[]]): Record<number, string> | undefined => {
+  if (!supportedChains?.length) {
+    return undefined;
+  }
+
+  return supportedChains.reduce((acc, chain) => {
+    acc[chain.id] = chain.rpcUrls.default.http[0];
+    return acc;
+  }, {} as Record<number, string>);
+};
 
 type SetActiveWalletResult = {
   error?: OpenfortError,
@@ -110,7 +126,11 @@ export function useWallets(hookOptions: WalletOptions = {}) {
       isActive: true,
       isConnecting: false,
       getProvider: async () => {
-        return await client.embeddedWallet.getEthereumProvider({ announceProvider: false });
+        return await client.embeddedWallet.getEthereumProvider({ 
+          announceProvider: false,
+          chains: buildChainsConfig(supportedChains),
+          ...(walletConfig?.ethereumProviderPolicyId && { policy: walletConfig.ethereumProviderPolicyId }),
+        });
       },
     };
   }, [activeWalletId, embeddedAccounts, client.embeddedWallet]);
@@ -203,7 +223,11 @@ export function useWallets(hookOptions: WalletOptions = {}) {
             isActive: true,
             isConnecting: false,
             getProvider: async () => {
-              return await client.embeddedWallet.getEthereumProvider({ announceProvider: false });
+              return await client.embeddedWallet.getEthereumProvider({ 
+                announceProvider: false,
+                chains: buildChainsConfig(supportedChains),
+                ...(walletConfig?.ethereumProviderPolicyId && { policy: walletConfig.ethereumProviderPolicyId }),
+              });
             },
           }
 
@@ -286,7 +310,11 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         isActive: activeWalletId === account.id,
         isConnecting: status.status === "connecting" && status.address === account.address,
         getProvider: async () => {
-          return await client.embeddedWallet.getEthereumProvider({ announceProvider: false });
+          return await client.embeddedWallet.getEthereumProvider({ 
+            announceProvider: false,
+            chains: buildChainsConfig(supportedChains),
+            ...(walletConfig?.ethereumProviderPolicyId && { policy: walletConfig.ethereumProviderPolicyId }),
+          });
         },
       }))
   ), [embeddedAccounts, activeWalletId, status.status === "connecting", client.embeddedWallet]);
@@ -370,7 +398,10 @@ export function useWallets(hookOptions: WalletOptions = {}) {
               isActive: true,
               isConnecting: false,
               getProvider: async () => {
-                return await client.embeddedWallet.getEthereumProvider();
+                return await client.embeddedWallet.getEthereumProvider({
+                  chains: buildChainsConfig(supportedChains),
+                  ...(walletConfig?.ethereumProviderPolicyId && { policy: walletConfig.ethereumProviderPolicyId }),
+                });
               },
             }
           }
@@ -417,7 +448,11 @@ export function useWallets(hookOptions: WalletOptions = {}) {
               isActive: true,
               isConnecting: false,
               getProvider: async () => {
-                return await client.embeddedWallet.getEthereumProvider({ announceProvider: false });
+                return await client.embeddedWallet.getEthereumProvider({ 
+                  announceProvider: false,
+                  chains: buildChainsConfig(supportedChains),
+                  ...(walletConfig?.ethereumProviderPolicyId && { policy: walletConfig.ethereumProviderPolicyId }),
+                });
               }
             }
           }
