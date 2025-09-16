@@ -30,7 +30,6 @@ type CreateWalletResult = SetActiveWalletResult
 type CreateWalletOptions = {
   chainType?: ChainTypeEnum;
   chainId?: number;
-  policyId?: string
   recoveryPassword?: string;
   accountType?: AccountTypeEnum;
 } & OpenfortHookOptions<CreateWalletResult>
@@ -42,7 +41,9 @@ type SetRecoveryOptions = {
   newRecovery: RecoveryParams,
 } & OpenfortHookOptions<CreateWalletResult>
 
-type WalletOptions = OpenfortHookOptions<SetActiveWalletResult | CreateWalletResult>;
+type WalletOptions = {
+  chainId?: number;
+} & OpenfortHookOptions<SetActiveWalletResult | CreateWalletResult>;
 
 type WalletFlowStatus = BaseFlowState | {
   status: "creating" | "connecting" | "disconnected";
@@ -110,7 +111,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
       isActive: true,
       isConnecting: false,
       getProvider: async () => {
-        return await client.embeddedWallet.getEthereumProvider({ announceProvider: false });
+        return await getEthereumProvider();
       },
     };
   }, [activeWalletId, embeddedAccounts, client.embeddedWallet]);
@@ -203,7 +204,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
             isActive: true,
             isConnecting: false,
             getProvider: async () => {
-              return await client.embeddedWallet.getEthereumProvider({ announceProvider: false });
+              return await getEthereumProvider();
             },
           }
 
@@ -258,6 +259,29 @@ export function useWallets(hookOptions: WalletOptions = {}) {
     fetchEmbeddedWallets();
   }, [fetchEmbeddedWallets]);
 
+  const getEthereumProvider = useCallback(async () => {
+    const resolvePolicy = () => {
+      const ethereumProviderPolicyId = walletConfig?.ethereumProviderPolicyId;
+
+      if (!ethereumProviderPolicyId) return undefined;
+
+      if (typeof ethereumProviderPolicyId === "string") {
+        return ethereumProviderPolicyId;
+      }
+
+      if (!hookOptions.chainId) return undefined;
+
+      const policy = ethereumProviderPolicyId[hookOptions.chainId];
+      if (!policy) {
+        return undefined;
+      }
+
+      return policy;
+    };
+
+    return await client.embeddedWallet.getEthereumProvider({ announceProvider: false, policy: resolvePolicy() });
+  }, [client.embeddedWallet]);
+
   useEffect(() => {
     (async () => {
       try {
@@ -286,7 +310,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         isActive: activeWalletId === account.id,
         isConnecting: status.status === "connecting" && status.address === account.address,
         getProvider: async () => {
-          return await client.embeddedWallet.getEthereumProvider({ announceProvider: false });
+          return await getEthereumProvider();
         },
       }))
   ), [embeddedAccounts, activeWalletId, status.status === "connecting", client.embeddedWallet]);
@@ -344,10 +368,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         logger.info('Embedded wallet configured with shield authentication');
 
         // Get the Ethereum provider
-        const provider = await client.embeddedWallet.getEthereumProvider({
-          announceProvider: false,
-          ...(options?.policyId && { policy: options.policyId }),
-        });
+        const provider = await getEthereumProvider();
 
         // Refetch the list of wallets to ensure the state is up to date
         await fetchEmbeddedWallets();
@@ -417,7 +438,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
               isActive: true,
               isConnecting: false,
               getProvider: async () => {
-                return await client.embeddedWallet.getEthereumProvider({ announceProvider: false });
+                return await getEthereumProvider();
               }
             }
           }

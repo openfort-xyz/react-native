@@ -32,11 +32,13 @@ interface CustomAuthConfig {
   getCustomAccessToken: () => Promise<string | null>;
 }
 
+type PolicyConfig = string | Record<number, string>;
+
 export type CommonEmbeddedWalletConfiguration = {
   /** Publishable key for the Shield API */
   shieldPublishableKey: string;
   /** Policy ID (pol_...) for the embedded signer */
-  ethereumProviderPolicyId?: string;
+  ethereumProviderPolicyId?: PolicyConfig;
   accountType?: AccountTypeEnum;
   debug?: boolean;
 }
