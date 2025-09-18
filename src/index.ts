@@ -41,5 +41,20 @@ export * from './core';
 // Re-export native functionality
 export * from './native';
 
+// Re-export utilities
+export {
+    getEnvironmentStatus,
+    validateEnvironmentVariables,
+    DEFAULT_ENV_RULES,
+    SHIELD_ENV_RULES,
+    EXTENDED_ENV_RULES,
+} from './lib/environmentValidation';
+export type {
+    EnvironmentValidationError,
+    EnvironmentRule,
+    EnvironmentValidationOptions,
+    EnvironmentValidationResult,
+} from './lib/environmentValidation';
+
 // Re-export constants
 export * from './constants';

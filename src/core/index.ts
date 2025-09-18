@@ -16,6 +16,7 @@ export type {
   EmbeddedWalletConfiguration,
   CommonEmbeddedWalletConfiguration,
   EncryptionSession,
+  EnvironmentValidationConfig,
 } from './provider';
 
 // Storage adapters

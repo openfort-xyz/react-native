@@ -22,6 +22,14 @@ import { OpenfortContext, type OpenfortContextValue } from './context';
 import { createOpenfortClient, setDefaultClient } from './client';
 import { EmbeddedWalletWebView, WebViewUtils } from '../native';
 import { logger, getEmbeddedStateName } from '../lib/logger';
+import {
+  DEFAULT_ENV_RULES,
+  getEnvironmentStatus,
+  type EnvironmentRule,
+  type EnvironmentValidationOptions,
+  type EnvironmentValidationResult,
+} from '../lib/environmentValidation';
+import { EnvironmentValidationErrorScreen } from '../components/environment/EnvironmentValidationErrorScreen';
 
 /**
  * Custom auth configuration
@@ -33,6 +41,19 @@ interface CustomAuthConfig {
 }
 
 type PolicyConfig = string | Record<number, string>;
+
+export interface EnvironmentValidationConfig {
+  /** Toggle the runtime validation behaviour. Defaults to true. */
+  enabled?: boolean;
+  /** Custom validation rules. Defaults to Openfort-specific requirements. */
+  rules?: EnvironmentRule[];
+  /** Provide an alternate lookup for configuration values. */
+  getValue?: EnvironmentValidationOptions['getValue'];
+  /** Control whether the default modal is displayed. Defaults to true. */
+  showModal?: boolean;
+  /** Render a completely custom fallback when configuration is invalid. */
+  renderFallback?: (result: EnvironmentValidationResult) => React.ReactNode;
+}
 
 export type CommonEmbeddedWalletConfiguration = {
   /** Publishable key for the Shield API */
@@ -177,6 +198,10 @@ export interface OpenfortProviderProps {
    * Enable verbose logging for debugging purposes
    */
   verbose?: boolean;
+  /**
+   * Configure how the provider validates environment variables before mounting.
+   */
+  environmentValidation?: EnvironmentValidationConfig;
 }
 
 /**
@@ -192,12 +217,61 @@ export const OpenfortProvider = ({
   overrides,
   thirdPartyAuth,
   verbose = false,
+  environmentValidation,
 }: OpenfortProviderProps) => {
   // Prevent multiple OpenfortProvider instances
   const existingContext = React.useContext(OpenfortContext);
   if (existingContext) {
     throw new Error(
       'Found multiple instances of OpenfortProvider. Ensure there is only one mounted in your application tree.'
+    );
+  }
+
+  const resolvedValidation = useMemo(() => ({
+    enabled: environmentValidation?.enabled ?? true,
+    rules: environmentValidation?.rules ?? DEFAULT_ENV_RULES,
+    getValue: environmentValidation?.getValue,
+    showModal: environmentValidation?.showModal ?? true,
+    renderFallback: environmentValidation?.renderFallback,
+  }), [environmentValidation]);
+
+  // Evaluate environment readiness before initialising the Openfort client.
+  const environmentStatus = useMemo<EnvironmentValidationResult>(() => {
+    if (!resolvedValidation.enabled) {
+      return { isValid: true, errors: [], values: {} as Record<string, string | undefined> };
+    }
+
+    return getEnvironmentStatus(resolvedValidation.rules, {
+      getValue: (rule) => {
+        if (resolvedValidation.getValue) {
+          const customValue = resolvedValidation.getValue(rule);
+          if (customValue !== undefined) {
+            return customValue;
+          }
+        }
+
+        switch (rule.envName) {
+          case 'OPENFORT_PROJECT_PUBLISHABLE_KEY':
+            return publishableKey;
+          case 'OPENFORT_SHIELD_PUBLISHABLE_KEY':
+            return walletConfig?.shieldPublishableKey;
+          default:
+            return undefined;
+        }
+      },
+    });
+  }, [resolvedValidation, publishableKey, walletConfig]);
+
+  if (resolvedValidation.enabled && !environmentStatus.isValid) {
+    if (resolvedValidation.renderFallback) {
+      return resolvedValidation.renderFallback(environmentStatus);
+    }
+
+    return (
+      <EnvironmentValidationErrorScreen
+        errors={environmentStatus.errors}
+        showModal={resolvedValidation.showModal}
+      />
     );
   }
 

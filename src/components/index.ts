@@ -9,3 +9,8 @@
  */
 
 export { AuthBoundary } from './AuthBoundary';
+
+export { EnvironmentValidationModal } from './environment/EnvironmentValidationModal';
+export { EnvironmentValidationErrorScreen } from './environment/EnvironmentValidationErrorScreen';
+export type { EnvironmentValidationModalProps } from './environment/EnvironmentValidationModal';
+export type { EnvironmentValidationErrorScreenProps } from './environment/EnvironmentValidationErrorScreen';
