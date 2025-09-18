@@ -47,7 +47,7 @@ export interface EnvironmentValidationResult {
 const PLACEHOLDER_VALUES = new Set<string>([
   'YOUR_PROJECT_PUBLISHABLE_KEY',
   'YOUR_SHIELD_PUBLISHABLE_KEY',
-  'YOUR_SHIELD_ENCRYPTION_PART',
+  'YOUR_SHIELD_ENCRYPTION_KEY',
   'YOUR_GAS_SPONSORSHIP_POLICY_ID',
   'https://your-recovery-endpoint.example.com',
 ]);
@@ -270,9 +270,9 @@ export const DEFAULT_ENV_RULES: EnvironmentRule[] = [
 
 export const SHIELD_ENV_RULES: EnvironmentRule[] = [
   {
-    envName: 'OPENFORT_SHIELD_ENCRYPTION_PART',
+    envName: 'OPENFORT_SHIELD_ENCRYPTION_KEY',
     extraKey: 'openfortShieldEncryptionKey',
-    description: 'Shield encryption part required for signing requests',
+    description: 'Shield encryption key required for signing requests',
     required: true,
   },
   {
