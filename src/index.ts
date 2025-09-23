@@ -1,12 +1,11 @@
 /**
- * Openfort React Native SDK
- * 
- * A comprehensive React Native SDK for integrating with the Openfort platform.
- * This SDK provides authentication, embedded wallets, session management, and UI components
- * for building decentralized applications on React Native.
- * 
- * @author Openfort
- * @version 0.1.8
+ * @packageDocumentation
+ *
+ * Entry point for the Openfort React Native SDK.
+ *
+ * This package re-exports the core SDK functionality, hooks, components and native helpers
+ * required to integrate Openfort authentication and embedded wallets into React Native and
+ * Expo applications.
  */
 
 // Re-export commonly used types from @openfort/openfort-js

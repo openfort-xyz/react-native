@@ -1,6 +1,3 @@
-/**
- * Core Openfort hook for accessing SDK state and methods
- */
 import { useOpenfortContext } from '../../core/context';
 import { UseOpenfort } from '../../types';
 

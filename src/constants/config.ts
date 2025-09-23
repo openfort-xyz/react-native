@@ -1,5 +1,5 @@
 /**
- * SDK package information
+ * Static metadata describing the React Native SDK package.
  */
 export const SDK_INFO = {
     name: '@openfort/react-native',

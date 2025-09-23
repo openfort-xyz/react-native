@@ -5,27 +5,22 @@ import type { Openfort as OpenfortClient } from '@openfort/openfort-js';
 import { useOpenfortContext } from '../../core/context';
 
 /**
- * Hook for accessing the Openfort client instance directly
- * 
- * This hook provides access to the underlying Openfort client for advanced use cases
- * where you need direct access to the client methods.
- * 
- * @returns The Openfort client instance
- * 
+ * Hook for accessing the Openfort client instance directly.
+ *
+ * This hook exposes the underlying {@link OpenfortClient} so that advanced consumer code
+ * can access low-level methods that are not surfaced through the convenience hooks.
+ *
+ * @returns The current {@link OpenfortClient} instance from context.
+ *
  * @example
  * ```tsx
  * const client = useOpenfortClient();
- * 
- * // Use client methods directly
- * const customResult = await client.auth.customMethod();
- * 
- * // Access client configuration
- * console.log('App ID:', client.config.appId);
- * 
- * // Check client status
- * if (client.isInitialized) {
- *   // Perform operations that require initialization
- * }
+ *
+ * // Invoke a raw SDK method
+ * const token = await client.getAccessToken();
+ *
+ * // Access nested services
+ * await client.auth.logout();
  * ```
  */
 export function useOpenfortClient(): OpenfortClient {

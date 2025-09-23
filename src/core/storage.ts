@@ -34,8 +34,11 @@ interface OpenfortStorage {
 }
 
 /**
- * Storage adapter using `expo-secure-store` intended for
- * use with `Openfort` class from `@openfort/openfort-js`.
+ * Storage adapter backed by {@link SecureStore} that is compatible with the
+ * {@link Storage} interface expected by `@openfort/openfort-js`.
+ *
+ * The adapter normalises the keys provided by the Openfort SDK so they can be safely
+ * persisted via Expo Secure Store.
  */
 export const SecureStorageAdapter: OpenfortStorage = {
   async get(key: StorageKeys): Promise<string | null> {
@@ -106,16 +109,23 @@ export const SecureStorageAdapter: OpenfortStorage = {
 };
 
 /**
- * Normalizes storage keys by replacing colons with hyphens
- * to ensure compatibility with expo-secure-store
+ * Normalises an Openfort storage key for use with Expo Secure Store.
+ *
+ * @param key - The key provided by the Openfort SDK.
+ * @returns A key that is safe to use with Expo Secure Store.
  */
 function normalizeKey(key: StorageKeys): string {
   return key.replaceAll(':', '-');
 }
 
 /**
- * Creates a type-safe storage adapter that bridges between the Openfort SDK's 
- * expected Storage interface and our React Native implementation
+ * Creates a type-safe storage adapter that bridges the Openfort SDK storage API with
+ * the React Native implementation.
+ *
+ * @param customStorage - Optional custom storage implementation. When omitted the
+ * {@link SecureStorageAdapter} is used.
+ * @returns An object that satisfies the {@link Storage} interface expected by
+ * `@openfort/openfort-js`.
  */
 export function createNormalizedStorage(customStorage?: OpenfortStorage): Storage {
   const baseStorage = customStorage || SecureStorageAdapter;
@@ -154,7 +164,12 @@ export function createNormalizedStorage(customStorage?: OpenfortStorage): Storag
 }
 
 /**
- * Converts an unknown key (likely from the Openfort SDK) to our StorageKeys enum
+ * Converts a key provided by the Openfort SDK to the local {@link StorageKeys} enum.
+ *
+ * @param key - Value provided by the Openfort SDK. Can be a string or an enum-like
+ * object.
+ * @returns The matching {@link StorageKeys} value.
+ * @throws {Error} When the key cannot be mapped to one of the known storage keys.
  */
 function keyToStorageKeys(key: unknown): StorageKeys {
   if (typeof key === 'string') {

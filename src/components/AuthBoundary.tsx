@@ -30,14 +30,14 @@ export interface AuthBoundaryProps {
 /**
  * Authentication boundary component that conditionally renders content based on
  * the user's authentication status and SDK readiness.
- * 
+ *
  * This component simplifies protecting routes and content based on authentication state.
- * It handles three main states:
- * 1. Loading - SDK is initializing
- * 2. Error - SDK encountered an initialization error
- * 3. Unauthenticated - User is not logged in
- * 4. Authenticated - User is logged in and SDK is ready
- * 
+ * It handles four distinct states:
+ * 1. **Loading** – the SDK is still initialising.
+ * 2. **Error** – the SDK encountered an initialisation error.
+ * 3. **Unauthenticated** – the user is not logged in.
+ * 4. **Authenticated** – the user is logged in and the SDK is ready.
+ *
  * @example
  * ```tsx
  * import { AuthBoundary } from '@openfort/react-native';
