@@ -57,10 +57,26 @@ export interface OpenfortContextValue {
 export const OpenfortContext = React.createContext<OpenfortContextValue | null>(null);
 
 /**
- * Hook to access the Openfort context.
+ * Hook to access the Openfort context
  *
- * @returns The {@link OpenfortContextValue} from the nearest provider.
- * @throws {Error} When used outside an {@link OpenfortProvider}.
+ * This hook provides access to the Openfort SDK context including client instance,
+ * user state, and authentication methods. Must be used within an OpenfortProvider.
+ *
+ * @returns The {@link OpenfortContextValue} from the nearest provider
+ * @throws {Error} When used outside an {@link OpenfortProvider}
+ *
+ * @example
+ * ```tsx
+ * const { client, user, isReady, logout } = useOpenfortContext();
+ *
+ * // Check if SDK is ready
+ * if (isReady && user) {
+ *   console.log('User authenticated:', user.id);
+ *
+ *   // Access client methods
+ *   const token = await client.getAccessToken();
+ * }
+ * ```
  */
 export function useOpenfortContext(): OpenfortContextValue {
   const context = React.useContext(OpenfortContext);
@@ -76,9 +92,24 @@ export function useOpenfortContext(): OpenfortContextValue {
 }
 
 /**
- * Hook to safely access the Openfort context.
+ * Hook to safely access the Openfort context
  *
- * @returns The {@link OpenfortContextValue} when available, otherwise `null`.
+ * This hook provides safe access to the Openfort SDK context without throwing errors.
+ * Returns null when used outside of an OpenfortProvider instead of throwing.
+ *
+ * @returns The {@link OpenfortContextValue} when available, otherwise `null`
+ *
+ * @example
+ * ```tsx
+ * const context = useOpenfortContextSafe();
+ *
+ * if (context) {
+ *   const { user, isReady } = context;
+ *   console.log('Context available:', { user: !!user, isReady });
+ * } else {
+ *   console.log('No Openfort context found');
+ * }
+ * ```
  */
 export function useOpenfortContextSafe(): OpenfortContextValue | null {
   return React.useContext(OpenfortContext);

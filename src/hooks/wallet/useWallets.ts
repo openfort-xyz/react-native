@@ -58,31 +58,36 @@ const mapWalletStatus = (status: WalletFlowStatus) => {
   }
 }
 /**
- * Hook for interacting with embedded Ethereum wallets.
+ * Hook for interacting with embedded wallets
  *
- * This hook manages embedded Ethereum wallets based on the user's state from the provider. Wallet state is determined by
- * polling in the provider, not by local state management.
+ * This hook manages embedded wallets based on the user's state from the provider. Wallet state is determined by
+ * polling in the provider, not by local state management. It provides wallet creation, recovery, and management capabilities.
  *
- * @param hookOptions - Optional configuration with callback functions.
- * @returns Current embedded Ethereum wallet state with actions.
- * 
+ * @param hookOptions - Optional configuration with callback functions and chain ID settings
+ * @returns Current embedded wallet state with actions and wallet collection
+ *
  * @example
  * ```tsx
- * const ethereumWallet = useEmbeddedEthereumWallet({
- *   onCreateWalletSuccess: (provider) => console.log('Ethereum wallet created:', provider),
- *   onCreateWalletError: (error) => console.error('Ethereum wallet creation failed:', error),
+ * const { wallets, activeWallet, createWallet, setActiveWallet, isCreating } = useWallets({
+ *   onSuccess: ({ wallet }) => console.log('Wallet operation successful:', wallet?.address),
+ *   onError: ({ error }) => console.error('Wallet operation failed:', error?.message),
+ *   chainId: 1, // Ethereum mainnet
  * });
- * 
- * // Check wallet status and create if needed
- * if (ethereumWallet.status === 'disconnected') {
- *   await ethereumWallet.create(); // Uses default chain
- *   // Or with specific chain: await ethereumWallet.create({ chainId: 1 });
+ *
+ * // Create a new wallet if none exist
+ * if (wallets.length === 0 && !isCreating) {
+ *   await createWallet({ chainId: 1 });
  * }
- * 
- * // Use connected wallets
- * if (ethereumWallet.status === 'connected' && ethereumWallet.wallets.length > 0) {
- *   const provider = await ethereumWallet.wallets[0].getProvider();
- *   // Use provider for Ethereum transactions
+ *
+ * // Use existing wallets
+ * if (wallets.length > 0 && !activeWallet) {
+ *   await setActiveWallet({ address: wallets[0].address });
+ * }
+ *
+ * // Access active wallet
+ * if (activeWallet) {
+ *   const provider = await activeWallet.getProvider();
+ *   // Use provider for transactions
  * }
  * ```
  */

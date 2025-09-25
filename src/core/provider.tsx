@@ -183,10 +183,35 @@ export interface OpenfortProviderProps {
 }
 
 /**
- * Provider component that initialises the Openfort SDK and exposes its state via {@link OpenfortContext}.
+ * Provider component that initialises the Openfort SDK and exposes its state via {@link OpenfortContext}
  *
- * @param props - Provider configuration including the publishable key and optional overrides.
- * @returns A React element that provides the Openfort context to its children.
+ * This component must wrap your React Native app to provide Openfort functionality to all child components.
+ * It initializes the SDK with the provided configuration and manages authentication state.
+ *
+ * @param props - Provider configuration including the publishable key and optional overrides
+ * @returns A React element that provides the Openfort context to its children
+ *
+ * @example
+ * ```tsx
+ * import { OpenfortProvider } from '@openfort/react-native';
+ * import { polygon, polygonMumbai } from 'viem/chains';
+ *
+ * function App() {
+ *   return (
+ *     <OpenfortProvider
+ *       publishableKey="pk_test_..."
+ *       supportedChains={[polygon, polygonMumbai]}
+ *       walletConfig={{
+ *         shieldPublishableKey: "shield_pk_...",
+ *         getEncryptionSession: () => fetchEncryptionSession(),
+ *       }}
+ *       verbose={true}
+ *     >
+ *       <YourAppContent />
+ *     </OpenfortProvider>
+ *   );
+ * }
+ * ```
  */
 export const OpenfortProvider = ({
   children,
