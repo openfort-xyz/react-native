@@ -2,12 +2,11 @@ import { useOpenfortContext } from '../../core/context';
 import { UseOpenfort } from '../../types';
 
 /**
- * Hook that exposes the core state of the Openfort SDK
- * 
- * This hook provides access to the current authenticated user object,
- * SDK initialization status, and core authentication methods.
- * 
- * @returns The Openfort SDK's core state and methods
+ * Hook that exposes the core state of the Openfort SDK.
+ *
+ * This hook provides access to the current authenticated user object, SDK initialization status, and core authentication methods.
+ *
+ * @returns The Openfort SDK's core state and methods.
  * 
  * @example
  * ```tsx

@@ -28,11 +28,10 @@ export interface AuthBoundaryProps {
 }
 
 /**
- * Authentication boundary component that conditionally renders content based on
- * the user's authentication status and SDK readiness.
+ * Authentication boundary component that renders content based on authentication state.
  *
- * This component simplifies protecting routes and content based on authentication state.
- * It handles four distinct states:
+ * This component simplifies protecting routes and content based on authentication state and
+ * handles four distinct scenarios:
  * 1. **Loading** – the SDK is still initialising.
  * 2. **Error** – the SDK encountered an initialisation error.
  * 3. **Unauthenticated** – the user is not logged in.

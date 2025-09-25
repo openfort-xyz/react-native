@@ -34,11 +34,9 @@ interface OpenfortStorage {
 }
 
 /**
- * Storage adapter backed by {@link SecureStore} that is compatible with the
- * {@link Storage} interface expected by `@openfort/openfort-js`.
+ * Storage adapter backed by {@link SecureStore} that matches the {@link Storage} interface expected by `@openfort/openfort-js`.
  *
- * The adapter normalises the keys provided by the Openfort SDK so they can be safely
- * persisted via Expo Secure Store.
+ * The adapter normalises the keys provided by the Openfort SDK so they can be safely persisted via Expo Secure Store.
  */
 export const SecureStorageAdapter: OpenfortStorage = {
   async get(key: StorageKeys): Promise<string | null> {
@@ -119,13 +117,10 @@ function normalizeKey(key: StorageKeys): string {
 }
 
 /**
- * Creates a type-safe storage adapter that bridges the Openfort SDK storage API with
- * the React Native implementation.
+ * Creates a type-safe storage adapter that bridges the Openfort SDK storage API with the React Native implementation.
  *
- * @param customStorage - Optional custom storage implementation. When omitted the
- * {@link SecureStorageAdapter} is used.
- * @returns An object that satisfies the {@link Storage} interface expected by
- * `@openfort/openfort-js`.
+ * @param customStorage - Optional custom storage implementation. When omitted the {@link SecureStorageAdapter} is used.
+ * @returns An object that satisfies the {@link Storage} interface expected by `@openfort/openfort-js`.
  */
 export function createNormalizedStorage(customStorage?: OpenfortStorage): Storage {
   const baseStorage = customStorage || SecureStorageAdapter;

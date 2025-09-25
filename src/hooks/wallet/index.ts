@@ -1,6 +1,6 @@
 /**
- * Wallet hooks index
- * 
+ * Wallet hooks index.
+ *
  * This module re-exports all wallet-related hooks for convenient importing.
  */
 

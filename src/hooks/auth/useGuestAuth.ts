@@ -7,14 +7,22 @@ import { OpenfortHookOptions } from '../../types/hookOption';
 import { OpenfortError, OpenfortErrorType } from '../../types/openfortError';
 import { CreateWalletPostAuthOptions } from './useCreateWalletPostAuth';
 
+export type GuestHookResult = {
+  error?: OpenfortError;
+  user?: OpenfortUser;
+  // wallet?: UserWallet;
+};
+
+export type GuestHookOptions = OpenfortHookOptions<GuestHookResult> & CreateWalletPostAuthOptions;
+
 /**
  * Hook for creating guest accounts.
  *
- * Guest accounts allow users to access certain features without full authentication and
- * can later be upgraded to full accounts by linking additional authentication methods.
+ * Guest accounts allow users to access certain features without full authentication and can later be upgraded to full accounts
+ * by linking additional authentication methods.
  *
  * @param hookOptions - Configuration options including success and error callbacks.
- * @returns An object exposing the `signUpGuest` action alongside flow state helpers.
+ * @returns Current guest authentication helpers with flow status indicators.
  *
  * @example
  * ```tsx
@@ -28,14 +36,6 @@ import { CreateWalletPostAuthOptions } from './useCreateWalletPostAuth';
  * }
  * ```
  */
-export type GuestHookResult = {
-  error?: OpenfortError;
-  user?: OpenfortUser;
-  // wallet?: UserWallet;
-};
-
-export type GuestHookOptions = OpenfortHookOptions<GuestHookResult> & CreateWalletPostAuthOptions;
-
 export const useGuestAuth = (hookOptions: GuestHookOptions = {}) => {
 
   const { client, _internal } = useOpenfortContext();

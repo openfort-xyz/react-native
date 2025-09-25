@@ -6,14 +6,13 @@ import { logger } from '../lib/logger';
 
 
 /**
- * Creates an {@link OpenfortClient} instance that is configured for use inside an
- * Expo/React Native environment.
+ * Creates an {@link OpenfortClient} configured for Expo and React Native environments.
  *
- * The helper makes sure the Expo specific utilities like secure storage and the
- * crypto digest implementation are wired into the underlying Openfort SDK.
+ * The helper ensures Expo-specific utilities like secure storage and the crypto digest
+ * implementation are wired into the underlying Openfort SDK.
  *
  * @param options - {@link OpenfortSDKConfiguration} containing the base configuration,
- * overrides and optional Shield configuration.
+ * overrides, and optional Shield configuration.
  * @returns A fully configured {@link OpenfortClient} instance ready for React Native apps.
  *
  * @example
@@ -62,10 +61,9 @@ export function createOpenfortClient({
 /**
  * Resolves the native application identifier from the Expo runtime.
  *
- * @throws {Error} Thrown when the identifier cannot be determined. This usually means
- * that the `expo-application` package is not correctly installed or the native bundle
- * identifier has not been configured.
  * @returns The native bundle identifier reported by Expo.
+ * @throws {Error} Thrown when the identifier cannot be determined, typically because the
+ * `expo-application` package is not installed or the native bundle identifier is missing.
  */
 function getNativeApplicationId(): string {
   if (typeof applicationId !== 'string') {
@@ -77,20 +75,19 @@ function getNativeApplicationId(): string {
 }
 
 /**
- * Default {@link OpenfortClient} instance used as a fallback when consumers do not
- * provide their own client. Applications should generally manage their own instance
- * via {@link createOpenfortClient} instead of relying on this singleton.
+ * Default {@link OpenfortClient} instance used when an application does not supply its own.
+ *
+ * Applications should generally manage their own instance via {@link createOpenfortClient}
+ * instead of relying on this singleton.
  */
 let defaultClient: OpenfortClient | null = null;
 
 /**
  * Retrieves the lazily initialised default {@link OpenfortClient} instance.
  *
- * @param options - Optional configuration used to create the client when it does not
- * yet exist.
+ * @param options - Optional configuration used to create the client when it does not yet exist.
  * @returns The cached {@link OpenfortClient} instance.
- * @throws {Error} When the client has not been initialised and no configuration was
- * provided.
+ * @throws {Error} When the client has not been initialised and no configuration was provided.
  * @internal
  */
 export function getDefaultClient(options?: OpenfortSDKConfiguration): OpenfortClient {

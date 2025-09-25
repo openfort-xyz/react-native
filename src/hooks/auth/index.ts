@@ -1,6 +1,6 @@
 /**
- * Authentication hooks index
- * 
+ * Authentication hooks index.
+ *
  * This module re-exports all authentication-related hooks for convenient importing.
  */
 

@@ -58,13 +58,11 @@ export type EncryptionSession =
 /**
  * Configuration for enabling embedded wallet recovery flows.
  *
- * Automatic recovery requires an encryption session, while password-based recovery
- * may either use an encryption session or a Shield encryption key.
- *
- * The encryption session can be provided either via
- * {@link EncryptionSession.createEncryptedSessionEndpoint | createEncryptedSessionEndpoint}
- * or by supplying a {@link EncryptionSession.getEncryptionSession | getEncryptionSession}
- * callback that resolves to the session identifier.
+ * Automatic recovery requires an encryption session, while password-based recovery may either use
+ * an encryption session or a Shield encryption key. The encryption session can be provided via
+ * {@link EncryptionSession.createEncryptedSessionEndpoint | createEncryptedSessionEndpoint} or by
+ * supplying a {@link EncryptionSession.getEncryptionSession | getEncryptionSession} callback that
+ * resolves to the session identifier.
  */
 export type EmbeddedWalletConfiguration = CommonEmbeddedWalletConfiguration & EncryptionSession
 
@@ -86,7 +84,9 @@ type BlockExplorer = {
   name: string;
   url: string;
 };
-/** A subset of WAGMI's chain type
+/**
+ * A subset of WAGMI's chain type.
+ *
  * https://github.com/wagmi-dev/references/blob/6aea7ee9c65cfac24f33173ab3c98176b8366f05/packages/chains/src/types.ts#L8
  */
 export type Chain = {
@@ -115,8 +115,7 @@ export type Chain = {
 
 
 /**
- * Starts polling the embedded wallet state and invokes the provided callback only when
- * the state transitions. A cleanup function is returned to stop the polling.
+ * Starts polling the embedded wallet state and invokes the callback when transitions occur.
  *
  * @param client - The Openfort client to query for embedded wallet state.
  * @param onChange - Callback invoked whenever the state changes.
@@ -184,11 +183,9 @@ export interface OpenfortProviderProps {
 }
 
 /**
- * Provider component that initialises the Openfort SDK and exposes its state via
- * {@link OpenfortContext} to the React tree.
+ * Provider component that initialises the Openfort SDK and exposes its state via {@link OpenfortContext}.
  *
- * @param props - Provider configuration including the publishable key and optional
- * overrides.
+ * @param props - Provider configuration including the publishable key and optional overrides.
  * @returns A React element that provides the Openfort context to its children.
  */
 export const OpenfortProvider = ({

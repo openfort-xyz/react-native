@@ -1,6 +1,3 @@
-/**
- * Hook for embedded Ethereum wallet functionality
- */
 import { AccountTypeEnum, ChainTypeEnum, EmbeddedState, Provider, RecoveryMethod, RecoveryParams, type EmbeddedAccount } from '@openfort/openfort-js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useOpenfortContext } from '../../core/context';
@@ -61,13 +58,13 @@ const mapWalletStatus = (status: WalletFlowStatus) => {
   }
 }
 /**
- * Hook for interacting with embedded Ethereum wallets
- * 
- * This hook manages embedded Ethereum wallets based on the user's state from the provider.
- * Wallet state is determined by polling in the provider, not by local state management.
- * 
- * @param props - Optional configuration with callback functions
- * @returns Current embedded Ethereum wallet state with actions
+ * Hook for interacting with embedded Ethereum wallets.
+ *
+ * This hook manages embedded Ethereum wallets based on the user's state from the provider. Wallet state is determined by
+ * polling in the provider, not by local state management.
+ *
+ * @param hookOptions - Optional configuration with callback functions.
+ * @returns Current embedded Ethereum wallet state with actions.
  * 
  * @example
  * ```tsx

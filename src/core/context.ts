@@ -4,8 +4,7 @@ import { OAuthFlowState, PasswordFlowState, RecoveryFlowState, SiweFlowState } f
 import type { Chain, EmbeddedWalletConfiguration } from './provider';
 
 /**
- * Core Openfort context interface describing the state and methods exposed through the
- * {@link OpenfortContext} React context.
+ * Core Openfort context interface describing the state and methods exposed through {@link OpenfortContext}.
  */
 export interface OpenfortContextValue {
   /** The Openfort client instance. */
@@ -60,8 +59,8 @@ export const OpenfortContext = React.createContext<OpenfortContextValue | null>(
 /**
  * Hook to access the Openfort context.
  *
- * @throws {Error} When used outside an {@link OpenfortProvider}.
  * @returns The {@link OpenfortContextValue} from the nearest provider.
+ * @throws {Error} When used outside an {@link OpenfortProvider}.
  */
 export function useOpenfortContext(): OpenfortContextValue {
   const context = React.useContext(OpenfortContext);
@@ -86,8 +85,7 @@ export function useOpenfortContextSafe(): OpenfortContextValue | null {
 }
 
 /**
- * Runtime type guard that checks whether a value satisfies
- * {@link OpenfortContextValue}.
+ * Runtime type guard that checks whether a value satisfies {@link OpenfortContextValue}.
  *
  * @param value - Value to check.
  * @returns `true` when the value matches the {@link OpenfortContextValue} shape.

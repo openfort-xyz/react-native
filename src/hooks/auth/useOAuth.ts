@@ -1,6 +1,3 @@
-/**
- * Hook for OAuth-based login functionality
- */
 import { OAuthProvider, type AuthPlayerResponse as OpenfortUser } from '@openfort/openfort-js';
 import { useCallback } from 'react';
 import { useOpenfortContext } from '../../core/context';
@@ -41,33 +38,26 @@ export type AuthHookOptions = {
 } & OpenfortHookOptions<StoreCredentialsResult | InitOAuthReturnType> & CreateWalletPostAuthOptions;
 
 /**
- * Hook for OAuth-based authentication with supported providers
- * 
- * This hook provides OAuth authentication flow for various providers (Google, Apple, Discord, etc.).
- * It opens the provider's web authentication page and handles the OAuth flow automatically.
- * 
- * @param opts - Configuration options including success/error callbacks
- * @returns Object with login function and current OAuth flow state
- * 
+ * Hook for OAuth-based authentication with supported providers.
+ *
+ * This hook provides OAuth authentication flows for providers like Google, Apple, and Discord. It opens the provider's web or
+ * native authentication surfaces and stores the resulting credentials.
+ *
+ * @param hookOptions - Configuration options including success and error callbacks.
+ * @returns OAuth helpers for initialising logins, linking accounts, and inspecting flow state.
+ *
  * @example
  * ```tsx
- * const { login, state } = useLoginWithOAuth({
- *   onSuccess: (user) => console.log('OAuth login successful:', user),
- *   onError: (error) => console.error('OAuth login failed:', error),
+ * const { login, state } = useOAuth({
+ *   onSuccess: ({ user }) => console.log('OAuth login successful:', user?.id),
+ *   onError: ({ error }) => console.error('OAuth login failed:', error?.message),
  * });
- * 
- * // Login with Google
- * const user = await login({ provider: 'google' });
- * 
- * // Login with Apple (using legacy web flow on iOS if needed)
- * const user = await login({ 
- *   provider: 'apple',
- *   isLegacyAppleIosBehaviorEnabled: true 
- * });
- * 
- * // Other supported providers
- * await login({ provider: 'discord' });
- * await login({ provider: 'twitter' });
+ *
+ * await login({ provider: OAuthProvider.GOOGLE });
+ *
+ * if (state.isError) {
+ *   console.log('OAuth failed:', state.error);
+ * }
  * ```
  */
 export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
