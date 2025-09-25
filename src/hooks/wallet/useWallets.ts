@@ -116,6 +116,45 @@ export function useWallets(hookOptions: WalletOptions = {}) {
     };
   }, [activeWalletId, embeddedAccounts, client.embeddedWallet]);
 
+  const resolveEncryptionSession = useCallback(async (): Promise<string> => {
+    if (!walletConfig) {
+      throw new OpenfortError('Encryption session configuration is required', OpenfortErrorType.WALLET_ERROR);
+    }
+
+    if (walletConfig.getEncryptionSession) {
+      return await walletConfig.getEncryptionSession();
+    }
+
+    if (walletConfig.createEncryptedSessionEndpoint) {
+      try {
+        const response = await fetch(walletConfig.createEncryptedSessionEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new OpenfortError('Failed to create encryption session', OpenfortErrorType.WALLET_ERROR, { status: response.status });
+        }
+
+        const body = await response.json() as { session?: string };
+        if (!body?.session || typeof body.session !== 'string') {
+          throw new OpenfortError('Encryption session response is missing the `session` property', OpenfortErrorType.WALLET_ERROR);
+        }
+
+        return body.session;
+      } catch (error) {
+        if (error instanceof OpenfortError) {
+          throw error;
+        }
+        throw new OpenfortError('Failed to create encryption session', OpenfortErrorType.WALLET_ERROR, { error });
+      }
+    }
+
+    throw new OpenfortError('Encryption session configuration is required', OpenfortErrorType.WALLET_ERROR);
+  }, [walletConfig]);
+
   const setActiveWallet = useCallback(
     async (options?: SetActiveWalletOptions): Promise<SetActiveWalletResult> => {
       // If there's already a recovery in progress, return the existing promise
@@ -180,13 +219,9 @@ export function useWallets(hookOptions: WalletOptions = {}) {
                 password: options.recoveryPassword,
               }
             } else {
-              if (!walletConfig?.getEncryptionSession) {
-                throw new OpenfortError('Encryption session (walletConfig.getEncryptionSession) is required for automatic recovery', OpenfortErrorType.WALLET_ERROR);
-              }
-
               recoveryParams = {
                 recoveryMethod: RecoveryMethod.AUTOMATIC,
-                encryptionSession: await walletConfig.getEncryptionSession()
+                encryptionSession: await resolveEncryptionSession()
               };
             }
 
@@ -237,7 +272,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
       return recoverPromiseRef.current;
     },
-    [client, supportedChains, walletConfig, _internal, embeddedAccounts, hookOptions]
+    [client, supportedChains, resolveEncryptionSession, _internal, embeddedAccounts, hookOptions]
   );
 
   // Fetch embedded wallets using embeddedWallet.list()
@@ -348,13 +383,9 @@ export function useWallets(hookOptions: WalletOptions = {}) {
             password: options.recoveryPassword,
           }
         } else {
-          if (!walletConfig?.getEncryptionSession) {
-            throw new OpenfortError('Encryption session (walletConfig.getEncryptionSession) is required for automatic recovery', OpenfortErrorType.WALLET_ERROR);
-          }
-
           recoveryParams = {
             recoveryMethod: RecoveryMethod.AUTOMATIC,
-            encryptionSession: await walletConfig.getEncryptionSession()
+            encryptionSession: await resolveEncryptionSession()
           };
         }
 
@@ -409,7 +440,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         })
       }
     },
-    [client, supportedChains, walletConfig, _internal, user]
+    [client, supportedChains, walletConfig, resolveEncryptionSession, _internal, user]
   );
 
   const setRecovery = useCallback(
