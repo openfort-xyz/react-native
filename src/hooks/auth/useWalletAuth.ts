@@ -53,18 +53,19 @@ const mapStatus = (status: SiweFlowState) => {
 };
 
 /**
- * Hook for linking Ethereum accounts to existing users through Sign-In With Ethereum (SIWE).
+ * Hook for handling Sign-In With Ethereum (SIWE) flows.
  *
- * This hook orchestrates SIWE message generation, signature submission, and state tracking so that external wallets can be
- * connected to authenticated users.
+ * This hook orchestrates SIWE message generation, signature submission, and state
+ * tracking so that external wallets can either authenticate a user (`signInWithSiwe`)
+ * or be linked to an existing account (`linkSiwe`).
  *
  * @param hookOptions - Optional callbacks for handling success or error events from the SIWE flows.
  * @returns SIWE helpers for generating messages, signing in, linking wallets, and inspecting flow status.
  *
  * @example
  * ```tsx
- * const { generateSiweMessage, signInWithSiwe, isAwaitingSignature } = useWalletAuth({
- *   onSuccess: ({ user }) => console.log('Linked SIWE wallet for user', user?.id),
+ * const { generateSiweMessage, signInWithSiwe, linkSiwe, isAwaitingSignature } = useWalletAuth({
+ *   onSuccess: ({ user }) => console.log('SIWE flow completed for', user?.id),
  * });
  *
  * const { message } = await generateSiweMessage({

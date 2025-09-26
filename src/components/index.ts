@@ -1,9 +1,8 @@
 /**
  * Openfort React Native SDK components.
  *
- * This module provides React components and hooks for building user interfaces that integrate with the Openfort platform in
- * React Native applications. The components are organised into the following categories:
- * - Authentication boundaries and guards
+ * This barrel currently exposes the authentication boundary component used to gate
+ * access to protected UI based on SDK readiness and user state.
  */
 
 export { AuthBoundary } from './AuthBoundary';
