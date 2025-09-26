@@ -1,17 +1,17 @@
 
 /**
- * Core Openfort hook interface
+ * Core Openfort hook interface.
  */
 export interface UseOpenfort {
-    /** The current authenticated user, or null when unauthenticated */
+    /** The current authenticated user, or null when unauthenticated. */
     user: import('@openfort/openfort-js').AuthPlayerResponse | null;
-    /** Whether or not the SDK has initialized and is ready for use */
+    /** Whether or not the SDK has initialized and is ready for use. */
     isReady: boolean;
-    /** Any error encountered during SDK initialization */
+    /** Any error encountered during SDK initialization. */
     error: Error | null;
-    /** A function that logs the current user out and clears any stored tokens */
+    /** A function that logs the current user out and clears any stored tokens. */
     logout: () => Promise<void>;
-    /** A function that gets the current authenticated user's access token */
+    /** A function that gets the current authenticated user's access token. */
     getAccessToken: () => Promise<string | null>;
 }
 
@@ -106,7 +106,7 @@ export {
 } from './predicates';
 
 /**
- * Embedded wallet hook options with callbacks
+ * Embedded wallet hook options with callbacks.
  */
 export type UseEmbeddedEthereumWallet = {
     onCreateWalletSuccess?: (provider: import('@openfort/openfort-js').Provider) => void;
@@ -116,7 +116,7 @@ export type UseEmbeddedEthereumWallet = {
 };
 
 /**
- * Embedded Solana wallet hook options with callbacks
+ * Embedded Solana wallet hook options with callbacks.
  */
 export type UseEmbeddedSolanaWallet = {
     onCreateWalletSuccess?: (account: import('@openfort/openfort-js').EmbeddedAccount) => void;

@@ -12,6 +12,24 @@ import type {
 
 /**
  * Type guard to check if embedded wallet is connected
+ *
+ * This function determines whether an embedded wallet is in a connected state and ready for use.
+ * It provides TypeScript type narrowing for wallet state management.
+ *
+ * @param s - The embedded wallet state to check
+ * @returns True if the wallet is connected, false otherwise
+ *
+ * @example
+ * ```tsx
+ * const { wallets } = useWallets();
+ * const wallet = wallets[0];
+ *
+ * if (isConnected(wallet)) {
+ *   // TypeScript knows wallet is connected, safe to use
+ *   const provider = await wallet.getProvider();
+ *   console.log('Wallet is connected:', wallet.address);
+ * }
+ * ```
  */
 export function isConnected(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletConnectedState;
 export function isConnected(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
@@ -36,6 +54,23 @@ export function isConnecting(s: EmbeddedEthereumWalletState | EmbeddedSolanaWall
 
 /**
  * Type guard to check if embedded wallet is disconnected
+ *
+ * This function determines whether an embedded wallet is in a disconnected state.
+ * Disconnected wallets need to be connected before they can be used for transactions.
+ *
+ * @param s - The embedded wallet state to check
+ * @returns True if the wallet is disconnected, false otherwise
+ *
+ * @example
+ * ```tsx
+ * const { wallets, setActiveWallet } = useWallets();
+ * const wallet = wallets[0];
+ *
+ * if (isDisconnected(wallet)) {
+ *   console.log('Wallet needs connection');
+ *   await setActiveWallet({ address: wallet.address });
+ * }
+ * ```
  */
 export function isDisconnected(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletDisconnectedState;
 export function isDisconnected(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
@@ -79,7 +114,26 @@ export function needsRecovery(s: EmbeddedEthereumWalletState | EmbeddedSolanaWal
  */
 
 /**
- * Type guard to check if wallet is in a loading state (connecting, creating, reconnecting)
+ * Type guard to check if wallet is in a loading state
+ *
+ * This function determines whether a wallet is currently in a transitional state
+ * (connecting, creating, or reconnecting) and should show loading indicators.
+ *
+ * @param s - The embedded wallet state to check
+ * @returns True if the wallet is in any loading state, false otherwise
+ *
+ * @example
+ * ```tsx
+ * const { wallets } = useWallets();
+ * const wallet = wallets[0];
+ *
+ * if (isLoading(wallet)) {
+ *   return <ActivityIndicator />; // Show spinner
+ * }
+ *
+ * // Safe to show wallet interface
+ * return <WalletInterface wallet={wallet} />;
+ * ```
  */
 export function isLoading(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
   return s.status === 'connecting' || s.status === 'creating' || s.status === 'reconnecting';

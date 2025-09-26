@@ -4,32 +4,32 @@ import { OAuthFlowState, PasswordFlowState, RecoveryFlowState, SiweFlowState } f
 import type { Chain, EmbeddedWalletConfiguration } from './provider';
 
 /**
- * Core Openfort context interface containing all SDK state and methods
+ * Core Openfort context interface describing the state and methods exposed through {@link OpenfortContext}.
  */
 export interface OpenfortContextValue {
-  /** The Openfort client instance */
+  /** The Openfort client instance. */
   client: OpenfortClient;
-  /** The current authenticated user, or null when unauthenticated */
+  /** The current authenticated user, or null when unauthenticated. */
   user: import('@openfort/openfort-js').AuthPlayerResponse | null;
-  /** Whether the SDK has initialized and is ready for use */
+  /** Whether the SDK has initialized and is ready for use. */
   isReady: boolean;
-  /** Any error encountered during SDK initialization */
+  /** Any error encountered during SDK initialization. */
   error: Error | null;
-  /** Supported chains configuration */
+  /** Supported chains configuration. */
   supportedChains?: [Chain, ...Chain[]];
-  /** Embedded wallet configuration for Shield integration */
+  /** Embedded wallet configuration for Shield integration. */
   walletConfig?: EmbeddedWalletConfiguration;
-  /** Current embedded wallet state */
+  /** Current embedded wallet state. */
   embeddedState: EmbeddedState;
 
   // Flow states
-  /** Password (email/SMS) authentication flow state */
+  /** Password (email/SMS) authentication flow state. */
   passwordState: PasswordFlowState;
-  /** OAuth authentication flow state */
+  /** OAuth authentication flow state. */
   oAuthState: OAuthFlowState;
-  /** Sign-in with Ethereum flow state */
+  /** Sign-in with Ethereum flow state. */
   siweState: SiweFlowState;
-  /** Recovery flow state */
+  /** Recovery flow state. */
   recoveryFlowState: RecoveryFlowState;
 
   // State setters
@@ -39,26 +39,44 @@ export interface OpenfortContextValue {
   setRecoveryFlowState: React.Dispatch<React.SetStateAction<RecoveryFlowState>>;
 
   // Core methods
-  /** Logs the current user out and clears any stored tokens */
+  /** Logs the current user out and clears any stored tokens. */
   logout: () => Promise<void>;
-  /** Gets the current authenticated user's access token */
+  /** Gets the current authenticated user's access token. */
   getAccessToken: () => Promise<string | null>;
 
   // Internal methods (not exposed to consumers)
-  /** @internal Refreshes user state after authentication changes */
+  /** @internal Refreshes user state after authentication changes. */
   _internal: {
     refreshUserState: (user?: import('@openfort/openfort-js').AuthPlayerResponse) => Promise<import('@openfort/openfort-js').AuthPlayerResponse | null>;
   };
 }
 
 /**
- * React context for sharing Openfort SDK state throughout the component tree
+ * React context for sharing Openfort SDK state throughout the component tree.
  */
 export const OpenfortContext = React.createContext<OpenfortContextValue | null>(null);
 
 /**
  * Hook to access the Openfort context
- * Throws an error if used outside of a OpenfortProvider
+ *
+ * This hook provides access to the Openfort SDK context including client instance,
+ * user state, and authentication methods. Must be used within an OpenfortProvider.
+ *
+ * @returns The {@link OpenfortContextValue} from the nearest provider
+ * @throws {Error} When used outside an {@link OpenfortProvider}
+ *
+ * @example
+ * ```tsx
+ * const { client, user, isReady, logout } = useOpenfortContext();
+ *
+ * // Check if SDK is ready
+ * if (isReady && user) {
+ *   console.log('User authenticated:', user.id);
+ *
+ *   // Access client methods
+ *   const token = await client.getAccessToken();
+ * }
+ * ```
  */
 export function useOpenfortContext(): OpenfortContextValue {
   const context = React.useContext(OpenfortContext);
@@ -75,14 +93,33 @@ export function useOpenfortContext(): OpenfortContextValue {
 
 /**
  * Hook to safely access the Openfort context
- * Returns null if used outside of a OpenfortProvider
+ *
+ * This hook provides safe access to the Openfort SDK context without throwing errors.
+ * Returns null when used outside of an OpenfortProvider instead of throwing.
+ *
+ * @returns The {@link OpenfortContextValue} when available, otherwise `null`
+ *
+ * @example
+ * ```tsx
+ * const context = useOpenfortContextSafe();
+ *
+ * if (context) {
+ *   const { user, isReady } = context;
+ *   console.log('Context available:', { user: !!user, isReady });
+ * } else {
+ *   console.log('No Openfort context found');
+ * }
+ * ```
  */
 export function useOpenfortContextSafe(): OpenfortContextValue | null {
   return React.useContext(OpenfortContext);
 }
 
 /**
- * Type guard to check if a value is a valid OpenfortContextValue
+ * Runtime type guard that checks whether a value satisfies {@link OpenfortContextValue}.
+ *
+ * @param value - Value to check.
+ * @returns `true` when the value matches the {@link OpenfortContextValue} shape.
  */
 export function isOpenfortContextValue(value: unknown): value is OpenfortContextValue {
   return (

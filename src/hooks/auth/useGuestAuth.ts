@@ -1,6 +1,3 @@
-/**
- * Hook for creating guest accounts
- */
 import type { AuthPlayerResponse as OpenfortUser } from '@openfort/openfort-js';
 import { useCallback, useState } from 'react';
 import { useOpenfortContext } from '../../core/context';
@@ -10,26 +7,6 @@ import { OpenfortHookOptions } from '../../types/hookOption';
 import { OpenfortError, OpenfortErrorType } from '../../types/openfortError';
 import { CreateWalletPostAuthOptions } from './useCreateWalletPostAuth';
 
-/**
- * Hook for creating guest accounts
- * 
- * Guest accounts allow users to access certain features without full authentication.
- * These accounts can later be upgraded to full accounts by linking authentication methods.
- * 
- * @param opts - Configuration options including success/error callbacks
- * @returns Object with create function
- * 
- * @example
- * ```tsx
- * const { create } = useGuestAuth({
- *   onSuccess: (user) => console.log('Guest account created:', user),
- *   onError: (error) => console.error('Failed to create guest account:', error),
- * });
- * 
- * // Create a guest account
- * const guestUser = await create();
- * ```
- */
 export type GuestHookResult = {
   error?: OpenfortError;
   user?: OpenfortUser;
@@ -38,6 +15,27 @@ export type GuestHookResult = {
 
 export type GuestHookOptions = OpenfortHookOptions<GuestHookResult> & CreateWalletPostAuthOptions;
 
+/**
+ * Hook for creating guest accounts.
+ *
+ * Guest accounts allow users to access certain features without full authentication and can later be upgraded to full accounts
+ * by linking additional authentication methods.
+ *
+ * @param hookOptions - Configuration options including success and error callbacks.
+ * @returns Current guest authentication helpers with flow status indicators.
+ *
+ * @example
+ * ```tsx
+ * const { signUpGuest, isLoading } = useGuestAuth({
+ *   onSuccess: ({ user }) => console.log('Guest account created:', user),
+ *   onError: ({ error }) => console.error('Failed to create guest account:', error),
+ * });
+ *
+ * if (!isLoading) {
+ *   await signUpGuest();
+ * }
+ * ```
+ */
 export const useGuestAuth = (hookOptions: GuestHookOptions = {}) => {
 
   const { client, _internal } = useOpenfortContext();

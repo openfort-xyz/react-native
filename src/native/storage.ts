@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 import { logger } from '../lib/logger';
 
 /**
- * Interface for secure storage message handling in WebView
+ * Shape of messages sent from the embedded WebView when interacting with secure storage.
  */
 export interface SecureStorageMessage {
   event: string;
@@ -13,7 +13,7 @@ export interface SecureStorageMessage {
 }
 
 /**
- * Interface for secure storage response
+ * Shape of responses returned to the WebView after processing a storage message.
  */
 export interface SecureStorageResponse {
   event: string;
@@ -22,7 +22,10 @@ export interface SecureStorageResponse {
 }
 
 /**
- * Checks if a message is a secure storage related message
+ * Checks if the provided value is a secure storage related message.
+ *
+ * @param message - Incoming message payload.
+ * @returns `true` when the payload matches the {@link SecureStorageMessage} structure.
  */
 export function isSecureStorageMessage(message: unknown): message is SecureStorageMessage {
   if (
@@ -43,7 +46,11 @@ export function isSecureStorageMessage(message: unknown): message is SecureStora
 }
 
 /**
- * Handles secure storage operations from WebView messages
+ * Handles secure storage operations initiated from WebView messages.
+ *
+ * @param message - Parsed WebView message describing the desired storage action.
+ * @returns The response payload that should be sent back to the WebView.
+ * @throws {Error} When the message event is unknown.
  */
 export async function handleSecureStorageMessage(
   message: SecureStorageMessage
@@ -162,25 +169,28 @@ export async function handleSecureStorageMessage(
 }
 
 /**
- * Normalizes storage keys for compatibility with secure storage
+ * Normalises storage keys for compatibility with Expo Secure Store.
+ *
+ * @param key - Original storage key.
+ * @returns The normalised key string.
  */
 function normalizeKey(key: string): string {
   return key.replaceAll(':', '-');
 }
 
 /**
- * Native storage utilities for platform-specific operations
+ * Native storage utilities for platform-specific operations.
  */
 export const NativeStorageUtils = {
   /**
-   * Checks if secure storage is available on the current platform
+   * Checks if secure storage is available on the current platform.
    */
   isAvailable(): boolean {
     return Platform.OS === 'ios' || Platform.OS === 'android';
   },
 
   /**
-   * Gets the platform-specific storage options
+   * Gets the platform-specific storage options.
    */
   getStorageOptions(): SecureStore.SecureStoreOptions {
     return {
@@ -189,7 +199,10 @@ export const NativeStorageUtils = {
   },
 
   /**
-   * Safely checks if a key exists in secure storage
+   * Safely checks if a key exists in secure storage.
+   *
+   * @param key - Storage key to look up.
+   * @returns `true` if the key is present, otherwise `false`.
    */
   async keyExists(key: string): Promise<boolean> {
     try {
@@ -201,7 +214,9 @@ export const NativeStorageUtils = {
   },
 
   /**
-   * Gets all available storage information
+   * Gets diagnostic information about the native storage capabilities.
+   *
+   * @returns Platform availability information and keychain accessibility value.
    */
   async getStorageInfo(): Promise<{
     isAvailable: boolean;

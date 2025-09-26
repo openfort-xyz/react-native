@@ -1,6 +1,3 @@
-/**
- * Hook for linking Ethereum accounts using SIWE to existing users
- */
 import { AuthPlayerResponse as OpenfortUser } from '@openfort/openfort-js';
 import { useCallback } from 'react';
 import { useOpenfortContext } from '../../core/context';
@@ -55,6 +52,30 @@ const mapStatus = (status: SiweFlowState) => {
   };
 };
 
+/**
+ * Hook for linking Ethereum accounts to existing users through Sign-In With Ethereum (SIWE).
+ *
+ * This hook orchestrates SIWE message generation, signature submission, and state tracking so that external wallets can be
+ * connected to authenticated users.
+ *
+ * @param hookOptions - Optional callbacks for handling success or error events from the SIWE flows.
+ * @returns SIWE helpers for generating messages, signing in, linking wallets, and inspecting flow status.
+ *
+ * @example
+ * ```tsx
+ * const { generateSiweMessage, signInWithSiwe, isAwaitingSignature } = useWalletAuth({
+ *   onSuccess: ({ user }) => console.log('Linked SIWE wallet for user', user?.id),
+ * });
+ *
+ * const { message } = await generateSiweMessage({
+ *   wallet: connectedWallet.address,
+ *   from: { domain: 'app.openfort.io', uri: 'https://app.openfort.io' },
+ * });
+ *
+ * const signature = await connectedWallet.signMessage(message);
+ * await signInWithSiwe({ walletAddress: connectedWallet.address, signature, messageOverride: message });
+ * ```
+ */
 export function useWalletAuth(hookOptions?: WalletHookOptions) {
   const { client, siweState, setSiweState, _internal } = useOpenfortContext();
 
