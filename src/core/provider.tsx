@@ -59,10 +59,10 @@ export type EncryptionSession =
  * Configuration for enabling embedded wallet recovery flows.
  *
  * Automatic recovery requires an encryption session, while password-based recovery may either use
- * an encryption session or a Shield encryption key. The encryption session can be provided via
- * {@link EncryptionSession.createEncryptedSessionEndpoint | createEncryptedSessionEndpoint} or by
- * supplying a {@link EncryptionSession.getEncryptionSession | getEncryptionSession} callback that
- * resolves to the session identifier.
+ * an encryption session or a Shield encryption key. Provide a
+ * {@link EncryptionSession.getEncryptionSession | getEncryptionSession} callback to surface the
+ * session identifier. TODO: add support for `createEncryptedSessionEndpoint` once the native
+ * hooks implement that pathway.
  */
 export type EmbeddedWalletConfiguration = CommonEmbeddedWalletConfiguration & EncryptionSession
 

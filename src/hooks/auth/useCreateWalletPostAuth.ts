@@ -4,26 +4,13 @@ import { useCallback } from "react";
 export type CreateWalletPostAuthOptions = {};
 
 /**
- * Hook for creating wallets after user authentication
+ * Hook for creating wallets after user authentication.
  *
- * This hook provides functionality to automatically create and connect wallets after a user has successfully
- * authenticated. It handles wallet creation with automatic recovery when configured.
+ * TODO: the implementation is currently a placeholder that always returns an
+ * undefined wallet. Once the post-auth wallet flow is wired up, this helper will
+ * attempt to provision or connect an embedded wallet automatically.
  *
- * @returns Object containing wallet creation utilities
- *
- * @example
- * ```tsx
- * const { tryUseWallet } = useCreateWalletPostAuth();
- *
- * // Attempt to create/connect wallet after authentication
- * const result = await tryUseWallet({
- *   // Configuration options would go here when implemented
- * });
- *
- * if (result.wallet) {
- *   console.log('Wallet created successfully:', result.wallet.address);
- * }
- * ```
+ * @returns Object containing wallet creation utilities (placeholder for now).
  */
 export const useCreateWalletPostAuth = () => {
 

@@ -72,13 +72,14 @@ const mapStatus = (status: PasswordFlowState) => {
 }
 
 /**
- * Hook for email and password authentication
+ * Hook for email and password authentication.
  *
- * This hook provides email/password authentication flows including sign-in, sign-up, linking accounts,
- * and password reset functionality. It handles email verification flows automatically.
+ * This hook provides email/password authentication flows including sign-in, sign-up, and
+ * account linking. Password reset and verification helpers are exposed but currently stubbed
+ * (TODOs) until the SDK wiring is complete.
  *
- * @param hookOptions - Optional configuration with callback functions and email verification settings
- * @returns Email authentication state and methods with flow status indicators
+ * @param hookOptions - Optional configuration with callback functions and email verification settings.
+ * @returns Email authentication state and methods with flow status indicators.
  *
  * @example
  * ```tsx
@@ -87,23 +88,13 @@ const mapStatus = (status: PasswordFlowState) => {
  *   onError: ({ error }) => console.error('Email auth failed:', error?.message),
  * });
  *
- * // Sign up with email
- * const result = await signUpEmail({
- *   email: 'user@example.com',
- *   password: 'securePassword123',
- *   name: 'John Doe',
- * });
+ * await signUpEmail({ email: 'user@example.com', password: 'securePassword123' });
  *
- * // Handle email verification if required
  * if (requiresEmailVerification) {
  *   console.log('Check email for verification code');
  * }
  *
- * // Sign in with existing account
- * await signInEmail({
- *   email: 'user@example.com',
- *   password: 'securePassword123',
- * });
+ * await signInEmail({ email: 'user@example.com', password: 'securePassword123' });
  * ```
  */
 export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {

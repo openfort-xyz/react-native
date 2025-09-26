@@ -40,23 +40,27 @@ export type AuthHookOptions = {
 /**
  * Hook for OAuth-based authentication with supported providers.
  *
- * This hook provides OAuth authentication flows for providers like Google, Apple, and Discord. It opens the provider's web or
- * native authentication surfaces and stores the resulting credentials.
+ * This hook provides helpers for starting OAuth login flows (`initOAuth`) and linking
+ * additional providers to an authenticated user (`linkOauth`). Some advanced flows may
+ * require manual credential storage via `storeCredentials`, which is currently a TODO.
  *
  * @param hookOptions - Configuration options including success and error callbacks.
- * @returns OAuth helpers for initialising logins, linking accounts, and inspecting flow state.
+ * @returns OAuth helpers and derived flow state flags.
  *
  * @example
  * ```tsx
- * const { login, state } = useOAuth({
- *   onSuccess: ({ user }) => console.log('OAuth login successful:', user?.id),
- *   onError: ({ error }) => console.error('OAuth login failed:', error?.message),
+ * const { initOAuth, linkOauth, isLoading, isError, error } = useOAuth({
+ *   onSuccess: ({ user }) => console.log('OAuth completed for', user?.id),
  * });
  *
- * await login({ provider: OAuthProvider.GOOGLE });
+ * // Start a login flow
+ * await initOAuth({ provider: OAuthProvider.GOOGLE });
  *
- * if (state.isError) {
- *   console.log('OAuth failed:', state.error);
+ * // Later, link another provider for the signed-in user
+ * await linkOauth({ provider: OAuthProvider.DISCORD });
+ *
+ * if (isError) {
+ *   console.warn('Latest OAuth attempt failed', error);
  * }
  * ```
  */
