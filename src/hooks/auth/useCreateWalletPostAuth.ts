@@ -3,7 +3,15 @@ import { useCallback } from "react";
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export type CreateWalletPostAuthOptions = {};
 
-// this hook is used to create a wallet after the user has authenticated
+/**
+ * Hook for creating wallets after user authentication.
+ *
+ * TODO: the implementation is currently a placeholder that always returns an
+ * undefined wallet. Once the post-auth wallet flow is wired up, this helper will
+ * attempt to provision or connect an embedded wallet automatically.
+ *
+ * @returns Object containing wallet creation utilities (placeholder for now).
+ */
 export const useCreateWalletPostAuth = () => {
 
   // This would connect to the wallet and set it as active

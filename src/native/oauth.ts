@@ -137,7 +137,25 @@ export async function isAppleSignInAvailable(): Promise<boolean> {
 }
 
 /**
- * Parses OAuth parameters from a URL
+ * Parses OAuth parameters from a redirect URL
+ *
+ * This function extracts OAuth authentication parameters from a callback URL after
+ * a successful or failed OAuth flow. It safely handles URL parsing errors.
+ *
+ * @param url - The OAuth redirect URL containing query parameters
+ * @returns Object containing parsed OAuth parameters including tokens and error information
+ *
+ * @example
+ * ```tsx
+ * const redirectUrl = 'myapp://oauth/callback?access_token=abc123&player_id=player_123';
+ * const result = parseOAuthUrl(redirectUrl);
+ *
+ * if (result.access_token && result.player_id) {
+ *   console.log('OAuth successful:', result.player_id);
+ * } else if (result.error) {
+ *   console.error('OAuth failed:', result.errorDescription);
+ * }
+ * ```
  */
 export function parseOAuthUrl(url: string): {
   access_token?: string;
@@ -165,6 +183,25 @@ export function parseOAuthUrl(url: string): {
 
 /**
  * Creates a redirect URI for OAuth flows
+ *
+ * This function generates a deep link URL that OAuth providers can redirect back to
+ * after authentication. The URL follows the app's custom URL scheme.
+ *
+ * @param path - The path component for the redirect URI, defaults to '/'
+ * @returns A complete redirect URI that can be used in OAuth flows
+ *
+ * @example
+ * ```tsx
+ * // Create default OAuth callback URI
+ * const callbackUri = createOAuthRedirectUri('/oauth/callback');
+ * console.log(callbackUri); // 'myapp://oauth/callback'
+ *
+ * // Use in OAuth configuration
+ * const oauthConfig = {
+ *   redirectUri: createOAuthRedirectUri('/auth/success'),
+ *   provider: 'google',
+ * };
+ * ```
  */
 export function createOAuthRedirectUri(path: string = '/'): string {
   return Linking.createURL(path);

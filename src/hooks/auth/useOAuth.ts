@@ -1,6 +1,3 @@
-/**
- * Hook for OAuth-based login functionality
- */
 import { OAuthProvider, type AuthPlayerResponse as OpenfortUser } from '@openfort/openfort-js';
 import { useCallback } from 'react';
 import { useOpenfortContext } from '../../core/context';
@@ -41,33 +38,30 @@ export type AuthHookOptions = {
 } & OpenfortHookOptions<StoreCredentialsResult | InitOAuthReturnType> & CreateWalletPostAuthOptions;
 
 /**
- * Hook for OAuth-based authentication with supported providers
- * 
- * This hook provides OAuth authentication flow for various providers (Google, Apple, Discord, etc.).
- * It opens the provider's web authentication page and handles the OAuth flow automatically.
- * 
- * @param opts - Configuration options including success/error callbacks
- * @returns Object with login function and current OAuth flow state
- * 
+ * Hook for OAuth-based authentication with supported providers.
+ *
+ * This hook provides helpers for starting OAuth login flows (`initOAuth`) and linking
+ * additional providers to an authenticated user (`linkOauth`). Some advanced flows may
+ * require manual credential storage via `storeCredentials`, which is currently a TODO.
+ *
+ * @param hookOptions - Configuration options including success and error callbacks.
+ * @returns OAuth helpers and derived flow state flags.
+ *
  * @example
  * ```tsx
- * const { login, state } = useLoginWithOAuth({
- *   onSuccess: (user) => console.log('OAuth login successful:', user),
- *   onError: (error) => console.error('OAuth login failed:', error),
+ * const { initOAuth, linkOauth, isLoading, isError, error } = useOAuth({
+ *   onSuccess: ({ user }) => console.log('OAuth completed for', user?.id),
  * });
- * 
- * // Login with Google
- * const user = await login({ provider: 'google' });
- * 
- * // Login with Apple (using legacy web flow on iOS if needed)
- * const user = await login({ 
- *   provider: 'apple',
- *   isLegacyAppleIosBehaviorEnabled: true 
- * });
- * 
- * // Other supported providers
- * await login({ provider: 'discord' });
- * await login({ provider: 'twitter' });
+ *
+ * // Start a login flow
+ * await initOAuth({ provider: OAuthProvider.GOOGLE });
+ *
+ * // Later, link another provider for the signed-in user
+ * await linkOauth({ provider: OAuthProvider.DISCORD });
+ *
+ * if (isError) {
+ *   console.warn('Latest OAuth attempt failed', error);
+ * }
  * ```
  */
 export const useOAuth = (hookOptions: AuthHookOptions = {}) => {

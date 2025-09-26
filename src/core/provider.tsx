@@ -24,7 +24,7 @@ import { EmbeddedWalletWebView, WebViewUtils } from '../native';
 import { logger, getEmbeddedStateName } from '../lib/logger';
 
 /**
- * Custom auth configuration
+ * Shape for configuring custom authentication synchronisation behaviour.
  */
 interface CustomAuthConfig {
   enabled: boolean;
@@ -35,9 +35,9 @@ interface CustomAuthConfig {
 type PolicyConfig = string | Record<number, string>;
 
 export type CommonEmbeddedWalletConfiguration = {
-  /** Publishable key for the Shield API */
+  /** Publishable key for the Shield API. */
   shieldPublishableKey: string;
-  /** Policy ID (pol_...) for the embedded signer */
+  /** Policy ID (pol_...) for the embedded signer. */
   ethereumProviderPolicyId?: PolicyConfig;
   accountType?: AccountTypeEnum;
   debug?: boolean;
@@ -56,16 +56,13 @@ export type EncryptionSession =
   };
 
 /**
- * Configuration for automatic recovery.
- * - An encryption session is required.
- * 
- * Configuration for password-based recovery.
- * - An encryption session, OR
- * - A `shieldEncryptionKey` without an encryption session.
- * 
- * Encryption session can be created using either:
- * - `createEncryptedSessionEndpoint` as a string, OR
- * - `getEncryptionSession.` as a function that returns a promise.
+ * Configuration for enabling embedded wallet recovery flows.
+ *
+ * Automatic recovery requires an encryption session, while password-based recovery may either use
+ * an encryption session or a Shield encryption key. Provide a
+ * {@link EncryptionSession.getEncryptionSession | getEncryptionSession} callback to surface the
+ * session identifier. TODO: add support for `createEncryptedSessionEndpoint` once the native
+ * hooks implement that pathway.
  */
 export type EmbeddedWalletConfiguration = CommonEmbeddedWalletConfiguration & EncryptionSession
 
@@ -79,7 +76,7 @@ type RpcUrls = {
 };
 type NativeCurrency = {
   name: string;
-  /** 2-6 characters long */
+  /** 2-6 characters long. */
   symbol: string;
   decimals: number;
 };
@@ -87,37 +84,43 @@ type BlockExplorer = {
   name: string;
   url: string;
 };
-/** A subset of WAGMI's chain type
+/**
+ * A subset of WAGMI's chain type.
+ *
  * https://github.com/wagmi-dev/references/blob/6aea7ee9c65cfac24f33173ab3c98176b8366f05/packages/chains/src/types.ts#L8
  */
 export type Chain = {
-  /** Id in number form */
+  /** Chain identifier in number form. */
   id: number;
-  /** Human readable name */
+  /** Human readable name. */
   name: string;
-  /** Internal network name */
+  /** Internal network name. */
   network?: string;
-  /** Currency used by chain */
+  /** Currency used by chain. */
   nativeCurrency: NativeCurrency;
-  /** Collection of block explorers */
+  /** Collection of block explorers. */
   blockExplorers?: {
     [key: string]: BlockExplorer;
     default: BlockExplorer;
   };
-  /** Collection of RPC endpoints */
+  /** Collection of RPC endpoints. */
   rpcUrls: {
     [key: string]: RpcUrls;
     default: RpcUrls;
   };
-  /** Flag for test networks */
+  /** Flag for test networks. */
   testnet?: boolean;
 };
 
 
 
 /**
- * Starts polling the embedded wallet state and calls onChange only when the
- * state actually changes. Returns a cleanup function to stop polling.
+ * Starts polling the embedded wallet state and invokes the callback when transitions occur.
+ *
+ * @param client - The Openfort client to query for embedded wallet state.
+ * @param onChange - Callback invoked whenever the state changes.
+ * @param intervalMs - Polling interval in milliseconds. Defaults to 1000ms.
+ * @returns A function that stops polling when called.
  */
 function startEmbeddedStatePolling(
   client: OpenfortClient,
@@ -151,37 +154,64 @@ function startEmbeddedStatePolling(
 }
 
 /**
- * Props for the OpenfortProvider component
+ * Props for the {@link OpenfortProvider} component.
  */
 export interface OpenfortProviderProps {
   children: React.ReactNode;
   customAuth?: CustomAuthConfig;
   /**
-   * Openfort application ID (can be found in openfort developer dashboard)
+   * Openfort application ID (can be found in the Openfort developer dashboard).
    */
   publishableKey: string;
   supportedChains?: [Chain, ...Chain[]];
   /**
-   * Embedded signer configuration for Shield integration
+   * Embedded signer configuration for Shield integration.
    */
   walletConfig?: EmbeddedWalletConfiguration;
   /**
-   * SDK overrides configuration for advanced customization
+   * SDK overrides configuration for advanced customization.
    */
   overrides?: SDKOverrides;
   /**
-   * Third party auth configuration for integrating with external auth providers
+   * Third party auth configuration for integrating with external auth providers.
    */
   thirdPartyAuth?: ThirdPartyAuthConfiguration;
   /**
-   * Enable verbose logging for debugging purposes
+   * Enable verbose logging for debugging purposes.
    */
   verbose?: boolean;
 }
 
 /**
- * Main provider component that wraps the entire application and provides
- * Openfort SDK functionality through React context
+ * Provider component that initialises the Openfort SDK and exposes its state via {@link OpenfortContext}
+ *
+ * This component must wrap your React Native app to provide Openfort functionality to all child components.
+ * It initializes the SDK with the provided configuration and manages authentication state.
+ *
+ * @param props - Provider configuration including the publishable key and optional overrides
+ * @returns A React element that provides the Openfort context to its children
+ *
+ * @example
+ * ```tsx
+ * import { OpenfortProvider } from '@openfort/react-native';
+ * import { polygon, polygonMumbai } from 'viem/chains';
+ *
+ * function App() {
+ *   return (
+ *     <OpenfortProvider
+ *       publishableKey="pk_test_..."
+ *       supportedChains={[polygon, polygonMumbai]}
+ *       walletConfig={{
+ *         shieldPublishableKey: "shield_pk_...",
+ *         getEncryptionSession: () => fetchEncryptionSession(),
+ *       }}
+ *       verbose={true}
+ *     >
+ *       <YourAppContent />
+ *     </OpenfortProvider>
+ *   );
+ * }
+ * ```
  */
 export const OpenfortProvider = ({
   children,

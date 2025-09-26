@@ -1,9 +1,9 @@
 /**
- * SDK package information
+ * Static metadata describing the React Native SDK package.
  */
 export const SDK_INFO = {
     name: '@openfort/react-native',
-    version: '0.1.8',
+    version: '0.1.9',
     description: 'React Native client for Openfort',
     homepage: 'https://openfort.io/docs',
 } as const;
