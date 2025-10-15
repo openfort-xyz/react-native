@@ -22,6 +22,7 @@ import { OpenfortContext, type OpenfortContextValue } from './context';
 import { createOpenfortClient, setDefaultClient } from './client';
 import { EmbeddedWalletWebView, WebViewUtils } from '../native';
 import { logger, getEmbeddedStateName } from '../lib/logger';
+import { validateEnvironment } from '../lib/environmentValidation';
 
 /**
  * Shape for configuring custom authentication synchronisation behaviour.
@@ -223,6 +224,12 @@ export const OpenfortProvider = ({
   thirdPartyAuth,
   verbose = false,
 }: OpenfortProviderProps) => {
+  // Validate environment variables before anything else
+  validateEnvironment({
+    publishableKey,
+    shieldPublishableKey: walletConfig?.shieldPublishableKey,
+  });
+
   // Prevent multiple OpenfortProvider instances
   const existingContext = React.useContext(OpenfortContext);
   if (existingContext) {
