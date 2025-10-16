@@ -1279,7 +1279,7 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@openfort/openfort-js@^0.10.25":
+"@openfort/openfort-js@^0.10.26":
   version "0.10.26"
   resolved "https://registry.yarnpkg.com/@openfort/openfort-js/-/openfort-js-0.10.26.tgz#6eb11b52632a5679debc85909b295c57cdc1a823"
   integrity sha512-XZFyhE/E5VD+Q4ttdY68QQ28WMvI/5Z/XHLwjz4x65/8y/4TpPYgAanN6BAT54hkUO0EHl4/9naGe/09bjIDtg==

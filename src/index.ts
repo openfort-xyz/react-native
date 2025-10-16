@@ -13,16 +13,29 @@ export {
     AuthPlayerResponse,
     OpenfortError,
     RecoveryMethod,
+    RecoveryParams,
     Openfort as OpenfortClient,
     Provider,
     OpenfortConfiguration,
     ShieldConfiguration,
     EmbeddedState,
+    AuthResponse,
+    EmbeddedAccount,
+    SignedMessagePayload,
+    AuthInitPayload,
 } from '@openfort/openfort-js';
 
 // Re-export enums and values from @openfort/openfort-js
 export {
     OAuthProvider,
+    AccountTypeEnum,
+} from '@openfort/openfort-js';
+
+// Re-export event listener functionality from @openfort/openfort-js
+export {
+    openfortEvents,
+    OpenfortEventMap,
+    OpenfortEvents,
 } from '@openfort/openfort-js';
 
 // Re-export all types from the main types module

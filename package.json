@@ -23,7 +23,7 @@
     }
   },
   "dependencies": {
-    "@openfort/openfort-js": "^0.10.25"
+    "@openfort/openfort-js": "^0.10.26"
   },
   "peerDependencies": {
     "expo-apple-authentication": "*",
