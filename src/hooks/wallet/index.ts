@@ -6,5 +6,3 @@
 
 // Embedded wallet hooks
 export { useWallets } from './useWallets';
-
-export { useWallet } from './useWallet';
