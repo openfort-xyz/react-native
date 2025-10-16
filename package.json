@@ -6,12 +6,11 @@
   "description": "React Native SDK for Openfort platform integration",
   "scripts": {
     "build": "rimraf dist && tsc",
-    "preinstall": "pnpx only-allow pnpm",
+    "prepare": "simple-git-hooks || true",
     "check": "biome check --write --unsafe",
     "check:types": "tsc --noEmit",
     "check:unused": "pnpm clean && knip",
     "clean": "rm -rf dist",
-    "postinstall": "simple-git-hooks",
     "docs:build": "typedoc",
     "changeset": "changeset",
     "changeset:version": "pnpm install --lockfile-only && changeset version",
