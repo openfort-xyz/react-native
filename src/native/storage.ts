@@ -1,24 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
-import { logger } from '../lib/logger';
+import * as SecureStore from 'expo-secure-store'
+import { Platform } from 'react-native'
+import { logger } from '../lib/logger'
 
 /**
  * Shape of messages sent from the embedded WebView when interacting with secure storage.
  */
 export interface SecureStorageMessage {
-  event: string;
-  id: string;
-  data: Record<string, any>;
+  event: string
+  id: string
+  data: Record<string, any>
 }
 
 /**
  * Shape of responses returned to the WebView after processing a storage message.
  */
 export interface SecureStorageResponse {
-  event: string;
-  id: string;
-  data: Record<string, any>;
+  event: string
+  id: string
+  data: Record<string, any>
 }
 
 /**
@@ -39,10 +39,10 @@ export function isSecureStorageMessage(message: unknown): message is SecureStora
     typeof (message as any).data !== 'object' ||
     (message as any).data === null
   ) {
-    return false;
+    return false
   }
 
-  return (message as any).event.startsWith('app:secure-storage:');
+  return (message as any).event.startsWith('app:secure-storage:')
 }
 
 /**
@@ -52,119 +52,125 @@ export function isSecureStorageMessage(message: unknown): message is SecureStora
  * @returns The response payload that should be sent back to the WebView.
  * @throws {Error} When the message event is unknown.
  */
-export async function handleSecureStorageMessage(
-  message: SecureStorageMessage
-): Promise<SecureStorageResponse> {
-  logger.info('Handling secure storage message', message);
+export async function handleSecureStorageMessage(message: SecureStorageMessage): Promise<SecureStorageResponse> {
+  logger.info('Handling secure storage message', message)
   switch (message.event) {
     case 'app:secure-storage:get': {
-      const { key } = message.data;
+      const { key } = message.data
       try {
         const value = await SecureStore.getItemAsync(normalizeKey(key), {
           keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
-        });
+        })
 
         return {
           event: message.event,
           id: message.id,
           data: { value },
-        };
+        }
       } catch (error) {
-        logger.warn('Failed to get the value from secure store', error);
+        logger.warn('Failed to get the value from secure store', error)
         return {
           event: message.event,
           id: message.id,
           data: { value: null },
-        };
+        }
       }
     }
 
     case 'app:secure-storage:set': {
-      const { key, value } = message.data;
+      const { key, value } = message.data
       try {
         await SecureStore.setItemAsync(normalizeKey(key), value, {
           keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
-        });
+        })
 
         return {
           event: message.event,
           id: message.id,
           data: { success: true },
-        };
+        }
       } catch (error) {
-        logger.warn('Failed to write the value to secure store', error);
+        logger.warn('Failed to write the value to secure store', error)
         return {
           event: message.event,
           id: message.id,
           data: { success: false },
-        };
+        }
       }
     }
 
     case 'app:secure-storage:remove': {
-      const { key } = message.data;
+      const { key } = message.data
       try {
         await SecureStore.deleteItemAsync(normalizeKey(key), {
           keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
-        });
+        })
 
         return {
           event: message.event,
           id: message.id,
           data: { success: true },
-        };
+        }
       } catch (error) {
-        logger.warn('Failed to remove the value from secure store', error);
+        logger.warn('Failed to remove the value from secure store', error)
         return {
           event: message.event,
           id: message.id,
           data: { success: false },
-        };
+        }
       }
     }
 
     case 'app:secure-storage:flush': {
-      const { origin } = message.data;
+      const { origin } = message.data
       try {
         // Systematically delete all known storage keys for this origin
         // These are the keys used by the iframe signature service
         const storageKeys = [
-          'playerID', 'chainId', 'deviceID', 'accountType', 'address', 
-          'ownerAddress', 'share', 'account', 'chainType', 'signerId'
-        ];
-        
+          'playerID',
+          'chainId',
+          'deviceID',
+          'accountType',
+          'address',
+          'ownerAddress',
+          'share',
+          'account',
+          'chainType',
+          'signerId',
+        ]
+
         const deletePromises = storageKeys.map(async (key) => {
-          const fullKey = normalizeKey(`${origin}:${key}`);
+          const fullKey = normalizeKey(`${origin}:${key}`)
           try {
             await SecureStore.deleteItemAsync(fullKey, {
               keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
-            });
+            })
           } catch (error) {
             // Ignore errors for keys that don't exist
-            logger.debug(`Key ${fullKey} not found during flush`, error);
+            logger.debug(`Key ${fullKey} not found during flush`, error)
           }
-        });
-        
-        await Promise.all(deletePromises);
-        logger.info('Flushed secure storage for origin', origin);
+        })
+
+        await Promise.all(deletePromises)
+        logger.info('Flushed secure storage for origin', origin)
 
         return {
           event: message.event,
           id: message.id,
           data: { success: true },
-        };
+        }
       } catch (error) {
-        logger.warn('Failed to flush secure store', error);
+        logger.warn('Failed to flush secure store', error)
         return {
           event: message.event,
           id: message.id,
           data: { success: false },
-        };
+        }
       }
     }
 
     default:
-      throw new Error(`Unknown secure storage event: ${message.event}`);
+      throw new Error(`Unknown secure storage event: ${message.event}`)
   }
 }
 
@@ -175,7 +181,7 @@ export async function handleSecureStorageMessage(
  * @returns The normalised key string.
  */
 function normalizeKey(key: string): string {
-  return key.replaceAll(':', '-');
+  return key.replaceAll(':', '-')
 }
 
 /**
@@ -186,7 +192,7 @@ export const NativeStorageUtils = {
    * Checks if secure storage is available on the current platform.
    */
   isAvailable(): boolean {
-    return Platform.OS === 'ios' || Platform.OS === 'android';
+    return Platform.OS === 'ios' || Platform.OS === 'android'
   },
 
   /**
@@ -195,7 +201,7 @@ export const NativeStorageUtils = {
   getStorageOptions(): SecureStore.SecureStoreOptions {
     return {
       keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
-    };
+    }
   },
 
   /**
@@ -206,10 +212,10 @@ export const NativeStorageUtils = {
    */
   async keyExists(key: string): Promise<boolean> {
     try {
-      const value = await SecureStore.getItemAsync(normalizeKey(key), this.getStorageOptions());
-      return value !== null;
+      const value = await SecureStore.getItemAsync(normalizeKey(key), this.getStorageOptions())
+      return value !== null
     } catch {
-      return false;
+      return false
     }
   },
 
@@ -219,14 +225,14 @@ export const NativeStorageUtils = {
    * @returns Platform availability information and keychain accessibility value.
    */
   async getStorageInfo(): Promise<{
-    isAvailable: boolean;
-    platform: string;
-    keychainAccessible: number;
+    isAvailable: boolean
+    platform: string
+    keychainAccessible: number
   }> {
     return {
       isAvailable: this.isAvailable(),
       platform: Platform.OS,
       keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
-    };
+    }
   },
-};
+}

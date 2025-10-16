@@ -1,22 +1,21 @@
 // Client creation and configuration
-export { createOpenfortClient, getDefaultClient, setDefaultClient } from './client';
+
+export type { SDKOverrides } from '@openfort/openfort-js'
 
 // Re-export important types and enums from openfort-js
-export { RecoveryMethod } from '@openfort/openfort-js';
-export type { SDKOverrides } from '@openfort/openfort-js';
-
+export { RecoveryMethod } from '@openfort/openfort-js'
+export { createOpenfortClient, getDefaultClient, setDefaultClient } from './client'
+export type { OpenfortContextValue } from './context'
 // React context and hooks
-export { OpenfortContext, useOpenfortContext, useOpenfortContextSafe, isOpenfortContextValue } from './context';
-export type { OpenfortContextValue } from './context';
-
-// Main provider component
-export { OpenfortProvider } from './provider';
-export type { 
-  OpenfortProviderProps,
-  EmbeddedWalletConfiguration,
+export { isOpenfortContextValue, OpenfortContext, useOpenfortContext, useOpenfortContextSafe } from './context'
+export type {
   CommonEmbeddedWalletConfiguration,
+  EmbeddedWalletConfiguration,
   EncryptionSession,
-} from './provider';
+  OpenfortProviderProps,
+} from './provider'
+// Main provider component
+export { OpenfortProvider } from './provider'
 
 // Storage adapters
-export { SecureStorageAdapter, createNormalizedStorage } from './storage';
+export { createNormalizedStorage, SecureStorageAdapter } from './storage'

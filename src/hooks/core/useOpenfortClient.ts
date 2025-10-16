@@ -1,5 +1,5 @@
-import type { Openfort as OpenfortClient } from '@openfort/openfort-js';
-import { useOpenfortContext } from '../../core/context';
+import type { Openfort as OpenfortClient } from '@openfort/openfort-js'
+import { useOpenfortContext } from '../../core/context'
 
 /**
  * Hook for accessing the Openfort client instance directly.
@@ -21,7 +21,7 @@ import { useOpenfortContext } from '../../core/context';
  * ```
  */
 export function useOpenfortClient(): OpenfortClient {
-  const { client } = useOpenfortContext();
+  const { client } = useOpenfortContext()
 
-  return client;
+  return client
 }

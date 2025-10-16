@@ -1,14 +1,14 @@
 import type {
   EmbeddedEthereumWalletState,
-  EmbeddedSolanaWalletState,
   EmbeddedSolanaWalletConnectedState,
   EmbeddedSolanaWalletConnectingState,
-  EmbeddedSolanaWalletReconnectingState,
-  EmbeddedSolanaWalletDisconnectedState,
-  EmbeddedSolanaWalletNeedsRecoveryState,
   EmbeddedSolanaWalletCreatingState,
+  EmbeddedSolanaWalletDisconnectedState,
   EmbeddedSolanaWalletErrorState,
-} from './wallet';
+  EmbeddedSolanaWalletNeedsRecoveryState,
+  EmbeddedSolanaWalletReconnectingState,
+  EmbeddedSolanaWalletState,
+} from './wallet'
 
 /**
  * Type guard to check if embedded wallet is connected
@@ -31,25 +31,25 @@ import type {
  * }
  * ```
  */
-export function isConnected(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletConnectedState;
+export function isConnected(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletConnectedState
 export function isConnected(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
-  return s.status === 'connected';
+  return s.status === 'connected'
 }
 
 /**
  * Type guard to check if embedded wallet is reconnecting
  */
-export function isReconnecting(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletReconnectingState;
+export function isReconnecting(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletReconnectingState
 export function isReconnecting(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
-  return s.status === 'reconnecting';
+  return s.status === 'reconnecting'
 }
 
 /**
  * Type guard to check if embedded wallet is connecting
  */
-export function isConnecting(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletConnectingState;
+export function isConnecting(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletConnectingState
 export function isConnecting(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
-  return s.status === 'connecting';
+  return s.status === 'connecting'
 }
 
 /**
@@ -72,41 +72,41 @@ export function isConnecting(s: EmbeddedEthereumWalletState | EmbeddedSolanaWall
  * }
  * ```
  */
-export function isDisconnected(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletDisconnectedState;
+export function isDisconnected(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletDisconnectedState
 export function isDisconnected(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
-  return s.status === 'disconnected';
+  return s.status === 'disconnected'
 }
 
 /**
  * Type guard to check if embedded wallet is not created
  */
-export function isNotCreated(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletDisconnectedState;
+export function isNotCreated(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletDisconnectedState
 export function isNotCreated(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
-  return s.status === 'disconnected';
+  return s.status === 'disconnected'
 }
 
 /**
  * Type guard to check if embedded wallet is being created
  */
-export function isCreating(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletCreatingState;
+export function isCreating(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletCreatingState
 export function isCreating(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
-  return s.status === 'creating';
+  return s.status === 'creating'
 }
 
 /**
  * Type guard to check if embedded wallet has an error
  */
-export function hasError(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletErrorState;
+export function hasError(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletErrorState
 export function hasError(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
-  return s.status === 'error';
+  return s.status === 'error'
 }
 
 /**
  * Type guard to check if embedded wallet needs recovery
  */
-export function needsRecovery(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletNeedsRecoveryState;
+export function needsRecovery(s: EmbeddedSolanaWalletState): s is EmbeddedSolanaWalletNeedsRecoveryState
 export function needsRecovery(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
-  return s.status === 'needs-recovery';
+  return s.status === 'needs-recovery'
 }
 
 /**
@@ -136,35 +136,35 @@ export function needsRecovery(s: EmbeddedEthereumWalletState | EmbeddedSolanaWal
  * ```
  */
 export function isLoading(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
-  return s.status === 'connecting' || s.status === 'creating' || s.status === 'reconnecting';
+  return s.status === 'connecting' || s.status === 'creating' || s.status === 'reconnecting'
 }
 
 /**
  * Type guard to check if wallet is ready for use
  */
 export function isReady(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
-  return s.status === 'connected';
+  return s.status === 'connected'
 }
 
 /**
  * Type guard to check if wallet needs user action
  */
 export function needsUserAction(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
-  return s.status === 'disconnected' || s.status === 'needs-recovery' || s.status === 'error';
+  return s.status === 'disconnected' || s.status === 'needs-recovery' || s.status === 'error'
 }
 
 /**
  * Type guard to check if wallet state is stable (not in transition)
  */
 export function isStable(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
-  return !isLoading(s);
+  return !isLoading(s)
 }
 
 /**
  * Type guard to check if wallet can perform transactions
  */
 export function canTransact(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): boolean {
-  return s.status === 'connected';
+  return s.status === 'connected'
 }
 
 /**
@@ -173,21 +173,21 @@ export function canTransact(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalle
 export function getStateDescription(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): string {
   switch (s.status) {
     case 'connected':
-      return 'Wallet is connected and ready to use';
+      return 'Wallet is connected and ready to use'
     case 'connecting':
-      return 'Connecting to wallet...';
+      return 'Connecting to wallet...'
     case 'reconnecting':
-      return 'Reconnecting to wallet...';
+      return 'Reconnecting to wallet...'
     case 'creating':
-      return 'Creating new wallet...';
+      return 'Creating new wallet...'
     case 'disconnected':
-      return 'Wallet is disconnected';
+      return 'Wallet is disconnected'
     case 'needs-recovery':
-      return 'Wallet needs to be recovered';
+      return 'Wallet needs to be recovered'
     case 'error':
-      return 'Wallet encountered an error';
+      return 'Wallet encountered an error'
     default:
-      return 'Unknown wallet state';
+      return 'Unknown wallet state'
   }
 }
 
@@ -197,18 +197,18 @@ export function getStateDescription(s: EmbeddedEthereumWalletState | EmbeddedSol
 export function getActionText(s: EmbeddedEthereumWalletState | EmbeddedSolanaWalletState): string {
   switch (s.status) {
     case 'needs-recovery':
-      return 'Recover Wallet';
+      return 'Recover Wallet'
     case 'error':
-      return 'Retry';
+      return 'Retry'
     case 'disconnected':
-      return 'Create Wallet';
+      return 'Create Wallet'
     case 'connecting':
     case 'creating':
     case 'reconnecting':
-      return 'Please wait...';
+      return 'Please wait...'
     case 'connected':
-      return 'Wallet Ready';
+      return 'Wallet Ready'
     default:
-      return 'Unknown';
+      return 'Unknown'
   }
 }

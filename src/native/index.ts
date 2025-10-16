@@ -1,29 +1,27 @@
 // WebView integration
-export { EmbeddedWalletWebView, WebViewUtils } from './webview';
 
-// Storage utilities
+export type {
+  AppleAuthResult,
+  OAuthResult,
+  OAuthSessionConfig,
+} from './oauth'
+// OAuth flows
 export {
-  isSecureStorageMessage,
-  handleSecureStorageMessage,
-  NativeStorageUtils,
-} from './storage';
+  authenticateWithApple,
+  createOAuthRedirectUri,
+  isAppleSignInAvailable,
+  OAuthUtils,
+  openOAuthSession,
+  parseOAuthUrl,
+} from './oauth'
 export type {
   SecureStorageMessage,
   SecureStorageResponse,
-} from './storage';
-
-
-// OAuth flows
+} from './storage'
+// Storage utilities
 export {
-  openOAuthSession,
-  authenticateWithApple,
-  isAppleSignInAvailable,
-  parseOAuthUrl,
-  createOAuthRedirectUri,
-  OAuthUtils,
-} from './oauth';
-export type {
-  OAuthResult,
-  AppleAuthResult,
-  OAuthSessionConfig,
-} from './oauth';
+  handleSecureStorageMessage,
+  isSecureStorageMessage,
+  NativeStorageUtils,
+} from './storage'
+export { EmbeddedWalletWebView, WebViewUtils } from './webview'
