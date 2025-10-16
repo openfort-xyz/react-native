@@ -6,10 +6,16 @@
   "description": "React Native SDK for Openfort platform integration",
   "scripts": {
     "build": "rimraf dist && tsc",
-    "lint": "eslint . --ignore-pattern dist",
-    "link": "yarn link",
-    "unlink": "yarn unlink",
-    "docs:build": "typedoc"
+    "preinstall": "pnpx only-allow pnpm",
+    "check": "biome check --write --unsafe",
+    "check:types": "tsc --noEmit",
+    "check:unused": "pnpm clean && knip",
+    "clean": "rm -rf dist",
+    "postinstall": "simple-git-hooks",
+    "docs:build": "typedoc",
+    "changeset": "changeset",
+    "changeset:version": "pnpm install --lockfile-only && changeset version",
+    "changeset:publish": "pnpm build && changeset publish"
   },
   "types": "dist/types/index.d.ts",
   "files": [
@@ -37,25 +43,54 @@
     "react-native-webview": "*"
   },
   "devDependencies": {
-    "@eslint/js": "^9.17.0",
+    "@biomejs/biome": "^2.2.4",
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.7",
     "@types/react": "~18.3.12",
     "@types/react-test-renderer": "^18.3.0",
     "buffer": "^5.4.3",
-    "eslint": "^9.17.0",
-    "eslint-plugin-react": "^7.37.3",
     "expo-apple-authentication": "^7.2.4",
     "expo-application": "^6.1.4",
     "expo-crypto": "14.0.2",
     "expo-linking": "^7.1.5",
     "expo-secure-store": "^14.2.3",
     "expo-web-browser": "^14.1.6",
+    "knip": "^5.64.0",
     "react": "^18.3.1",
     "react-native": "0.77.1",
     "react-native-webview": "^13.15.0",
+    "rimraf": "^3.0.2",
+    "simple-git-hooks": "^2.13.1",
     "typedoc": "^0.26.5",
-    "typescript": "^5.5.3",
-    "typescript-eslint": "^8.19.0"
+    "typescript": "^5.5.3"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm check"
+  },
+  "knip": {
+    "ignore": [
+      ".github/**",
+      "**/dist/**",
+      "**/.expo/**",
+      "**/node_modules/**"
+    ],
+    "ignoreBinaries": [
+      "only-allow",
+      "simple-git-hooks"
+    ],
+    "ignoreDependencies": [
+      "@biomejs/biome",
+      "@changesets/changelog-github",
+      "@changesets/cli",
+      "simple-git-hooks",
+      "knip",
+      "typedoc",
+      "rimraf"
+    ],
+    "entry": [
+      "src/index.ts!"
+    ]
   },
   "private": false,
-  "packageManager": "yarn@1.22.17"
+  "packageManager": "pnpm@10.16.1"
 }
