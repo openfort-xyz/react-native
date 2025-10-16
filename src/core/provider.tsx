@@ -1,60 +1,52 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-
 import {
-  AuthPlayerResponse,
-  OpenfortConfiguration,
-  ShieldConfiguration,
-  SDKOverrides,
+  type AccountTypeEnum,
+  type AuthPlayerResponse,
   EmbeddedState,
-  AccountTypeEnum,
-  ThirdPartyAuthConfiguration,
-  Openfort as OpenfortClient,
-} from '@openfort/openfort-js';
-
-import type {
-  PasswordFlowState,
-  OAuthFlowState,
-  SiweFlowState,
-  RecoveryFlowState
-} from '../types';
-
-import { OpenfortContext, type OpenfortContextValue } from './context';
-import { createOpenfortClient, setDefaultClient } from './client';
-import { EmbeddedWalletWebView, WebViewUtils } from '../native';
-import { logger, getEmbeddedStateName } from '../lib/logger';
-import { validateEnvironment } from '../lib/environmentValidation';
+  type Openfort as OpenfortClient,
+  OpenfortConfiguration,
+  type SDKOverrides,
+  ShieldConfiguration,
+  type ThirdPartyAuthConfiguration,
+} from '@openfort/openfort-js'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { validateEnvironment } from '../lib/environmentValidation'
+import { getEmbeddedStateName, logger } from '../lib/logger'
+import { EmbeddedWalletWebView, WebViewUtils } from '../native'
+import type { OAuthFlowState, PasswordFlowState, RecoveryFlowState, SiweFlowState } from '../types'
+import { createOpenfortClient, setDefaultClient } from './client'
+import { OpenfortContext, type OpenfortContextValue } from './context'
 
 /**
  * Shape for configuring custom authentication synchronisation behaviour.
  */
 interface CustomAuthConfig {
-  enabled: boolean;
-  isLoading: boolean;
-  getCustomAccessToken: () => Promise<string | null>;
+  enabled: boolean
+  isLoading: boolean
+  getCustomAccessToken: () => Promise<string | null>
 }
 
-type PolicyConfig = string | Record<number, string>;
+type PolicyConfig = string | Record<number, string>
 
 export type CommonEmbeddedWalletConfiguration = {
   /** Publishable key for the Shield API. */
-  shieldPublishableKey: string;
+  shieldPublishableKey: string
   /** Policy ID (pol_...) for the embedded signer. */
-  ethereumProviderPolicyId?: PolicyConfig;
-  accountType?: AccountTypeEnum;
-  debug?: boolean;
+  ethereumProviderPolicyId?: PolicyConfig
+  accountType?: AccountTypeEnum
+  debug?: boolean
 }
 
 export type EncryptionSession =
   | {
-    /** Function to retrieve an encryption session using a session ID */
-    getEncryptionSession?: () => Promise<string>;
-    createEncryptedSessionEndpoint?: never;
-  }
+      /** Function to retrieve an encryption session using a session ID */
+      getEncryptionSession?: () => Promise<string>
+      createEncryptedSessionEndpoint?: never
+    }
   | {
-    /** API endpoint for creating an encrypted session */
-    createEncryptedSessionEndpoint?: string;
-    getEncryptionSession?: never;
-  };
+      /** API endpoint for creating an encrypted session */
+      createEncryptedSessionEndpoint?: string
+      getEncryptionSession?: never
+    }
 
 /**
  * Configuration for enabling embedded wallet recovery flows.
@@ -72,19 +64,19 @@ export type EmbeddedWalletConfiguration = CommonEmbeddedWalletConfiguration & En
  * we need interop in the future.
  */
 type RpcUrls = {
-  http: readonly string[];
-  webSocket?: readonly string[];
-};
+  http: readonly string[]
+  webSocket?: readonly string[]
+}
 type NativeCurrency = {
-  name: string;
+  name: string
   /** 2-6 characters long. */
-  symbol: string;
-  decimals: number;
-};
+  symbol: string
+  decimals: number
+}
 type BlockExplorer = {
-  name: string;
-  url: string;
-};
+  name: string
+  url: string
+}
 /**
  * A subset of WAGMI's chain type.
  *
@@ -92,28 +84,26 @@ type BlockExplorer = {
  */
 export type Chain = {
   /** Chain identifier in number form. */
-  id: number;
+  id: number
   /** Human readable name. */
-  name: string;
+  name: string
   /** Internal network name. */
-  network?: string;
+  network?: string
   /** Currency used by chain. */
-  nativeCurrency: NativeCurrency;
+  nativeCurrency: NativeCurrency
   /** Collection of block explorers. */
   blockExplorers?: {
-    [key: string]: BlockExplorer;
-    default: BlockExplorer;
-  };
+    [key: string]: BlockExplorer
+    default: BlockExplorer
+  }
   /** Collection of RPC endpoints. */
   rpcUrls: {
-    [key: string]: RpcUrls;
-    default: RpcUrls;
-  };
+    [key: string]: RpcUrls
+    default: RpcUrls
+  }
   /** Flag for test networks. */
-  testnet?: boolean;
-};
-
-
+  testnet?: boolean
+}
 
 /**
  * Starts polling the embedded wallet state and invokes the callback when transitions occur.
@@ -126,61 +116,61 @@ export type Chain = {
 function startEmbeddedStatePolling(
   client: OpenfortClient,
   onChange: (state: EmbeddedState) => void,
-  intervalMs: number = 1000,
+  intervalMs: number = 1000
 ): () => void {
-  let lastState: EmbeddedState | null = null;
-  let stopped = false;
+  let lastState: EmbeddedState | null = null
+  let stopped = false
 
   const check = async () => {
-    if (stopped) return;
+    if (stopped) return
     try {
-      const state = await client.embeddedWallet.getEmbeddedState();
+      const state = await client.embeddedWallet.getEmbeddedState()
       if (state !== lastState) {
-        lastState = state;
-        onChange(state);
+        lastState = state
+        onChange(state)
       }
     } catch (error) {
-      logger.error('Error checking embedded state with Openfort', error);
+      logger.error('Error checking embedded state with Openfort', error)
     }
-  };
+  }
 
-  const intervalId: ReturnType<typeof setInterval> = setInterval(check, intervalMs);
+  const intervalId: ReturnType<typeof setInterval> = setInterval(check, intervalMs)
   // Run once immediately so we don't wait for the first interval tick
-  void check();
+  void check()
 
   return () => {
-    stopped = true;
-    clearInterval(intervalId as unknown as number);
-  };
+    stopped = true
+    clearInterval(intervalId as unknown as number)
+  }
 }
 
 /**
  * Props for the {@link OpenfortProvider} component.
  */
 export interface OpenfortProviderProps {
-  children: React.ReactNode;
-  customAuth?: CustomAuthConfig;
+  children: React.ReactNode
+  customAuth?: CustomAuthConfig
   /**
    * Openfort application ID (can be found in the Openfort developer dashboard).
    */
-  publishableKey: string;
-  supportedChains?: [Chain, ...Chain[]];
+  publishableKey: string
+  supportedChains?: [Chain, ...Chain[]]
   /**
    * Embedded signer configuration for Shield integration.
    */
-  walletConfig?: EmbeddedWalletConfiguration;
+  walletConfig?: EmbeddedWalletConfiguration
   /**
    * SDK overrides configuration for advanced customization.
    */
-  overrides?: SDKOverrides;
+  overrides?: SDKOverrides
   /**
    * Third party auth configuration for integrating with external auth providers.
    */
-  thirdPartyAuth?: ThirdPartyAuthConfiguration;
+  thirdPartyAuth?: ThirdPartyAuthConfiguration
   /**
    * Enable verbose logging for debugging purposes.
    */
-  verbose?: boolean;
+  verbose?: boolean
 }
 
 /**
@@ -228,237 +218,247 @@ export const OpenfortProvider = ({
   validateEnvironment({
     publishableKey,
     shieldPublishableKey: walletConfig?.shieldPublishableKey,
-  });
+  })
 
   // Prevent multiple OpenfortProvider instances
-  const existingContext = React.useContext(OpenfortContext);
+  const existingContext = React.useContext(OpenfortContext)
   if (existingContext) {
     throw new Error(
       'Found multiple instances of OpenfortProvider. Ensure there is only one mounted in your application tree.'
-    );
+    )
   }
 
   // Set logger verbose mode
   useEffect(() => {
-    if (verbose) logger.printVerboseWarning();
-    logger.setVerbose(verbose);
-  }, [verbose]);
+    if (verbose) logger.printVerboseWarning()
+    logger.setVerbose(verbose)
+  }, [verbose])
 
   // Create or use provided client
   const client = useMemo(() => {
-
     const newClient = createOpenfortClient({
       baseConfiguration: new OpenfortConfiguration({
         publishableKey: publishableKey,
       }),
-      shieldConfiguration: walletConfig ? new ShieldConfiguration({
-        shieldPublishableKey: walletConfig.shieldPublishableKey,
-        shieldDebug: walletConfig.debug,
-      }) : undefined,
+      shieldConfiguration: walletConfig
+        ? new ShieldConfiguration({
+            shieldPublishableKey: walletConfig.shieldPublishableKey,
+            shieldDebug: walletConfig.debug,
+          })
+        : undefined,
       overrides,
       thirdPartyAuth,
-    });
+    })
 
-    setDefaultClient(newClient);
-    return newClient;
-  }, [publishableKey, walletConfig, overrides]);
-
+    setDefaultClient(newClient)
+    return newClient
+  }, [publishableKey, walletConfig, overrides, thirdPartyAuth])
 
   // Embedded state
-  const [embeddedState, setEmbeddedState] = useState<EmbeddedState>(EmbeddedState.NONE);
+  const [embeddedState, setEmbeddedState] = useState<EmbeddedState>(EmbeddedState.NONE)
 
   // Start polling embedded state: only update and log when state changes
   useEffect(() => {
-    if (!client) return;
-    const stop = startEmbeddedStatePolling(client, (state) => {
-      setEmbeddedState(state);
-      logger.info('Current state of the embedded wallet:', getEmbeddedStateName(state));
-    }, 1000);
-    return stop;
-  }, [client]);
+    if (!client) return
+    const stop = startEmbeddedStatePolling(
+      client,
+      (state) => {
+        setEmbeddedState(state)
+        logger.info('Current state of the embedded wallet:', getEmbeddedStateName(state))
+      },
+      1000
+    )
+    return stop
+  }, [client])
 
   // Core state
-  const [user, setUser] = useState<AuthPlayerResponse | null>(null);
-  const [isUserInitialized, setIsUserInitialized] = useState(false);
-  const [isClientReady, setIsClientReady] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [user, setUser] = useState<AuthPlayerResponse | null>(null)
+  const [isUserInitialized, setIsUserInitialized] = useState(false)
+  const [isClientReady, setIsClientReady] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
 
   // Flow states
-  const [passwordState, setPasswordState] = useState<PasswordFlowState>({ status: 'initial' });
-  const [oAuthState, setOAuthState] = useState<OAuthFlowState>({ status: 'initial' });
-  const [siweState, setSiweState] = useState<SiweFlowState>({ status: 'initial' });
-  const [recoveryFlowState, setRecoveryFlowState] = useState<RecoveryFlowState>({ status: 'initial' });
+  const [passwordState, setPasswordState] = useState<PasswordFlowState>({ status: 'initial' })
+  const [oAuthState, setOAuthState] = useState<OAuthFlowState>({ status: 'initial' })
+  const [siweState, setSiweState] = useState<SiweFlowState>({ status: 'initial' })
+  const [recoveryFlowState, setRecoveryFlowState] = useState<RecoveryFlowState>({ status: 'initial' })
 
   // User state management
   const handleUserChange = useCallback((newUser: AuthPlayerResponse | null) => {
     if (newUser === null) {
-      logger.info('User not authenticated. User state changed to: null');
+      logger.info('User not authenticated. User state changed to: null')
     } else if ('id' in newUser) {
-      logger.info('User authenticated. User state changed to user with id:', newUser.id);
+      logger.info('User authenticated. User state changed to user with id:', newUser.id)
     } else {
-      logger.error('User state changed to user in wrong format:', newUser);
+      logger.error('User state changed to user in wrong format:', newUser)
     }
 
-    setUser(newUser);
+    setUser(newUser)
     if (newUser) {
-      setError(null);
+      setError(null)
     }
-  }, []);
+  }, [])
 
   // Core methods
   const logout = useCallback(async () => {
-    handleUserChange(null);
-    return client.auth.logout();
-  }, [client, handleUserChange]);
+    handleUserChange(null)
+    return client.auth.logout()
+  }, [client, handleUserChange])
 
   const getAccessToken = useCallback(async () => {
     try {
-      return await client.getAccessToken();
+      return await client.getAccessToken()
     } catch (err) {
-      logger.debug('Failed to get access token', err);
-      return null;
+      logger.debug('Failed to get access token', err)
+      return null
     }
-  }, [client]);
+  }, [client])
 
   // Internal refresh function for auth hooks to use
-  const refreshUserState = useCallback(async (user?: AuthPlayerResponse) => {
-    try {
-      if (user === undefined) {
-        logger.info('Refreshing user state, no user provided');
-      } else if ('id' in user) {
-        logger.info('Refreshing user state, user provided with id:', user.id);
-      } else {
-        logger.error('Refreshing user state, user provided is in wrong format:', user);
-      }
+  const refreshUserState = useCallback(
+    async (user?: AuthPlayerResponse) => {
+      try {
+        if (user === undefined) {
+          logger.info('Refreshing user state, no user provided')
+        } else if ('id' in user) {
+          logger.info('Refreshing user state, user provided with id:', user.id)
+        } else {
+          logger.error('Refreshing user state, user provided is in wrong format:', user)
+        }
 
-      // If user is provided, use it directly instead of fetching from API
-      if (user !== undefined) {
-        handleUserChange(user);
-        return user;
-      }
+        // If user is provided, use it directly instead of fetching from API
+        if (user !== undefined) {
+          handleUserChange(user)
+          return user
+        }
 
-      // Otherwise, fetch from API
-      const currentUser = await client.user.get();
-      logger.info('Refreshed user state', currentUser);
-      handleUserChange(currentUser);
-      return currentUser;
-    } catch (err) {
-      logger.warn('Failed to refresh user state', err);
-      handleUserChange(null);
-      return null;
-    }
-  }, [client, handleUserChange]);
+        // Otherwise, fetch from API
+        const currentUser = await client.user.get()
+        logger.info('Refreshed user state', currentUser)
+        handleUserChange(currentUser)
+        return currentUser
+      } catch (err) {
+        logger.warn('Failed to refresh user state', err)
+        handleUserChange(null)
+        return null
+      }
+    },
+    [client, handleUserChange]
+  )
 
   // Initialize client and user
   useEffect(() => {
     if (isUserInitialized) {
-      logger.info('Openfort client and user state already initialized. isUserInitialized:', isUserInitialized);
-      return;
+      logger.info('Openfort client and user state already initialized. isUserInitialized:', isUserInitialized)
+      return
     }
 
-    let cancelled = false;
+    let cancelled = false
 
     const initialize = async () => {
-      logger.info('Initializing Openfort client and user state');
+      logger.info('Initializing Openfort client and user state')
 
       // No explicit client initialization required
-      setIsClientReady(true);
+      setIsClientReady(true)
 
       try {
-        logger.info('Refreshing user state on initial load');
-        await refreshUserState();
+        logger.info('Refreshing user state on initial load')
+        await refreshUserState()
       } catch (err) {
-        logger.error('Failed to initialize user state', err);
+        logger.error('Failed to initialize user state', err)
         // User not logged in or fetch failed; treat as unauthenticated
-        handleUserChange(null);
+        handleUserChange(null)
       } finally {
-        if (!cancelled) setIsUserInitialized(true);
+        if (!cancelled) setIsUserInitialized(true)
       }
-    };
+    }
 
-    void initialize();
+    void initialize()
 
     return () => {
-      cancelled = true;
-    };
-  }, [client, isUserInitialized, handleUserChange, refreshUserState]);
+      cancelled = true
+    }
+  }, [isUserInitialized, handleUserChange, refreshUserState])
 
   // Custom auth state management
   useEffect(() => {
     if (customAuth?.enabled && isUserInitialized && isClientReady) {
-      (async () => {
+      ;(async () => {
         try {
-          const { getCustomAccessToken, isLoading } = customAuth!;
+          const { getCustomAccessToken, isLoading } = customAuth!
 
-          if (isLoading) return;
+          if (isLoading) return
 
-          const customToken = await getCustomAccessToken();
+          const customToken = await getCustomAccessToken()
 
           if (customToken) {
             // Custom auth sync implementation would go here
             // This would typically handle SIWE authentication with the custom token
-            logger.debug('Custom token available for authentication sync');
+            logger.debug('Custom token available for authentication sync')
           }
         } catch (err) {
-          logger.error('Custom auth sync failed', err);
+          logger.error('Custom auth sync failed', err)
         }
-      })();
+      })()
     }
-  }, [client, customAuth, isUserInitialized, isClientReady]);
+  }, [customAuth, isUserInitialized, isClientReady])
 
   // Determine if SDK is ready
   const isReady = useMemo(() => {
-    const customAuthReady = !customAuth?.enabled || !customAuth.isLoading;
-    return isUserInitialized && isClientReady && customAuthReady;
-  }, [isUserInitialized, isClientReady, customAuth?.enabled, customAuth?.isLoading]);
+    const customAuthReady = !customAuth?.enabled || !customAuth.isLoading
+    return isUserInitialized && isClientReady && customAuthReady
+  }, [isUserInitialized, isClientReady, customAuth?.enabled, customAuth?.isLoading])
 
   // Context value
-  const contextValue: OpenfortContextValue = useMemo(() => ({
-    client,
-    user,
-    isReady,
-    error,
-    supportedChains,
-    walletConfig,
-    embeddedWallet: walletConfig,
-    embeddedState,
+  const contextValue: OpenfortContextValue = useMemo(
+    () => ({
+      client,
+      user,
+      isReady,
+      error,
+      supportedChains,
+      walletConfig,
+      embeddedWallet: walletConfig,
+      embeddedState,
 
-    // Flow states
-    passwordState,
-    oAuthState,
-    siweState,
-    recoveryFlowState,
+      // Flow states
+      passwordState,
+      oAuthState,
+      siweState,
+      recoveryFlowState,
 
-    // State setters
-    setPasswordState,
-    setOAuthState,
-    setSiweState,
-    setRecoveryFlowState,
+      // State setters
+      setPasswordState,
+      setOAuthState,
+      setSiweState,
+      setRecoveryFlowState,
 
-    // Core methods
-    logout,
-    getAccessToken,
+      // Core methods
+      logout,
+      getAccessToken,
 
-    // Internal methods
-    _internal: {
+      // Internal methods
+      _internal: {
+        refreshUserState,
+      },
+    }),
+    [
+      client,
+      user,
+      isReady,
+      error,
+      supportedChains,
+      walletConfig,
+      embeddedState,
+      passwordState,
+      oAuthState,
+      siweState,
+      recoveryFlowState,
+      logout,
+      getAccessToken,
       refreshUserState,
-    },
-  }), [
-    client,
-    user,
-    isReady,
-    error,
-    supportedChains,
-    walletConfig,
-    embeddedState,
-    passwordState,
-    oAuthState,
-    siweState,
-    recoveryFlowState,
-    logout,
-    getAccessToken,
-    refreshUserState,
-  ]);
+    ]
+  )
 
   return (
     <OpenfortContext.Provider value={contextValue}>
@@ -471,11 +471,11 @@ export const OpenfortProvider = ({
           onProxyStatusChange={(status: 'loading' | 'loaded' | 'reloading') => {
             // Handle WebView status changes for debugging
             if (verbose) {
-              logger.debug('WebView status changed', status);
+              logger.debug('WebView status changed', status)
             }
           }}
         />
       )}
     </OpenfortContext.Provider>
-  );
-};
+  )
+}

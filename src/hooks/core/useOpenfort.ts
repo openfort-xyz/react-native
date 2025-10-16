@@ -1,5 +1,5 @@
-import { useOpenfortContext } from '../../core/context';
-import { UseOpenfort } from '../../types';
+import { useOpenfortContext } from '../../core/context'
+import type { UseOpenfort } from '../../types'
 
 /**
  * Hook that exposes the core state of the Openfort SDK.
@@ -38,7 +38,7 @@ import { UseOpenfort } from '../../types';
  * ```
  */
 export function useOpenfort(): UseOpenfort {
-  const { user, isReady, error, logout, getAccessToken } = useOpenfortContext();
+  const { user, isReady, error, logout, getAccessToken } = useOpenfortContext()
 
   return {
     user,
@@ -46,5 +46,5 @@ export function useOpenfort(): UseOpenfort {
     error,
     logout,
     getAccessToken,
-  };
+  }
 }

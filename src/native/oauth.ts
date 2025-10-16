@@ -1,28 +1,28 @@
-import { Platform } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
-import { logger } from '../lib/logger';
-import * as AppleAuthentication from 'expo-apple-authentication';
-import { OAuthProvider as OAuthProviderType } from '@openfort/openfort-js';
+import { OAuthProvider as OAuthProviderType } from '@openfort/openfort-js'
+import * as AppleAuthentication from 'expo-apple-authentication'
+import * as Linking from 'expo-linking'
+import * as WebBrowser from 'expo-web-browser'
+import { Platform } from 'react-native'
+import { logger } from '../lib/logger'
 
 /**
  * OAuth authentication result
  */
 export interface OAuthResult {
-  type: 'success' | 'cancel' | 'error';
-  url?: string;
-  error?: string;
+  type: 'success' | 'cancel' | 'error'
+  url?: string
+  error?: string
 }
 
 /**
  * Apple Sign-In authentication result
  */
 export interface AppleAuthResult {
-  authorizationCode: string;
-  state: string;
-  identityToken?: string;
-  email?: string;
-  fullName?: AppleAuthentication.AppleAuthenticationFullName;
+  authorizationCode: string
+  state: string
+  identityToken?: string
+  email?: string
+  fullName?: AppleAuthentication.AppleAuthenticationFullName
 }
 
 /**
@@ -30,9 +30,9 @@ export interface AppleAuthResult {
  */
 export interface OAuthSessionConfig {
   /** OAuth provider URL */
-  url: string;
+  url: string
   /** Redirect URI for OAuth flow */
-  redirectUri: string;
+  redirectUri: string
 }
 
 /**
@@ -40,49 +40,42 @@ export interface OAuthSessionConfig {
  */
 export async function openOAuthSession(config: OAuthSessionConfig): Promise<OAuthResult> {
   try {
-    const result = await WebBrowser.openAuthSessionAsync(
-      config.url,
-      config.redirectUri,
-      {
-        // Additional options can be configured here
-        showInRecents: false,
-      }
-    );
+    const result = await WebBrowser.openAuthSessionAsync(config.url, config.redirectUri, {
+      // Additional options can be configured here
+      showInRecents: false,
+    })
 
     if (result.type === 'success') {
       return {
         type: 'success',
         url: result.url,
-      };
+      }
     }
 
     if (result.type === 'cancel' || result.type === 'dismiss') {
       return {
         type: 'cancel',
-      };
+      }
     }
 
     return {
       type: 'error',
       error: 'OAuth session failed',
-    };
+    }
   } catch (error) {
     return {
       type: 'error',
       error: error instanceof Error ? error.message : 'Unknown OAuth error',
-    };
+    }
   }
 }
 
 /**
  * Handles Apple Sign-In authentication for iOS
  */
-export async function authenticateWithApple(options: {
-  state: string;
-  isLogin: boolean;
-}): Promise<AppleAuthResult> {
+export async function authenticateWithApple(options: { state: string; isLogin: boolean }): Promise<AppleAuthResult> {
   if (Platform.OS !== 'ios') {
-    throw new Error('Apple Sign-In is only available on iOS');
+    throw new Error('Apple Sign-In is only available on iOS')
   }
 
   try {
@@ -92,10 +85,10 @@ export async function authenticateWithApple(options: {
         AppleAuthentication.AppleAuthenticationScope.EMAIL,
         AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
       ],
-    });
+    })
 
     if (!result.authorizationCode || !result.state) {
-      throw new Error('Invalid Apple authentication response');
+      throw new Error('Invalid Apple authentication response')
     }
 
     return {
@@ -104,20 +97,20 @@ export async function authenticateWithApple(options: {
       identityToken: result.identityToken || undefined,
       email: result.email || undefined,
       fullName: result.fullName || undefined,
-    };
+    }
   } catch (error) {
     if (error instanceof Error && 'code' in error && error.code === 'ERR_REQUEST_CANCELED') {
       const errorCode = options.isLogin
         ? 'login_with_oauth_was_cancelled_by_user'
-        : 'link_with_oauth_was_cancelled_by_user';
+        : 'link_with_oauth_was_cancelled_by_user'
 
       throw {
         code: errorCode,
         error: 'Apple login was cancelled',
-      };
+      }
     }
 
-    throw error;
+    throw error
   }
 }
 
@@ -126,13 +119,13 @@ export async function authenticateWithApple(options: {
  */
 export async function isAppleSignInAvailable(): Promise<boolean> {
   if (Platform.OS !== 'ios') {
-    return false;
+    return false
   }
 
   try {
-    return await AppleAuthentication.isAvailableAsync();
+    return await AppleAuthentication.isAvailableAsync()
   } catch {
-    return false;
+    return false
   }
 }
 
@@ -158,15 +151,15 @@ export async function isAppleSignInAvailable(): Promise<boolean> {
  * ```
  */
 export function parseOAuthUrl(url: string): {
-  access_token?: string;
-  refresh_token?: string;
-  player_id?: string;
-  error?: string;
-  errorDescription?: string;
+  access_token?: string
+  refresh_token?: string
+  player_id?: string
+  error?: string
+  errorDescription?: string
 } {
   try {
-    const { queryParams } = Linking.parse(url);
-    logger.info('Parsed OAuth URL', queryParams);
+    const { queryParams } = Linking.parse(url)
+    logger.info('Parsed OAuth URL', queryParams)
 
     return {
       access_token: queryParams?.access_token as string,
@@ -174,10 +167,10 @@ export function parseOAuthUrl(url: string): {
       player_id: queryParams?.player_id as string,
       error: queryParams?.error as string,
       errorDescription: queryParams?.error_description as string,
-    };
+    }
   } catch (error) {
-    logger.warn('Failed to parse OAuth URL', error);
-    return {};
+    logger.warn('Failed to parse OAuth URL', error)
+    return {}
   }
 }
 
@@ -204,7 +197,7 @@ export function parseOAuthUrl(url: string): {
  * ```
  */
 export function createOAuthRedirectUri(path: string = '/'): string {
-  return Linking.createURL(path);
+  return Linking.createURL(path)
 }
 
 /**
@@ -214,30 +207,23 @@ export const OAuthUtils = {
   /**
    * Checks if a provider should use native authentication
    */
-  shouldUseNativeAuth(
-    provider: OAuthProviderType,
-    isLegacyAppleIosBehaviorEnabled: boolean = false
-  ): boolean {
-    return (
-      Platform.OS === 'ios' &&
-      provider === 'apple' &&
-      !isLegacyAppleIosBehaviorEnabled
-    );
+  shouldUseNativeAuth(provider: OAuthProviderType, isLegacyAppleIosBehaviorEnabled: boolean = false): boolean {
+    return Platform.OS === 'ios' && provider === 'apple' && !isLegacyAppleIosBehaviorEnabled
   },
 
   /**
    * Gets platform-specific OAuth configuration
    */
   getPlatformConfig(): {
-    supportsNativeApple: boolean;
-    platform: string;
-    supportsWebBrowser: boolean;
+    supportsNativeApple: boolean
+    platform: string
+    supportsWebBrowser: boolean
   } {
     return {
       supportsNativeApple: Platform.OS === 'ios',
       platform: Platform.OS,
       supportsWebBrowser: true,
-    };
+    }
   },
 
   /**
@@ -251,10 +237,10 @@ export const OAuthUtils = {
       OAuthProviderType.LINE,
       OAuthProviderType.FACEBOOK,
       OAuthProviderType.EPIC_GAMES,
-      OAuthProviderType.APPLE
-    ];
+      OAuthProviderType.APPLE,
+    ]
 
-    return supportedProviders.includes(provider);
+    return supportedProviders.includes(provider)
   },
 
   /**
@@ -263,10 +249,10 @@ export const OAuthUtils = {
   getProviderUrl(provider: OAuthProviderType, baseUrl: string): string {
     // Handle Twitter URL compatibility between platforms
     if (provider === 'twitter' && Platform.OS === 'android') {
-      return baseUrl.replace('x.com', 'twitter.com');
+      return baseUrl.replace('x.com', 'twitter.com')
     }
 
-    return baseUrl;
+    return baseUrl
   },
 
   /**
@@ -275,21 +261,15 @@ export const OAuthUtils = {
   createTimeoutPromise(timeoutMs: number = 120000): Promise<never> {
     return new Promise((_, reject) => {
       setTimeout(() => {
-        reject(new Error('OAuth session timed out'));
-      }, timeoutMs);
-    });
+        reject(new Error('OAuth session timed out'))
+      }, timeoutMs)
+    })
   },
 
   /**
    * Combines OAuth session with timeout
    */
-  async withTimeout<T>(
-    promise: Promise<T>,
-    timeoutMs: number = 120000
-  ): Promise<T> {
-    return Promise.race([
-      promise,
-      this.createTimeoutPromise(timeoutMs),
-    ]);
+  async withTimeout<T>(promise: Promise<T>, timeoutMs: number = 120000): Promise<T> {
+    return Promise.race([promise, this.createTimeoutPromise(timeoutMs)])
   },
-};
+}

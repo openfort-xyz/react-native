@@ -9,36 +9,28 @@
  */
 
 // Re-export commonly used types from @openfort/openfort-js
-export {
-    AuthPlayerResponse,
-    OpenfortError,
-    RecoveryMethod,
-    Openfort as OpenfortClient,
-    Provider,
-    OpenfortConfiguration,
-    ShieldConfiguration,
-    EmbeddedState,
-} from '@openfort/openfort-js';
-
 // Re-export enums and values from @openfort/openfort-js
 export {
-    OAuthProvider,
-} from '@openfort/openfort-js';
-
-// Re-export all types from the main types module
-export * from './types';
-
-// Re-export all hooks
-export * from './hooks';
-
+  AuthPlayerResponse,
+  EmbeddedState,
+  OAuthProvider,
+  Openfort as OpenfortClient,
+  OpenfortConfiguration,
+  OpenfortError,
+  Provider,
+  RecoveryMethod,
+  ShieldConfiguration,
+} from '@openfort/openfort-js'
 // Re-export all components and UI elements
-export * from './components';
-
+export * from './components'
+// Re-export constants
+export * from './constants'
 // Re-export core functionality
-export * from './core';
+export * from './core'
+// Re-export all hooks
+export * from './hooks'
 
 // Re-export native functionality
-export * from './native';
-
-// Re-export constants
-export * from './constants';
+export * from './native'
+// Re-export all types from the main types module
+export * from './types'

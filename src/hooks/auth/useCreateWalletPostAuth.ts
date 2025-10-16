@@ -1,7 +1,6 @@
-import { useCallback } from "react";
+import { useCallback } from 'react'
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export type CreateWalletPostAuthOptions = {};
+export type CreateWalletPostAuthOptions = Record<string, never>
 
 /**
  * Hook for creating wallets after user authentication.
@@ -13,25 +12,28 @@ export type CreateWalletPostAuthOptions = {};
  * @returns Object containing wallet creation utilities (placeholder for now).
  */
 export const useCreateWalletPostAuth = () => {
-
   // This would connect to the wallet and set it as active
-  // eslint-disable-next-line no-empty-pattern
-  const tryUseWallet = useCallback(async ({ /* logoutOnError: signOutOnError = true, automaticRecovery = true */ }: CreateWalletPostAuthOptions) => {
-    // if (!walletConfig || walletConfig.recoveryMethod !== RecoveryMethod.AUTOMATIC || !automaticRecovery) {
-    //   return {};
-    // }
+  const tryUseWallet = useCallback(
+    async (_options: CreateWalletPostAuthOptions) => {
+      // if (!walletConfig || walletConfig.recoveryMethod !== RecoveryMethod.AUTOMATIC || !automaticRecovery) {
+      //   return {};
+      // }
 
-    // const wallet = await setActiveWallet({
-    //   connector: embeddedWalletId,
-    // });
+      // const wallet = await setActiveWallet({
+      //   connector: embeddedWalletId,
+      // });
 
-    // if (wallet.error && signOutOnError) {
-    //   // If there was an error and we should log out, we can call the logout function
-    //   await signOut();
-    // }
+      // if (wallet.error && signOutOnError) {
+      //   // If there was an error and we should log out, we can call the logout function
+      //   await signOut();
+      // }
 
-    return { wallet: undefined };
-  }, [/* walletConfig, setActiveWallet, signOut */]);
+      return { wallet: undefined }
+    },
+    [
+      /* walletConfig, setActiveWallet, signOut */
+    ]
+  )
 
   return {
     tryUseWallet,

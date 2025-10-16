@@ -1,4 +1,4 @@
-import { useWallets } from "./useWallets";
+import { useWallets } from './useWallets'
 
 /**
  * Hook for accessing the currently active embedded wallet
@@ -28,7 +28,7 @@ import { useWallets } from "./useWallets";
  * ```
  */
 export function useWallet() {
-  const { activeWallet } = useWallets();
+  const { activeWallet } = useWallets()
 
-  return activeWallet;
+  return activeWallet
 }
