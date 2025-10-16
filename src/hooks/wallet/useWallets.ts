@@ -196,23 +196,27 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
           const address = options?.address || wallets[0]?.address;
 
-          const embeddedAccountToRecover = embeddedAccounts.find(account => account.chainId === chainId && account.address === address);
+          // Find account to recover based on whether we're using EOA or Smart Account
+          let embeddedAccountToRecover: EmbeddedAccount | undefined;
+
+          if (walletConfig?.accountType === AccountTypeEnum.EOA) {
+            // For EOAs, match only by address (EOAs work across all chains)
+            embeddedAccountToRecover = embeddedAccounts.find(account =>
+              account.address.toLowerCase() === address?.toLowerCase()
+            );
+          } else {
+            // For Smart Accounts, match by both address and chainId (Smart Accounts are chain-specific)
+            embeddedAccountToRecover = embeddedAccounts.find(account =>
+              account.chainId === chainId && account.address.toLowerCase() === address?.toLowerCase()
+            );
+          }
 
           let embeddedAccount: EmbeddedAccount | undefined;
           if (!embeddedAccountToRecover) {
-            // Different chain maybe?
-            // if (embeddedAccounts.some(account => account.address === address)) {
-            // create wallet with new chain
-            // embeddedAccount = await client.embeddedWallet.create({
-            //   chainId: chainId!,
-            //   accountType: AccountTypeEnum.SMART_ACCOUNT,
-            //   chainType: ChainTypeEnum.EVM,
-            //   shieldAuthentication: shieldAuthentication ?? undefined,
-            //   recoveryParams: options?.recoveryPassword ? { password: options.recoveryPassword, recoveryMethod: RecoveryMethod.PASSWORD } : undefined
-            // });
-            // } else {
-            throw new OpenfortError(`No embedded account found for address ${address} on chain ID ${chainId}`, OpenfortErrorType.WALLET_ERROR);
-            // }
+            const errorMsg = walletConfig?.accountType === AccountTypeEnum.EOA
+              ? `No embedded EOA account found for address ${address}`
+              : `No embedded account found for address ${address} on chain ID ${chainId}`;
+            throw new OpenfortError(errorMsg, OpenfortErrorType.WALLET_ERROR);
           } else {
             let recoveryParams: RecoveryParams;;
             if (options?.recoveryPassword) {
@@ -285,12 +289,17 @@ export function useWallets(hookOptions: WalletOptions = {}) {
     }
 
     try {
-      const accounts = await client.embeddedWallet.list();
+      const accounts = await client.embeddedWallet.list({
+        limit: 100,
+        // If its EOA we want all accounts, otherwise we want only smart accounts
+        accountType: walletConfig?.accountType === AccountTypeEnum.EOA ?
+          undefined : AccountTypeEnum.SMART_ACCOUNT
+      });
       setEmbeddedAccounts(accounts);
     } catch {
       setEmbeddedAccounts([]);
     }
-  }, [client, embeddedState, user]);
+  }, [client, embeddedState, user, walletConfig]);
 
   useEffect(() => {
     fetchEmbeddedWallets();
@@ -331,26 +340,36 @@ export function useWallets(hookOptions: WalletOptions = {}) {
   }, [setActiveWalletId, client])
 
   // Extract Ethereum wallets from embedded accounts
-  const wallets: UserWallet[] = useMemo(() => (
-    embeddedAccounts
-      .reduce((acc, account) => {
-        if (!acc.some(a => a.address === account.address)) {
+  const wallets: UserWallet[] = useMemo(() => {
+    // Deduplicate accounts based on account type
+    const deduplicatedAccounts = embeddedAccounts.reduce((acc, account) => {
+      if (walletConfig?.accountType === AccountTypeEnum.EOA) {
+        // For EOAs, deduplicate by address only (EOAs work across all chains)
+        if (!acc.some(a => a.address.toLowerCase() === account.address.toLowerCase())) {
           acc.push(account);
         }
-        return acc;
-      }, [] as EmbeddedAccount[])
-      .map((account) => ({
-        address: account.address as Hex,
-        implementationType: account.implementationType,
-        ownerAddress: account.ownerAddress,
-        chainType: account.chainType,
-        isActive: activeWalletId === account.id,
-        isConnecting: status.status === "connecting" && status.address === account.address,
-        getProvider: async () => {
-          return await getEthereumProvider();
-        },
-      }))
-  ), [embeddedAccounts, activeWalletId, status.status === "connecting", client.embeddedWallet]);
+      } else {
+        // For Smart Accounts, keep separate entries per chain (they're chain-specific)
+        // Only deduplicate exact matches (same address AND same chainId)
+        if (!acc.some(a => a.address.toLowerCase() === account.address.toLowerCase() && a.chainId === account.chainId)) {
+          acc.push(account);
+        }
+      }
+      return acc;
+    }, [] as EmbeddedAccount[]);
+
+    return deduplicatedAccounts.map((account) => ({
+      address: account.address as Hex,
+      implementationType: account.implementationType,
+      ownerAddress: account.ownerAddress,
+      chainType: account.chainType,
+      isActive: activeWalletId === account.id,
+      isConnecting: status.status === "connecting" && status.address === account.address,
+      getProvider: async () => {
+        return await getEthereumProvider();
+      },
+    }));
+  }, [embeddedAccounts, activeWalletId, status.status, walletConfig?.accountType, client.embeddedWallet]);
 
   const create = useCallback(
     async (options?: CreateWalletOptions): Promise<CreateWalletResult> => {

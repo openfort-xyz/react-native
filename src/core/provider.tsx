@@ -25,7 +25,7 @@ import { logger, getEmbeddedStateName } from '../lib/logger';
 import { validateEnvironment } from '../lib/environmentValidation';
 
 /**
- * Shape for configuring custom authentication synchronisation behaviour.
+ * Shape for configuring custom authentication synchronization behavior.
  */
 interface CustomAuthConfig {
   enabled: boolean;
@@ -42,6 +42,8 @@ export type CommonEmbeddedWalletConfiguration = {
   ethereumProviderPolicyId?: PolicyConfig;
   accountType?: AccountTypeEnum;
   debug?: boolean;
+  /** Automatically recover wallet after authentication. */
+  recoverWalletAutomaticallyAfterAuth?: boolean;
 }
 
 export type EncryptionSession =
