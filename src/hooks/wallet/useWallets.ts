@@ -101,7 +101,7 @@ const mapWalletStatus = (status: WalletFlowStatus) => {
  * ```
  */
 export function useWallets(hookOptions: WalletOptions = {}) {
-  const { client, user, supportedChains, walletConfig, embeddedState, _internal } = useOpenfortContext()
+  const { client, supportedChains, walletConfig, embeddedState, _internal } = useOpenfortContext()
   const [embeddedAccounts, setEmbeddedAccounts] = useState<EmbeddedAccount[]>([])
   const recoverPromiseRef = useRef<Promise<SetActiveWalletResult> | null>(null)
   const [activeWalletId, setActiveWalletId] = useState<string | null>(null) // OPENFORT-JS Should provide this
@@ -109,23 +109,6 @@ export function useWallets(hookOptions: WalletOptions = {}) {
   const [status, setStatus] = useState<WalletFlowStatus>({
     status: 'idle',
   })
-
-  const activeWallet = useMemo((): UserWallet | null => {
-    if (!activeWalletId || !embeddedAccounts) return null
-    const account = embeddedAccounts.find((acc) => acc.id === activeWalletId)
-    if (!account) return null
-    return {
-      address: account.address as Hex,
-      implementationType: account.implementationType,
-      ownerAddress: account.ownerAddress,
-      chainType: account.chainType,
-      isActive: true,
-      isConnecting: false,
-      getProvider: async () => {
-        return await getEthereumProvider()
-      },
-    }
-  }, [activeWalletId, embeddedAccounts, getEthereumProvider])
 
   const resolveEncryptionSession = useCallback(async (): Promise<string> => {
     if (!walletConfig) {
@@ -170,6 +153,100 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
     throw new OpenfortError('Encryption session configuration is required', OpenfortErrorType.WALLET_ERROR)
   }, [walletConfig])
+
+  // Fetch embedded wallets using embeddedWallet.list()
+  const fetchEmbeddedWallets = useCallback(async () => {
+    if (!client || embeddedState === EmbeddedState.NONE || embeddedState === EmbeddedState.UNAUTHENTICATED) {
+      setEmbeddedAccounts([])
+      return
+    }
+
+    try {
+      const accounts = await client.embeddedWallet.list()
+      setEmbeddedAccounts(accounts)
+    } catch {
+      setEmbeddedAccounts([])
+    }
+  }, [client, embeddedState])
+
+  useEffect(() => {
+    fetchEmbeddedWallets()
+  }, [fetchEmbeddedWallets])
+
+  const getEthereumProvider = useCallback(async () => {
+    const resolvePolicy = () => {
+      const ethereumProviderPolicyId = walletConfig?.ethereumProviderPolicyId
+
+      if (!ethereumProviderPolicyId) return undefined
+
+      if (typeof ethereumProviderPolicyId === 'string') {
+        return ethereumProviderPolicyId
+      }
+
+      if (!hookOptions.chainId) return undefined
+
+      const policy = ethereumProviderPolicyId[hookOptions.chainId]
+      if (!policy) {
+        return undefined
+      }
+
+      return policy
+    }
+
+    return await client.embeddedWallet.getEthereumProvider({ announceProvider: false, policy: resolvePolicy() })
+  }, [client.embeddedWallet, hookOptions.chainId, walletConfig?.ethereumProviderPolicyId])
+
+  useEffect(() => {
+    ;(async () => {
+      try {
+        const embeddedAccount = await client.embeddedWallet.get()
+        setActiveWalletId(embeddedAccount.id)
+      } catch {
+        setActiveWalletId(null)
+      }
+    })()
+  }, [client])
+
+  // Extract Ethereum wallets from embedded accounts
+  const wallets: UserWallet[] = useMemo(
+    () =>
+      embeddedAccounts
+        .reduce((acc, account) => {
+          if (!acc.some((a) => a.address === account.address)) {
+            acc.push(account)
+          }
+          return acc
+        }, [] as EmbeddedAccount[])
+        .map((account) => ({
+          address: account.address as Hex,
+          implementationType: account.implementationType,
+          ownerAddress: account.ownerAddress,
+          chainType: account.chainType,
+          isActive: activeWalletId === account.id,
+          isConnecting: status.status === 'connecting' && status.address === account.address,
+          getProvider: async () => {
+            return await getEthereumProvider()
+          },
+        })),
+    [embeddedAccounts, activeWalletId, getEthereumProvider, status.status, 'address' in status ? status.address : undefined]
+  )
+
+  const activeWallet = useMemo((): UserWallet | null => {
+    if (!activeWalletId || !embeddedAccounts) return null
+    const account = embeddedAccounts.find((acc) => acc.id === activeWalletId)
+    if (!account) return null
+    return {
+      address: account.address as Hex,
+      implementationType: account.implementationType,
+      ownerAddress: account.ownerAddress,
+      chainType: account.chainType,
+      isActive: true,
+      isConnecting: false,
+      getProvider: async () => {
+        return await getEthereumProvider()
+      },
+    }
+  }, [activeWalletId, embeddedAccounts, getEthereumProvider])
 
   const setActiveWallet = useCallback(
     async (options?: SetActiveWalletOptions): Promise<SetActiveWalletResult> => {
@@ -401,6 +478,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
       },
     }))
   }, [embeddedAccounts, activeWalletId, status.status, walletConfig?.accountType, getEthereumProvider, status.address])
+
 
   const create = useCallback(
     async (options?: CreateWalletOptions): Promise<CreateWalletResult> => {
