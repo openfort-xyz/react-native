@@ -42,6 +42,8 @@ export type CommonEmbeddedWalletConfiguration = {
   ethereumProviderPolicyId?: PolicyConfig;
   accountType?: AccountTypeEnum;
   debug?: boolean;
+  /** Recovery method for the embedded wallet: 'automatic' or 'password' */
+  recoveryMethod?: 'automatic' | 'password';
 }
 
 export type EncryptionSession =
