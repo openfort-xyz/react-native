@@ -45,7 +45,10 @@ export function createOpenfortClient({
   // baseUrl,
   // logLevel,
   return new OpenfortClient({
-    baseConfiguration,
+    baseConfiguration: {
+      nativeAppIdentifier: nativeAppId,
+      ...baseConfiguration
+    },
     overrides: {
       ...overrides,
       crypto: {

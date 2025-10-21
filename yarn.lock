@@ -1279,10 +1279,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@openfort/openfort-js@^0.10.27":
-  version "0.10.27"
-  resolved "https://registry.yarnpkg.com/@openfort/openfort-js/-/openfort-js-0.10.27.tgz#c9554424c5e2779863a8e72c76d84a00e5923e93"
-  integrity sha512-obWvRFHYVJuG48/uXrK0xnPZCQ8bjHd6cQAeknBeNzzvrCYsC0Xe5JsvUv28+E7T1xcOq+IfT21u444lNd0wgw==
+"@openfort/openfort-js@^0.10.28":
+  version "0.10.28"
+  resolved "https://registry.yarnpkg.com/@openfort/openfort-js/-/openfort-js-0.10.28.tgz#06b474e9600763df4067c721a953cf74b61b9f81"
+  integrity sha512-65aL2PUk2wnYnnNa92UC4fIbCUG6tVHyfpfADXqEO/jYN+Vkmfr0zJ8hR/oT33bCTwEuKVwn9ghoPXSYG7Q4+A==
   dependencies:
     "@ethersproject/abi" "^5.8.0"
     "@ethersproject/bytes" "^5.8.0"
