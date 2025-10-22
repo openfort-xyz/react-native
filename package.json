@@ -1,7 +1,7 @@
 {
   "name": "@openfort/react-native",
   "main": "dist/index.js",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "license": "MIT",
   "description": "React Native SDK for Openfort platform integration",
   "scripts": {
@@ -23,7 +23,7 @@
     }
   },
   "dependencies": {
-    "@openfort/openfort-js": "^0.10.28"
+    "@openfort/openfort-js": "^0.10.30"
   },
   "peerDependencies": {
     "expo-apple-authentication": "*",
