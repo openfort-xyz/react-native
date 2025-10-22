@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 import {
   AuthPlayerResponse,
-  OpenfortConfiguration,
   ShieldConfiguration,
   SDKOverrides,
   EmbeddedState,
