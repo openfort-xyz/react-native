@@ -250,9 +250,9 @@ export const OpenfortProvider = ({
   const client = useMemo(() => {
 
     const newClient = createOpenfortClient({
-      baseConfiguration: new OpenfortConfiguration({
+      baseConfiguration: {
         publishableKey: publishableKey,
-      }),
+      },
       shieldConfiguration: walletConfig ? new ShieldConfiguration({
         shieldPublishableKey: walletConfig.shieldPublishableKey,
         shieldDebug: walletConfig.debug,

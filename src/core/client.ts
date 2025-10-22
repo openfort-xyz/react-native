@@ -95,7 +95,7 @@ let defaultClient: OpenfortClient | null = null;
  */
 export function getDefaultClient(options?: OpenfortSDKConfiguration): OpenfortClient {
   if (!defaultClient && options) {
-    defaultClient = new OpenfortClient(options);
+    defaultClient = createOpenfortClient(options);
   }
 
   if (!defaultClient) {
