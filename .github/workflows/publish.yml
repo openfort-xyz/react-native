@@ -32,9 +32,6 @@ jobs:
       - name: Security audit
         run: pnpm audit
 
-      # - name: Lint (Biome)
-      #   run: pnpm lint
-
       - name: Code check (Biome)
         run: pnpm biome check
 
