@@ -5,10 +5,12 @@
   "license": "MIT",
   "description": "React Native SDK for Openfort platform integration",
   "scripts": {
-    "build": "rimraf dist && tsc",
-    "lint": "eslint . --ignore-pattern dist",
-    "link": "yarn link",
-    "unlink": "yarn unlink",
+    "build": "tsc",
+    "check": "biome check",
+    "check:fix": "biome check --write",
+    "lint": "tsc -b && biome lint .",
+    "link": "pnpm link",
+    "unlink": "pnpm unlink",
     "docs:build": "typedoc"
   },
   "types": "dist/types/index.d.ts",
@@ -27,22 +29,20 @@
   },
   "peerDependencies": {
     "expo-apple-authentication": "*",
+    "expo-application": "*",
     "expo-crypto": "*",
     "expo-linking": "*",
     "expo-secure-store": "*",
     "expo-web-browser": "*",
     "react": "*",
-    "expo-application": "*",
     "react-native": "*",
     "react-native-webview": "*"
   },
   "devDependencies": {
-    "@eslint/js": "^9.17.0",
+    "@biomejs/biome": "^2.2.4",
     "@types/react": "~18.3.12",
     "@types/react-test-renderer": "^18.3.0",
     "buffer": "^5.4.3",
-    "eslint": "^9.17.0",
-    "eslint-plugin-react": "^7.37.3",
     "expo-apple-authentication": "^7.2.4",
     "expo-application": "^6.1.4",
     "expo-crypto": "14.0.2",
@@ -52,10 +52,9 @@
     "react": "^18.3.1",
     "react-native": "0.77.1",
     "react-native-webview": "^13.15.0",
-    "typedoc": "^0.26.5",
-    "typescript": "^5.5.3",
-    "typescript-eslint": "^8.19.0"
+    "typedoc": "^0.28.14",
+    "typescript": "^5.9.3"
   },
   "private": false,
-  "packageManager": "yarn@1.22.17"
+  "packageManager": "pnpm@10.22.0"
 }
