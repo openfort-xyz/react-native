@@ -1,3 +1,5 @@
+// biome-ignore-all lint/performance/noReExportAll: This is an index file that re-exports everything
+
 /**
  * Openfort React Native SDK hooks.
  *
@@ -9,11 +11,10 @@
  * - Wallet: Embedded wallet management utilities
  */
 
-// Re-export all core hooks
-export * from './core';
-
 // Re-export all authentication hooks
-export * from './auth';
+export * from './auth'
+// Re-export all core hooks
+export * from './core'
 
 // Re-export all wallet hooks
-export * from './wallet';
+export * from './wallet'

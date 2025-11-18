@@ -5,8 +5,8 @@
  */
 
 // Core SDK hooks
-export { useOpenfort } from './useOpenfort';
+export { useOpenfort } from './useOpenfort'
 
-export { useOpenfortClient } from './useOpenfortClient';
+export { useOpenfortClient } from './useOpenfortClient'
 
-export { useUser } from './useUser';
+export { useUser } from './useUser'

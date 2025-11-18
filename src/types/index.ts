@@ -1,124 +1,118 @@
-
 /**
  * Core Openfort hook interface.
  */
 export interface UseOpenfort {
-    /** The current authenticated user, or null when unauthenticated. */
-    user: import('@openfort/openfort-js').AuthPlayerResponse | null;
-    /** Whether or not the SDK has initialized and is ready for use. */
-    isReady: boolean;
-    /** Any error encountered during SDK initialization. */
-    error: Error | null;
-    /** A function that logs the current user out and clears any stored tokens. */
-    logout: () => Promise<void>;
-    /** A function that gets the current authenticated user's access token. */
-    getAccessToken: () => Promise<string | null>;
+  /** The current authenticated user, or null when unauthenticated. */
+  user: import('@openfort/openfort-js').AuthPlayerResponse | null
+  /** Whether or not the SDK has initialized and is ready for use. */
+  isReady: boolean
+  /** Any error encountered during SDK initialization. */
+  error: Error | null
+  /** A function that logs the current user out and clears any stored tokens. */
+  logout: () => Promise<void>
+  /** A function that gets the current authenticated user's access token. */
+  getAccessToken: () => Promise<string | null>
 }
 
 // Authentication types
 export type {
-    PasswordFlowState,
-    SiweFlowState,
-    RecoveryFlowState,
-    CustomAuthFlowState,
-    AuthSuccessCallback,
-    AuthLinkSuccessCallback,
-    ErrorCallback,
-    EmailLoginHookOptions,
-    EmailLinkHookOptions,
-    EmailLoginHookResult,
-    EmailLinkHookResult,
-    SiweLoginHookOptions,
-    SiweLinkHookOptions,
-    SiweLoginHookResult,
-    SiweLinkHookResult,
-    GenerateSiweMessageResponse,
-    GenerateSiweMessage,
-} from './auth';
-
-// OAuth types
-export type {
-    OAuthFlowState,
-    OAuthTokens,
-    UseOAuthTokensOptions,
-    LoginWithOAuthInput,
-    LinkWithOAuthInput,
-    UseLoginWithOAuth,
-    UseLinkWithOAuth,
-    UnlinkOAuthOptions,
-    UnlinkOAuthParams,
-} from './oauth';
-
-// Wallet types
-export type {
-    OpenfortEmbeddedWalletAccount,
-    WalletRecoveryCallbacks,
-    SolanaWalletRecoveryCallbacks,
-    RecoveryMethodOptions,
-    CreateSolanaEmbeddedWalletOpts,
-    RecoverSolanaEmbeddedWalletOpts,
-    EmbeddedEthereumWalletActions,
-    EmbeddedEthereumWalletState,
-    EmbeddedWalletStatus,
-    ConnectedEmbeddedSolanaWallet,
-    EmbeddedSolanaWalletActions,
-    EmbeddedSolanaWalletConnectedState,
-    EmbeddedSolanaWalletConnectingState,
-    EmbeddedSolanaWalletReconnectingState,
-    EmbeddedSolanaWalletDisconnectedState,
-    EmbeddedSolanaWalletNeedsRecoveryState,
-    EmbeddedSolanaWalletCreatingState,
-    EmbeddedSolanaWalletErrorState,
-    EmbeddedSolanaWalletState,
-    EmbeddedSolanaWalletStatus,
-    ConnectedEmbeddedEthereumWallet,
-    UserWallet,
-} from './wallet';
-
+  AuthLinkSuccessCallback,
+  AuthSuccessCallback,
+  CustomAuthFlowState,
+  EmailLinkHookOptions,
+  EmailLinkHookResult,
+  EmailLoginHookOptions,
+  EmailLoginHookResult,
+  ErrorCallback,
+  GenerateSiweMessage,
+  GenerateSiweMessageResponse,
+  PasswordFlowState,
+  RecoveryFlowState,
+  SiweFlowState,
+  SiweLinkHookOptions,
+  SiweLinkHookResult,
+  SiweLoginHookOptions,
+  SiweLoginHookResult,
+} from './auth'
 // Configuration and utility types
 export type {
-    CustomAuthProviderConfig,
-    UseGuestAuth,
-    UseOnEmbeddedWalletStateChange,
-    SetRecoveryParams,
-    UseSetEmbeddedWalletRecoveryResult,
-    UseSetEmbeddedWalletRecovery,
-} from './config';
-
-
+  CustomAuthProviderConfig,
+  SetRecoveryParams,
+  UseGuestAuth,
+  UseOnEmbeddedWalletStateChange,
+  UseSetEmbeddedWalletRecovery,
+  UseSetEmbeddedWalletRecoveryResult,
+} from './config'
+// OAuth types
+export type {
+  LinkWithOAuthInput,
+  LoginWithOAuthInput,
+  OAuthFlowState,
+  OAuthTokens,
+  UnlinkOAuthOptions,
+  UnlinkOAuthParams,
+  UseLinkWithOAuth,
+  UseLoginWithOAuth,
+  UseOAuthTokensOptions,
+} from './oauth'
 // Predicate functions (exported directly, not as types)
 export {
-    isConnected,
-    isReconnecting,
-    isConnecting,
-    isDisconnected,
-    isNotCreated,
-    isCreating,
-    hasError,
-    needsRecovery,
-    isLoading,
-    isReady,
-    needsUserAction,
-    isStable,
-    canTransact,
-    getStateDescription,
-    getActionText,
-} from './predicates';
+  canTransact,
+  getActionText,
+  getStateDescription,
+  hasError,
+  isConnected,
+  isConnecting,
+  isCreating,
+  isDisconnected,
+  isLoading,
+  isNotCreated,
+  isReady,
+  isReconnecting,
+  isStable,
+  needsRecovery,
+  needsUserAction,
+} from './predicates'
+// Wallet types
+export type {
+  ConnectedEmbeddedEthereumWallet,
+  ConnectedEmbeddedSolanaWallet,
+  CreateSolanaEmbeddedWalletOpts,
+  EmbeddedEthereumWalletActions,
+  EmbeddedEthereumWalletState,
+  EmbeddedSolanaWalletActions,
+  EmbeddedSolanaWalletConnectedState,
+  EmbeddedSolanaWalletConnectingState,
+  EmbeddedSolanaWalletCreatingState,
+  EmbeddedSolanaWalletDisconnectedState,
+  EmbeddedSolanaWalletErrorState,
+  EmbeddedSolanaWalletNeedsRecoveryState,
+  EmbeddedSolanaWalletReconnectingState,
+  EmbeddedSolanaWalletState,
+  EmbeddedSolanaWalletStatus,
+  EmbeddedWalletStatus,
+  OpenfortEmbeddedWalletAccount,
+  RecoverSolanaEmbeddedWalletOpts,
+  RecoveryMethodOptions,
+  SolanaWalletRecoveryCallbacks,
+  UserWallet,
+  WalletRecoveryCallbacks,
+} from './wallet'
 
 /**
  * Embedded wallet hook options with callbacks.
  */
 export type UseEmbeddedEthereumWallet = {
-    onCreateWalletSuccess?: (provider: import('@openfort/openfort-js').Provider) => void;
-    onCreateWalletError?: (error: Error) => void;
-    onSetWalletRecoverySuccess?: (result: { user: import('@openfort/openfort-js').AuthPlayerResponse }) => void;
-    onSetWalletRecoveryError?: (error: Error) => void;
-};
+  onCreateWalletSuccess?: (provider: import('@openfort/openfort-js').Provider) => void
+  onCreateWalletError?: (error: Error) => void
+  onSetWalletRecoverySuccess?: (result: { user: import('@openfort/openfort-js').AuthPlayerResponse }) => void
+  onSetWalletRecoveryError?: (error: Error) => void
+}
 
 /**
  * Embedded Solana wallet hook options with callbacks.
  */
 export type UseEmbeddedSolanaWallet = {
-    onCreateWalletSuccess?: (account: import('@openfort/openfort-js').EmbeddedAccount) => void;
-    onCreateWalletError?: (error: Error) => void;
-};
+  onCreateWalletSuccess?: (account: import('@openfort/openfort-js').EmbeddedAccount) => void
+  onCreateWalletError?: (error: Error) => void
+}

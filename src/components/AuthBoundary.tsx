@@ -1,5 +1,5 @@
-import React from 'react';
-import { useOpenfort } from '../hooks/core/useOpenfort';
+import type React from 'react'
+import { useOpenfort } from '../hooks/core/useOpenfort'
 
 /**
  * Props for the AuthBoundary component
@@ -8,23 +8,23 @@ export interface AuthBoundaryProps {
   /**
    * Component to render while the SDK is initializing and not ready
    */
-  loading: React.ReactNode;
-  
+  loading: React.ReactNode
+
   /**
    * Component to render when the user is not authenticated
    */
-  unauthenticated: React.ReactNode;
-  
+  unauthenticated: React.ReactNode
+
   /**
    * Optional component to render when there's an error during SDK initialization
    * Can be a component or a function that receives the error and returns a component
    */
-  error?: React.ReactNode | ((error: Error) => React.ReactNode);
-  
+  error?: React.ReactNode | ((error: Error) => React.ReactNode)
+
   /**
    * Children to render when the user is authenticated and the SDK is ready
    */
-  children: React.ReactNode;
+  children: React.ReactNode
 }
 
 /**
@@ -41,7 +41,7 @@ export interface AuthBoundaryProps {
  * ```tsx
  * import { AuthBoundary } from '@openfort/react-native';
  * import { Text, ActivityIndicator } from 'react-native';
- * 
+ *
  * function App() {
  *   return (
  *     <AuthBoundary
@@ -54,16 +54,16 @@ export interface AuthBoundaryProps {
  *   );
  * }
  * ```
- * 
+ *
  * @example
  * // With React Navigation
  * ```tsx
  * import { AuthBoundary } from '@openfort/react-native';
  * import { NavigationContainer } from '@react-navigation/native';
  * import { createNativeStackNavigator } from '@react-navigation/native-stack';
- * 
+ *
  * const Stack = createNativeStackNavigator();
- * 
+ *
  * function App() {
  *   return (
  *     <NavigationContainer>
@@ -92,28 +92,26 @@ export const AuthBoundary: React.FC<AuthBoundaryProps> = ({
   error: errorComponent,
   children,
 }) => {
-  const { user, isReady, error } = useOpenfort();
+  const { user, isReady, error } = useOpenfort()
 
   // SDK encountered an error during initialization
   if (error && errorComponent) {
     if (typeof errorComponent === 'function') {
-      return <>{errorComponent(error)}</>;
+      return <>{errorComponent(error)}</>
     }
-    return <>{errorComponent}</>;
+    return <>{errorComponent}</>
   }
 
   // SDK is still initializing
   if (!isReady) {
-    return <>{loading}</>;
+    return <>{loading}</>
   }
 
   // User is not authenticated
   if (!user) {
-    return <>{unauthenticated}</>;
+    return <>{unauthenticated}</>
   }
 
   // User is authenticated and SDK is ready
-  return <>{children}</>;
-};
-
-export default AuthBoundary;
+  return <>{children}</>
+}

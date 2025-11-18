@@ -1,9 +1,8 @@
-import { Openfort as OpenfortClient, OpenfortSDKConfiguration } from '@openfort/openfort-js';
-import { digest } from 'expo-crypto';
-import { applicationId } from 'expo-application';
-import { SecureStorageAdapter, createNormalizedStorage } from './storage';
-import { logger } from '../lib/logger';
-
+import { Openfort as OpenfortClient, type OpenfortSDKConfiguration } from '@openfort/openfort-js'
+import { applicationId } from 'expo-application'
+import { digest } from 'expo-crypto'
+import { logger } from '../lib/logger'
+import { createNormalizedStorage, SecureStorageAdapter } from './storage'
 
 /**
  * Creates an {@link OpenfortClient} configured for Expo and React Native environments.
@@ -31,8 +30,8 @@ export function createOpenfortClient({
   overrides,
   shieldConfiguration,
 }: OpenfortSDKConfiguration): OpenfortClient {
-  const nativeAppId = getNativeApplicationId();
-  logger.info('Creating Openfort client with native app ID', nativeAppId);
+  const nativeAppId = getNativeApplicationId()
+  logger.info('Creating Openfort client with native app ID', nativeAppId)
   // appId,
   // clientId,
   // supportedChains,
@@ -47,7 +46,7 @@ export function createOpenfortClient({
   return new OpenfortClient({
     baseConfiguration: {
       nativeAppIdentifier: nativeAppId,
-      ...baseConfiguration
+      ...baseConfiguration,
     },
     overrides: {
       ...overrides,
@@ -55,10 +54,10 @@ export function createOpenfortClient({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         digest: digest as any,
       },
-      storage: createNormalizedStorage(SecureStorageAdapter)
+      storage: createNormalizedStorage(SecureStorageAdapter),
     },
-    shieldConfiguration
-  });
+    shieldConfiguration,
+  })
 }
 
 /**
@@ -72,9 +71,9 @@ function getNativeApplicationId(): string {
   if (typeof applicationId !== 'string') {
     throw new Error(
       'Cannot determine native application ID. Please make sure `expo-application` is installed as a dependency and that `ios.bundleId` or `android.package` is set.'
-    );
+    )
   }
-  return applicationId;
+  return applicationId
 }
 
 /**
@@ -83,7 +82,7 @@ function getNativeApplicationId(): string {
  * Applications should generally manage their own instance via {@link createOpenfortClient}
  * instead of relying on this singleton.
  */
-let defaultClient: OpenfortClient | null = null;
+let defaultClient: OpenfortClient | null = null
 
 /**
  * Retrieves the lazily initialised default {@link OpenfortClient} instance.
@@ -95,14 +94,14 @@ let defaultClient: OpenfortClient | null = null;
  */
 export function getDefaultClient(options?: OpenfortSDKConfiguration): OpenfortClient {
   if (!defaultClient && options) {
-    defaultClient = createOpenfortClient(options);
+    defaultClient = createOpenfortClient(options)
   }
 
   if (!defaultClient) {
-    throw new Error('Openfort client not initialized. Make sure to wrap your app with OpenfortProvider.');
+    throw new Error('Openfort client not initialized. Make sure to wrap your app with OpenfortProvider.')
   }
 
-  return defaultClient;
+  return defaultClient
 }
 
 /**
@@ -113,5 +112,5 @@ export function getDefaultClient(options?: OpenfortSDKConfiguration): OpenfortCl
  * @internal
  */
 export function setDefaultClient(client: OpenfortClient): void {
-  defaultClient = client;
+  defaultClient = client
 }
