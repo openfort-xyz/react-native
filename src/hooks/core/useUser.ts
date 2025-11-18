@@ -1,5 +1,5 @@
-import { EmbeddedState } from "@openfort/openfort-js";
-import { useOpenfortContext } from "../../core";
+import { EmbeddedState } from '@openfort/openfort-js'
+import { useOpenfortContext } from '../../core'
 
 /**
  * Hook for accessing current user state and authentication status
@@ -30,11 +30,11 @@ import { useOpenfortContext } from "../../core";
  * ```
  */
 export function useUser() {
-  const { user, embeddedState, getAccessToken } = useOpenfortContext();
+  const { user, embeddedState, getAccessToken } = useOpenfortContext()
 
   return {
     user,
     isAuthenticated: embeddedState !== EmbeddedState.NONE && embeddedState !== EmbeddedState.UNAUTHENTICATED,
     getAccessToken,
-  };
+  }
 }

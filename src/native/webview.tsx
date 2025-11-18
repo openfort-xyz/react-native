@@ -1,22 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useRef, useCallback, useEffect } from 'react';
-import { AppState, Platform, View } from 'react-native';
-import WebView from 'react-native-webview';
-import type { WebViewMessageEvent } from 'react-native-webview';
-import type { Openfort as OpenfortClient} from '@openfort/openfort-js';
-import { isSecureStorageMessage, handleSecureStorageMessage } from './storage';
-import { logger } from '../lib/logger';
+
+import type { Openfort as OpenfortClient } from '@openfort/openfort-js'
+import type React from 'react'
+import { useCallback, useEffect, useRef } from 'react'
+import { AppState, Platform, View } from 'react-native'
+import type { WebViewMessageEvent } from 'react-native-webview'
+import WebView from 'react-native-webview'
+import { logger } from '../lib/logger'
+import { handleSecureStorageMessage, isSecureStorageMessage } from './storage'
 
 /**
  * Props for the EmbeddedWalletWebView component
  */
 interface EmbeddedWalletWebViewProps {
   /** Openfort client instance */
-  client: OpenfortClient;
+  client: OpenfortClient
   /** Whether the client is ready and initialized */
-  isClientReady: boolean;
+  isClientReady: boolean
   /** Callback when WebView proxy status changes */
-  onProxyStatusChange?: (status: 'loading' | 'loaded' | 'reloading') => void;
+  onProxyStatusChange?: (status: 'loading' | 'loaded' | 'reloading') => void
 }
 
 /**
@@ -29,7 +31,7 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
   isClientReady,
   onProxyStatusChange,
 }) => {
-  const webViewRef = useRef<WebView>(null);
+  const webViewRef = useRef<WebView>(null)
 
   // Handle app state changes to monitor WebView health
   useEffect(() => {
@@ -37,29 +39,29 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
       if (nextAppState === 'active') {
         // Check if embedded wallet is still responsive
         try {
-          await client.embeddedWallet.ping(500);
+          await client.embeddedWallet.ping(500)
           // if (!isResponsive) {
           //   onProxyStatusChange?.('reloading');
           //   // client.embeddedWallet.reload();
           // }
         } catch (error) {
-          logger.warn('Failed to ping embedded wallet', error);
+          logger.warn('Failed to ping embedded wallet', error)
         }
       }
-    };
+    }
 
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
-    return () => subscription?.remove();
-  }, [client, onProxyStatusChange]);
+    const subscription = AppState.addEventListener('change', handleAppStateChange)
+    return () => subscription?.remove()
+  }, [client, onProxyStatusChange])
 
   // Handle WebView load events
   const handleLoad = useCallback(() => {
-    onProxyStatusChange?.('loaded');
-  }, [onProxyStatusChange]);
+    onProxyStatusChange?.('loaded')
+  }, [onProxyStatusChange])
 
   const handleError = useCallback((error: any) => {
-    logger.error('WebView error', error);
-  }, []);
+    logger.error('WebView error', error)
+  }, [])
 
   // Set up WebView reference with client immediately when both are available
   useEffect(() => {
@@ -67,68 +69,72 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
       // Simple message poster that uses WebView's postMessage directly
       const messagePoster = {
         postMessage: (message: string) => {
-          webViewRef.current?.postMessage(message);
-        }
-      };
-      client.embeddedWallet.setMessagePoster(messagePoster);
+          webViewRef.current?.postMessage(message)
+        },
+      }
+      client.embeddedWallet.setMessagePoster(messagePoster)
     }
-  }, [client, isClientReady]);
+  }, [client, isClientReady])
 
   // Clean message handler using the new penpal bridge
-  const handleMessage = useCallback(async (event: WebViewMessageEvent) => {
-    try {
-      const messageData = JSON.parse(event?.nativeEvent?.data);
-      if (!messageData) return;
-      
-      // Handle secure storage messages
-      if (isSecureStorageMessage(messageData)) {
-        const response = await handleSecureStorageMessage(messageData);
-        webViewRef.current?.postMessage(JSON.stringify(response));
-        return;
+  const handleMessage = useCallback(
+    async (event: WebViewMessageEvent) => {
+      try {
+        const messageData = JSON.parse(event?.nativeEvent?.data)
+        if (!messageData) return
+
+        // Handle secure storage messages
+        if (isSecureStorageMessage(messageData)) {
+          const response = await handleSecureStorageMessage(messageData)
+          webViewRef.current?.postMessage(JSON.stringify(response))
+          return
+        }
+        // Forward all messages to the embedded wallet
+        client.embeddedWallet.onMessage(messageData)
+      } catch (error) {
+        logger.error('Failed to handle WebView message', error)
+        // Don't crash the app on message handling errors
       }
-      // Forward all messages to the embedded wallet
-      client.embeddedWallet.onMessage(messageData);
-      
-    } catch (error) {
-      logger.error('Failed to handle WebView message', error);
-      // Don't crash the app on message handling errors
-    }
-  }, [client]);
+    },
+    [client]
+  )
 
   // Ref callback to set up message poster immediately
-  const handleWebViewRef = useCallback((ref: WebView | null) => {
-    if (webViewRef.current !== ref) {
-      (webViewRef as React.MutableRefObject<WebView | null>).current = ref;
-    }
-    if (ref) {
-      const messagePoster = {
-        postMessage: (message: string) => {
-          ref.postMessage(message);
+  const handleWebViewRef = useCallback(
+    (ref: WebView | null) => {
+      if (webViewRef.current !== ref) {
+        ;(webViewRef as React.MutableRefObject<WebView | null>).current = ref
+      }
+      if (ref) {
+        const messagePoster = {
+          postMessage: (message: string) => {
+            ref.postMessage(message)
+          },
         }
-      };
-      client.embeddedWallet.setMessagePoster(messagePoster);
-    }
-  }, [client]);
+        client.embeddedWallet.setMessagePoster(messagePoster)
+      }
+    },
+    [client]
+  )
 
   return (
     <View style={{ width: 0, height: 0, overflow: 'hidden' }}>
       <WebView
         ref={handleWebViewRef}
-        source={{ 
+        source={{
           uri: client.embeddedWallet.getURL(),
         }}
         webviewDebuggingEnabled={true}
         cacheEnabled={false}
-        injectedJavaScriptObject={{shouldUseAppBackedStorage: true}}
+        injectedJavaScriptObject={{ shouldUseAppBackedStorage: true }}
         cacheMode="LOAD_NO_CACHE"
-
         onLoad={handleLoad}
         onError={handleError}
         onMessage={handleMessage}
       />
     </View>
-  );
-};
+  )
+}
 
 /**
  * Utilities for WebView integration
@@ -138,7 +144,7 @@ export const WebViewUtils = {
    * Checks if WebView is supported on the current platform
    */
   isSupported(): boolean {
-    return Platform.OS === 'ios' || Platform.OS === 'android';
+    return Platform.OS === 'ios' || Platform.OS === 'android'
   },
 
   /**
@@ -150,7 +156,7 @@ export const WebViewUtils = {
         allowsInlineMediaPlayback: false,
         allowsLinkPreview: false,
         bounces: false,
-      };
+      }
     }
 
     if (Platform.OS === 'android') {
@@ -158,10 +164,10 @@ export const WebViewUtils = {
         domStorageEnabled: false,
         javaScriptCanOpenWindowsAutomatically: false,
         mixedContentMode: 'never',
-      };
+      }
     }
 
-    return {};
+    return {}
   },
 
   /**
@@ -172,7 +178,7 @@ export const WebViewUtils = {
       timestamp: Date.now(),
       platform: Platform.OS,
       data,
-    });
+    })
   },
 
   /**
@@ -180,19 +186,19 @@ export const WebViewUtils = {
    */
   validateMessage(message: string): { isValid: boolean; data?: any; error?: string } {
     try {
-      const parsed = JSON.parse(message);
+      const parsed = JSON.parse(message)
 
       // Basic validation
       if (typeof parsed !== 'object' || parsed === null) {
-        return { isValid: false, error: 'Invalid message format' };
+        return { isValid: false, error: 'Invalid message format' }
       }
 
-      return { isValid: true, data: parsed };
+      return { isValid: true, data: parsed }
     } catch (error) {
       return {
         isValid: false,
-        error: error instanceof Error ? error.message : 'Failed to parse message'
-      };
+        error: error instanceof Error ? error.message : 'Failed to parse message',
+      }
     }
   },
 
@@ -200,7 +206,7 @@ export const WebViewUtils = {
    * Gets WebView user agent for the current platform
    */
   getUserAgent(): string {
-    const baseAgent = 'OpenfortEmbeddedWallet/1.0';
-    return `${baseAgent} (${Platform.OS}; ${Platform.Version})`;
+    const baseAgent = 'OpenfortEmbeddedWallet/1.0'
+    return `${baseAgent} (${Platform.OS}; ${Platform.Version})`
   },
-};
+}

@@ -1,65 +1,65 @@
-
-import type { AuthPlayerResponse as OpenfortUser } from '@openfort/openfort-js';
-import { useCallback } from 'react';
-import { useOpenfortContext } from '../../core/context';
-import { onError, onSuccess } from '../../lib/hookConsistency';
-import { OpenfortHookOptions } from '../../types/hookOption';
-import { OpenfortError, OpenfortErrorType } from '../../types/openfortError';
-import { CreateWalletPostAuthOptions } from './useCreateWalletPostAuth';
-import { PasswordFlowState } from '../../types';
-
+import type { AuthPlayerResponse as OpenfortUser } from '@openfort/openfort-js'
+import { useCallback } from 'react'
+import { useOpenfortContext } from '../../core/context'
+import { onError, onSuccess } from '../../lib/hookConsistency'
+import type { PasswordFlowState } from '../../types'
+import type { OpenfortHookOptions } from '../../types/hookOption'
+import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
+import type { CreateWalletPostAuthOptions } from './useCreateWalletPostAuth'
 
 export type EmailAuthResult = {
-  error?: OpenfortError;
-  user?: OpenfortUser;
+  error?: OpenfortError
+  user?: OpenfortUser
   // wallet?: UserWallet;
-  requiresEmailVerification?: boolean;
-};
+  requiresEmailVerification?: boolean
+}
 
 export type SignInEmailOptions = {
-  email: string;
-  password: string;
-  emailVerificationRedirectTo?: string;
-} & OpenfortHookOptions<EmailAuthResult> & CreateWalletPostAuthOptions;
+  email: string
+  password: string
+  emailVerificationRedirectTo?: string
+} & OpenfortHookOptions<EmailAuthResult> &
+  CreateWalletPostAuthOptions
 
 export type SignUpEmailOptions = {
-  email: string;
-  password: string;
-  name?: string;
-  emailVerificationRedirectTo?: string;
-} & OpenfortHookOptions<EmailAuthResult> & CreateWalletPostAuthOptions;
+  email: string
+  password: string
+  name?: string
+  emailVerificationRedirectTo?: string
+} & OpenfortHookOptions<EmailAuthResult> &
+  CreateWalletPostAuthOptions
 
 export type RequestResetPasswordOptions = {
-  email: string;
-  emailVerificationRedirectTo?: string;
-} & OpenfortHookOptions<EmailAuthResult>;
+  email: string
+  emailVerificationRedirectTo?: string
+} & OpenfortHookOptions<EmailAuthResult>
 
 export type ResetPasswordOptions = {
-  email: string;
-  password: string;
-  state: string;
-} & OpenfortHookOptions<EmailAuthResult>;
+  email: string
+  password: string
+  state: string
+} & OpenfortHookOptions<EmailAuthResult>
 
 export type LinkEmailOptions = {
-  email: string;
-  password: string;
-  emailVerificationRedirectTo?: string;
-} & OpenfortHookOptions<EmailAuthResult>;
+  email: string
+  password: string
+  emailVerificationRedirectTo?: string
+} & OpenfortHookOptions<EmailAuthResult>
 
 export type VerifyEmailOptions = {
-  email: string;
-  state: string;
-} & OpenfortHookOptions<EmailVerificationResult>;
+  email: string
+  state: string
+} & OpenfortHookOptions<EmailVerificationResult>
 
 export type EmailVerificationResult = {
-  email?: string,
+  email?: string
   error?: OpenfortError
 }
 
 export type UseEmailHookOptions = {
-  emailVerificationRedirectTo?: string;
-} & OpenfortHookOptions<EmailAuthResult | EmailVerificationResult> & CreateWalletPostAuthOptions;
-
+  emailVerificationRedirectTo?: string
+} & OpenfortHookOptions<EmailAuthResult | EmailVerificationResult> &
+  CreateWalletPostAuthOptions
 
 const mapStatus = (status: PasswordFlowState) => {
   return {
@@ -67,7 +67,7 @@ const mapStatus = (status: PasswordFlowState) => {
     isError: status.status === 'error',
     isSuccess: status.status === 'done',
     requiresEmailVerification: status.status === 'awaiting-code-input',
-    error: "error" in status ? status.error : null,
+    error: 'error' in status ? status.error : null,
   }
 }
 
@@ -98,169 +98,184 @@ const mapStatus = (status: PasswordFlowState) => {
  * ```
  */
 export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
-  const { client, setPasswordState, _internal, passwordState } = useOpenfortContext();
+  const { client, setPasswordState, _internal, passwordState } = useOpenfortContext()
 
-  const signInEmail = useCallback(async (options: SignInEmailOptions): Promise<EmailAuthResult> => {
-    try {
-      setPasswordState({ status: 'sending-verification-code' });
+  const signInEmail = useCallback(
+    async (options: SignInEmailOptions): Promise<EmailAuthResult> => {
+      try {
+        setPasswordState({ status: 'sending-verification-code' })
 
-      // Login with email and password
-      const result = await client.auth.logInWithEmailPassword({
-        email: options.email,
-        password: options.password,
-      });
-
-      // Check if action is required (email verification)
-      if ('action' in result) {
-        setPasswordState({
-          status: 'awaiting-code-input',
-        });
-        // Return undefined as email verification is required
-        return onSuccess({
-          hookOptions,
-          options,
-          data: { requiresEmailVerification: true },
+        // Login with email and password
+        const result = await client.auth.logInWithEmailPassword({
+          email: options.email,
+          password: options.password,
         })
-      } else {
-        // Login successful
-        setPasswordState({ status: 'done' });
-        const user = result.player;
-        // Refresh user state in provider
-        await _internal.refreshUserState(user);
-        return onSuccess({
-          hookOptions,
-          options,
-          data: { user },
-        });
-      }
-    } catch (e) {
-      const error = new OpenfortError('Failed to login with email and password', OpenfortErrorType.AUTHENTICATION_ERROR, { error: e });
-      setPasswordState({
-        status: 'error',
-        error
-      });
-      return onError({
-        hookOptions,
-        options,
-        error
-      });
-    }
-  },
-    [client, setPasswordState, _internal, hookOptions]
-  );
 
-  const signUpEmail = useCallback(async (options: SignUpEmailOptions): Promise<EmailAuthResult> => {
-    try {
-      setPasswordState({ status: 'sending-verification-code' });
-
-      // Sign up with email and password
-      const result = await client.auth.signUpWithEmailPassword({
-        email: options.email,
-        password: options.password,
-        ...(options.name && { name: options.name }),
-      });
-
-      // Check if action is required (email verification)
-      if ('action' in result) {
+        // Check if action is required (email verification)
+        if ('action' in result) {
+          setPasswordState({
+            status: 'awaiting-code-input',
+          })
+          // Return undefined as email verification is required
+          return onSuccess({
+            hookOptions,
+            options,
+            data: { requiresEmailVerification: true },
+          })
+        } else {
+          // Login successful
+          setPasswordState({ status: 'done' })
+          const user = result.player
+          // Refresh user state in provider
+          await _internal.refreshUserState(user)
+          return onSuccess({
+            hookOptions,
+            options,
+            data: { user },
+          })
+        }
+      } catch (e) {
+        const error = new OpenfortError(
+          'Failed to login with email and password',
+          OpenfortErrorType.AUTHENTICATION_ERROR,
+          { error: e }
+        )
         setPasswordState({
-          status: 'awaiting-code-input',
-        });
-        // Return undefined as email verification is required
-        return onSuccess({
+          status: 'error',
+          error,
+        })
+        return onError({
           hookOptions,
           options,
-          data: { requiresEmailVerification: true },
-        });
-      } else {
-        // Signup successful
-        setPasswordState({ status: 'done' });
-        const user = result.player;
-        // Refresh user state in provider
-        await _internal.refreshUserState(user);
-        return onSuccess({
-          hookOptions,
-          options,
-          data: { user },
-        });
+          error,
+        })
       }
-    } catch (e) {
-      const error = new OpenfortError('Failed to signup with email and password', OpenfortErrorType.AUTHENTICATION_ERROR, { error: e });
-      setPasswordState({
-        status: 'error',
-        error
-      });
-      return onError({
-        hookOptions,
-        options,
-        error
-      });
-    }
-  },
+    },
     [client, setPasswordState, _internal, hookOptions]
-  );
+  )
 
-  const linkEmail = useCallback(async (options: LinkEmailOptions): Promise<EmailAuthResult> => {
-    try {
-      setPasswordState({ status: 'sending-verification-code' });
+  const signUpEmail = useCallback(
+    async (options: SignUpEmailOptions): Promise<EmailAuthResult> => {
+      try {
+        setPasswordState({ status: 'sending-verification-code' })
 
-      // Get current user access token
-      const accessToken = await client.getAccessToken();
-      if (!accessToken) {
-        throw new Error('User must be authenticated to link email');
-      }
+        // Sign up with email and password
+        const result = await client.auth.signUpWithEmailPassword({
+          email: options.email,
+          password: options.password,
+          ...(options.name && { name: options.name }),
+        })
 
-      // Link email account
-      const result = await client.auth.linkEmailPassword({
-        email: options.email,
-        password: options.password,
-        authToken: accessToken,
-      });
-
-      // Check if action is required (email verification)
-      if ('action' in result) {
+        // Check if action is required (email verification)
+        if ('action' in result) {
+          setPasswordState({
+            status: 'awaiting-code-input',
+          })
+          // Return undefined as email verification is required
+          return onSuccess({
+            hookOptions,
+            options,
+            data: { requiresEmailVerification: true },
+          })
+        } else {
+          // Signup successful
+          setPasswordState({ status: 'done' })
+          const user = result.player
+          // Refresh user state in provider
+          await _internal.refreshUserState(user)
+          return onSuccess({
+            hookOptions,
+            options,
+            data: { user },
+          })
+        }
+      } catch (e) {
+        const error = new OpenfortError(
+          'Failed to signup with email and password',
+          OpenfortErrorType.AUTHENTICATION_ERROR,
+          { error: e }
+        )
         setPasswordState({
-          status: 'awaiting-code-input',
-        });
-        // Return undefined as email verification is required
-        return onSuccess({
+          status: 'error',
+          error,
+        })
+        return onError({
           hookOptions,
           options,
-          data: { requiresEmailVerification: true },
-        });
-      } else {
-        // Link successful
-        setPasswordState({ status: 'done' });
-        // Refresh user state to reflect email linking
-        await _internal.refreshUserState();
-        return onSuccess({
-          hookOptions,
-          options,
-          data: { user: result },
-        });
+          error,
+        })
       }
-    } catch (e) {
-      const error = new OpenfortError('Failed to link email and password', OpenfortErrorType.AUTHENTICATION_ERROR, { error: e });
-      setPasswordState({
-        status: 'error',
-        error
-      });
-      return onError({
-        hookOptions,
-        options,
-        error
-      });
-    }
-  }, [client, setPasswordState, _internal, hookOptions]);
+    },
+    [client, setPasswordState, _internal, hookOptions]
+  )
 
-  const verifyEmail = () => { } // TODO
+  const linkEmail = useCallback(
+    async (options: LinkEmailOptions): Promise<EmailAuthResult> => {
+      try {
+        setPasswordState({ status: 'sending-verification-code' })
 
-  const resetPassword = () => { } // TODO
+        // Get current user access token
+        const accessToken = await client.getAccessToken()
+        if (!accessToken) {
+          throw new Error('User must be authenticated to link email')
+        }
 
-  const requestResetPassword = () => { } // TODO
+        // Link email account
+        const result = await client.auth.linkEmailPassword({
+          email: options.email,
+          password: options.password,
+          authToken: accessToken,
+        })
+
+        // Check if action is required (email verification)
+        if ('action' in result) {
+          setPasswordState({
+            status: 'awaiting-code-input',
+          })
+          // Return undefined as email verification is required
+          return onSuccess({
+            hookOptions,
+            options,
+            data: { requiresEmailVerification: true },
+          })
+        } else {
+          // Link successful
+          setPasswordState({ status: 'done' })
+          // Refresh user state to reflect email linking
+          await _internal.refreshUserState()
+          return onSuccess({
+            hookOptions,
+            options,
+            data: { user: result },
+          })
+        }
+      } catch (e) {
+        const error = new OpenfortError('Failed to link email and password', OpenfortErrorType.AUTHENTICATION_ERROR, {
+          error: e,
+        })
+        setPasswordState({
+          status: 'error',
+          error,
+        })
+        return onError({
+          hookOptions,
+          options,
+          error,
+        })
+      }
+    },
+    [client, setPasswordState, _internal, hookOptions]
+  )
+
+  const verifyEmail = () => {} // TODO
+
+  const resetPassword = () => {} // TODO
+
+  const requestResetPassword = () => {} // TODO
 
   const reset = () => {
-    setPasswordState({ status: 'initial' });
-  };
+    setPasswordState({ status: 'initial' })
+  }
 
   return {
     signInEmail,
@@ -271,5 +286,5 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
     resetPassword,
     reset,
     ...mapStatus(passwordState),
-  };
+  }
 }
