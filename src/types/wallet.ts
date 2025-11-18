@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Embedded wallet provider types
-export interface OpenfortEmbeddedEthereumWalletProvider {
+interface OpenfortEmbeddedEthereumWalletProvider {
   request: (args: { method: string; params?: any[] }) => Promise<any>
   on: (event: string, handler: (...args: any[]) => void) => void
   removeListener: (event: string, handler: (...args: any[]) => void) => void
   [key: string]: any
 }
 
-export interface OpenfortEmbeddedSolanaWalletProvider {
+interface OpenfortEmbeddedSolanaWalletProvider {
   signTransaction: (transaction: any) => Promise<any>
   signAllTransactions: (transactions: any[]) => Promise<any[]>
   publicKey: string
@@ -15,7 +15,7 @@ export interface OpenfortEmbeddedSolanaWalletProvider {
 }
 
 // Embedded wallet account types
-export interface OpenfortEthereumEmbeddedWalletAccount {
+interface OpenfortEthereumEmbeddedWalletAccount {
   address: string
   ownerAddress?: string
   implementationType?: string
@@ -23,7 +23,7 @@ export interface OpenfortEthereumEmbeddedWalletAccount {
   walletIndex: number
 }
 
-export interface OpenfortSolanaEmbeddedWalletAccount {
+interface OpenfortSolanaEmbeddedWalletAccount {
   address: string
   chainType: 'solana'
   walletIndex: number
@@ -173,7 +173,7 @@ export type EmbeddedEthereumWalletActions = {
 // export type EmbeddedEthereumWalletCreatingState = EmbeddedEthereumWalletActions & IEmbeddedEthereumWalletCreatingState;
 // export type EmbeddedEthereumWalletErrorState = EmbeddedEthereumWalletActions & IEmbeddedEthereumWalletErrorState;
 
-export type EthereumWalletState =
+type EthereumWalletState =
   | IEmbeddedEthereumWalletConnectedState
   | IEmbeddedEthereumWalletConnectingState
   | IEmbeddedEthereumWalletReconnectingState

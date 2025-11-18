@@ -12,7 +12,7 @@ export type CreateWalletPostAuthOptions = any
  *
  * @returns Object containing wallet creation utilities (placeholder for now).
  */
-export const useCreateWalletPostAuth = () => {
+const _useCreateWalletPostAuth = () => {
   // This would connect to the wallet and set it as active
   // eslint-disable-next-line no-empty-pattern
   const tryUseWallet = useCallback(

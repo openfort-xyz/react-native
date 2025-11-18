@@ -115,5 +115,3 @@ export const AuthBoundary: React.FC<AuthBoundaryProps> = ({
   // User is authenticated and SDK is ready
   return <>{children}</>
 }
-
-export default AuthBoundary

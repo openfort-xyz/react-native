@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { Openfort as OpenfortClient } from '@openfort/openfort-js'
-import type React from 'react'
-import { useCallback, useEffect, useRef } from 'react'
+// biome-ignore lint: need to import react
+import React, { useCallback, useEffect, useRef } from 'react'
 import { AppState, Platform, View } from 'react-native'
 import type { WebViewMessageEvent } from 'react-native-webview'
 import WebView from 'react-native-webview'

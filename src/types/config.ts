@@ -1,18 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/**
- * Storage interface
- */
-export interface Storage {
-  [key: string]: any
-}
-
-/**
- * Chain configuration
- */
-export interface Chain {
-  [key: string]: any
-}
-
 /**
  * Custom authentication provider configuration
  */

@@ -43,7 +43,6 @@
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
     "@types/react": "~18.3.12",
-    "@types/react-test-renderer": "^18.3.0",
     "buffer": "^5.4.3",
     "expo-apple-authentication": "^7.2.4",
     "expo-application": "^6.1.4",
@@ -80,34 +79,8 @@
       "**/next-env.d.ts",
       "**/vite-env.d.ts"
     ],
-    "ignoreBinaries": [
-      "dev",
-      "only-allow",
-      "printf",
-      "open",
-      "simple-git-hooks",
-      "parcel"
-    ],
     "ignoreDependencies": [
-      "@biomejs/biome",
-      "@changesets/changelog-github",
-      "@changesets/cli",
-      "simple-git-hooks",
-      "sherif",
-      "knip",
-      "typedoc",
-      "tslib",
-      "@rollup/plugin-typescript",
-      "buffer",
-      "crypto-browserify",
-      "events",
-      "stream-browserify",
-      "vm-browserify"
-    ],
-    "ignoreWorkspaces": [
-      "examples/**",
-      "test",
-      "packages/platform-bridge"
+      "buffer"
     ],
     "jest": {
       "entry": [
@@ -117,11 +90,7 @@
     "workspaces": {
       ".": {
         "entry": [
-          "rollup.config.js!",
           "typedoc.json!"
-        ],
-        "ignoreDependencies": [
-          "typescript"
         ]
       },
       "sdk": {

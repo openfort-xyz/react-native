@@ -65,5 +65,3 @@ export const getEmbeddedStateName = (state: EmbeddedState): string => {
       return `STATE: ${String(state)}`
   }
 }
-
-export type { LogLevel }

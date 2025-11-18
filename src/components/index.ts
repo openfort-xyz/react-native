@@ -5,4 +5,4 @@
  * access to protected UI based on SDK readiness and user state.
  */
 
-export { AuthBoundary } from './AuthBoundary'
+export { AuthBoundary, type AuthBoundaryProps } from './AuthBoundary'
