@@ -42,7 +42,6 @@ jobs:
           commit: "chore: version package" # Default is `Version Packages`
           title: "chore: version package"  # Default is `Version Packages`
         env:
-          NPM_CONFIG_PROVENANCE: true # this works only with npmjs and public repos, not ghcr
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}    # we need this for PRs
           NPM_TOKEN: '' # bug in changesets/action - https://github.com/changesets/changesets/issues/1152#issuecomment-3190884868
 
