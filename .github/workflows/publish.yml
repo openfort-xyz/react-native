@@ -1,16 +1,21 @@
 name: Publish to NPM
 
 on:
-  release:
-    types: [created]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   publish:
     name: publish
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      id-token: write  # Required for OIDC (Trusted publishing)
+      contents: write       # To push commits and tags
+      pull-requests: write  # To create and update PRs
+      id-token: write       # For OIDC and provenance
 
     steps:
       - name: Checkout
@@ -22,21 +27,22 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Security audit
-        run: pnpm audit
+      - name: Publish to GitHub Packages
+        uses: changesets/action@v1
+        with:
+          publish: pnpm changeset:publish
+          version: pnpm changeset:version
+          commit: "chore: version package" # Default is `Version Packages`
+          title: "chore: version package"  # Default is `Version Packages`
+        env:
+          NPM_CONFIG_PROVENANCE: true # this works only with npmjs and public repos, not ghcr
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}    # we need this for PRs
+          NPM_TOKEN: '' # bug in changesets/action - https://github.com/changesets/changesets/issues/1152#issuecomment-3190884868
 
-      - name: Code check (Biome)
-        run: pnpm biome check
-
-      - name: Build project
-        run: pnpm build
-
-      - name: Release
-        run: pnpm publish

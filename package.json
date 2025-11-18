@@ -8,6 +8,9 @@
     "build": "tsc",
     "check": "biome check",
     "clean": "rm -rf dist",
+    "changeset": "changeset",
+    "changeset:version": "pnpm install --lockfile-only && changeset version",
+    "changeset:publish": "pnpm build && changeset publish",
     "check:unused": "pnpm clean && knip",
     "check:fix": "biome check --write --unsafe",
     "lint": "tsc -b && biome lint .",
@@ -42,6 +45,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.7",
     "@types/react": "~18.3.12",
     "buffer": "^5.4.3",
     "expo-apple-authentication": "^7.2.4",
