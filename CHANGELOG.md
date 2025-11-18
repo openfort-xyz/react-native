@@ -1,57 +1,84 @@
 # Changelog
 
+## 0.1.16
+
+### Patch Changes
+
+- [#19](https://github.com/openfort-xyz/react-native/pull/19) [`abe0f8c`](https://github.com/openfort-xyz/react-native/commit/abe0f8c9d05020d682e281fc6c253b2facde251d) Thanks [@andrii-kravets-x](https://github.com/andrii-kravets-x)! - migrate to pnpm, add changeset, biome, setup Trust Publishing
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.1.16] - 2025-11-18
+
 ### Chore
+
 - migrate to pnpm, add changeset, biome, setup Trust Publishing
 
 ## [0.1.15] - 2025-10-22
+
 ### Chore
+
 - Update openfort-js
 
 ## [0.1.14] - 2025-10-22
+
 ### Fix
+
 - Use app native identifier
 
 ## [0.1.13] - 2025-10-21
+
 ### Chore
+
 - Use app native identifier
 
 ## [0.1.12] - 2025-10-16
+
 ### Chore
+
 - Improve support for EOA
-  
+
 ## [0.1.11] - 2025-10-14
+
 ### Chore
+
 - Update openfort-js
 
 ## [0.1.10] - 2025-09-30
+
 ### Chore
+
 - Complete tsdoc standardization with @param, @returns, and @example sections
 
 ## [0.1.9] - 2025-09-17
+
 ### Feat
+
 - Add policy per chain
 
 ## [0.1.8] - 2025-09-10
+
 ### Feat
+
 - Update deps
 
 ## [0.1.7] - 2025-09-10
+
 ### Fix
 
 - Put the `embeddedWallet` alias back
 
 ## [0.1.6] - 2025-09-09
+
 ### Fix
 
 - Fix walletConfig error
 
 ## [0.1.5] - 2025-09-06
+
 ### Feat
 
 - Update openfort-js
