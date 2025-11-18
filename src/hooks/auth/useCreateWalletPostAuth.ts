@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export type CreateWalletPostAuthOptions = {}
+export type CreateWalletPostAuthOptions = any
 
 /**
  * Hook for creating wallets after user authentication.
@@ -16,7 +16,8 @@ export const useCreateWalletPostAuth = () => {
   // This would connect to the wallet and set it as active
   // eslint-disable-next-line no-empty-pattern
   const tryUseWallet = useCallback(
-    async ({/* logoutOnError: signOutOnError = true, automaticRecovery = true */}: CreateWalletPostAuthOptions) => {
+    // async ({/* logoutOnError: signOutOnError = true, automaticRecovery = true */}: CreateWalletPostAuthOptions) => {
+    async (_props: CreateWalletPostAuthOptions) => {
       // if (!walletConfig || walletConfig.recoveryMethod !== RecoveryMethod.AUTOMATIC || !automaticRecovery) {
       //   return {};
       // }
