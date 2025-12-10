@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.17
+
+### Patch Changes
+
+- [#24](https://github.com/openfort-xyz/react-native/pull/24) [`52b284e`](https://github.com/openfort-xyz/react-native/commit/52b284ec0e15c8ede62291d78e6d2b1eb7807730) Thanks [@jamalavedra](https://github.com/jamalavedra)! - update deps
+
 ## 0.1.16
 
 ### Patch Changes
