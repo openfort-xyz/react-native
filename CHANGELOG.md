@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.18
+
+### Patch Changes
+
+- [#27](https://github.com/openfort-xyz/react-native/pull/27) [`0cd88d2`](https://github.com/openfort-xyz/react-native/commit/0cd88d2bb4c9f9ee13832879955394f1c4ed96f9) Thanks [@jamalavedra](https://github.com/jamalavedra)! - update stoarge
+
 ## 0.1.17
 
 ### Patch Changes
