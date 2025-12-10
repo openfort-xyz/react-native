@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.19
+
+### Patch Changes
+
+- [#29](https://github.com/openfort-xyz/react-native/pull/29) [`46ff87c`](https://github.com/openfort-xyz/react-native/commit/46ff87cf41fd98d863255b9674c7220f20d0821a) Thanks [@jamalavedra](https://github.com/jamalavedra)! - fix storage
+
 ## 0.1.18
 
 ### Patch Changes
