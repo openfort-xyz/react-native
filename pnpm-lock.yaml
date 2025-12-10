@@ -12,8 +12,8 @@ importers:
   .:
     dependencies:
       '@openfort/openfort-js':
-        specifier: ^0.10.35
-        version: 0.10.35
+        specifier: ^0.10.38
+        version: 0.10.38
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.2.4
@@ -1201,8 +1201,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@openfort/openfort-js@0.10.35':
-    resolution: {integrity: sha512-UGqPCTW1l9s1UAxRarC3YtVoIbzE8GJTpeeYg/YdwqXs0MMUbzy0h/HkeIUCF5MuIpQxpaxFNGXVXchbmyQjsw==}
+  '@openfort/openfort-js@0.10.38':
+    resolution: {integrity: sha512-PHLqkwpAi9suapjCPeP3cpmAvy9Bif0SRJqAN6A39KDgSTNyoN/1cDg9rfBAV9inRTbNFEteKEjynqKvMNJtLg==}
 
   '@openfort/shield-js@0.1.30':
     resolution: {integrity: sha512-SGk2e+I4KTMQK0uND5eyKcTB4mF3QCm3I2m6wQPzUe/JtPkJ13/YwIlD6ibPRrn6hC0PRGAzfJPGa9352U2o0A==}
@@ -5640,7 +5640,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
 
-  '@openfort/openfort-js@0.10.35':
+  '@openfort/openfort-js@0.10.38':
     dependencies:
       '@ethersproject/abi': 5.8.0
       '@ethersproject/bytes': 5.8.0
