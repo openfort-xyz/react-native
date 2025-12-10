@@ -5,6 +5,27 @@ import * as SecureStore from 'expo-secure-store'
 import { logger } from '../lib/logger'
 import { NativeStorageUtils } from '../native'
 
+/**
+ * Tracks pending write operations per key.
+ * This ensures `get` waits for any in-flight `save` to complete,
+ * providing read-after-write consistency while keeping `save` synchronous.
+ */
+const pendingWrites = new Map<string, Promise<void>>()
+
+/**
+ * Creates a scope prefix from the publishable key.
+ * Extracts the unique project identifier after the "pk_test_" or "pk_live_" prefix.
+ * Uses the first 8 characters of that unique part to keep keys readable.
+ *
+ * e.g., "pk_test_abc123xyz789" -> "abc123xy"
+ */
+function createScope(publishableKey: string): string {
+  // Remove the "pk_test_" or "pk_live_" prefix (8 characters)
+  const uniquePart = publishableKey.substring(8)
+  // Use first 8 characters of the unique part as scope
+  return uniquePart.substring(0, 8)
+}
+
 // Define the StorageKeys enum values that match the Openfort SDK
 enum StorageKeys {
   AUTHENTICATION = 'openfort.authentication',
@@ -20,13 +41,13 @@ enum StorageKeys {
 
 // Create a proper Storage interface that matches what we need
 interface OpenfortStorage {
-  get(key: StorageKeys): Promise<string | null>
-  save(key: StorageKeys, value: string): Promise<void>
-  remove(key: StorageKeys): Promise<void>
+  get(key: string): Promise<string | null>
+  save(key: string, value: string): Promise<void>
+  remove(key: string): Promise<void>
   flush(): void
 
   // Additional utility methods using native storage utilities
-  keyExists(key: StorageKeys): Promise<boolean>
+  keyExists(key: string): Promise<boolean>
   getStorageInfo(): Promise<{
     isAvailable: boolean
     platform: string
@@ -40,9 +61,15 @@ interface OpenfortStorage {
  * The adapter normalises the keys provided by the Openfort SDK so they can be safely persisted via Expo Secure Store.
  */
 export const SecureStorageAdapter: OpenfortStorage = {
-  async get(key: StorageKeys): Promise<string | null> {
+  async get(key: string): Promise<string | null> {
     try {
       const normalizedKey = normalizeKey(key)
+
+      // Wait for any pending write to complete before reading
+      const pendingWrite = pendingWrites.get(normalizedKey)
+      if (pendingWrite) {
+        await pendingWrite
+      }
 
       const result = await SecureStore.getItemAsync(normalizedKey, NativeStorageUtils.getStorageOptions())
 
@@ -67,17 +94,23 @@ export const SecureStorageAdapter: OpenfortStorage = {
     }
   },
 
-  async save(key: StorageKeys, value: string): Promise<void> {
-    try {
-      const normalizedKey = normalizeKey(key)
-      await SecureStore.setItemAsync(normalizedKey, value, NativeStorageUtils.getStorageOptions())
-    } catch (error) {
-      logger.warn('Failed to set item in secure store', error)
-      throw error
-    }
+  async save(key: string, value: string): Promise<void> {
+    const normalizedKey = normalizeKey(key)
+    const writePromise = (async () => {
+      try {
+        await SecureStore.setItemAsync(normalizedKey, value, NativeStorageUtils.getStorageOptions())
+      } catch (error) {
+        logger.warn('Failed to set item in secure store', error)
+        throw error
+      } finally {
+        pendingWrites.delete(normalizedKey)
+      }
+    })()
+    pendingWrites.set(normalizedKey, writePromise)
+    return writePromise
   },
 
-  async remove(key: StorageKeys): Promise<void> {
+  async remove(key: string): Promise<void> {
     try {
       const normalizedKey = normalizeKey(key)
       await SecureStore.deleteItemAsync(normalizedKey, NativeStorageUtils.getStorageOptions())
@@ -93,7 +126,7 @@ export const SecureStorageAdapter: OpenfortStorage = {
   },
 
   // Additional utility methods using native storage utilities
-  async keyExists(key: StorageKeys): Promise<boolean> {
+  async keyExists(key: string): Promise<boolean> {
     const normalizedKey = normalizeKey(key)
     return await NativeStorageUtils.keyExists(normalizedKey)
   },
@@ -108,37 +141,50 @@ export const SecureStorageAdapter: OpenfortStorage = {
 }
 
 /**
- * Normalises an Openfort storage key for use with Expo Secure Store.
+ * Normalizes an Openfort storage key for use with Expo Secure Store.
  *
  * @param key - The key provided by the Openfort SDK.
  * @returns A key that is safe to use with Expo Secure Store.
  */
-function normalizeKey(key: StorageKeys): string {
+function normalizeKey(key: string): string {
   return key.replaceAll(':', '-')
 }
 
 /**
  * Creates a type-safe storage adapter that bridges the Openfort SDK storage API with the React Native implementation.
+ * Storage keys are scoped by publishable key to isolate data between different projects.
  *
+ * @param publishableKey - The publishable key used to scope storage keys.
  * @param customStorage - Optional custom storage implementation. When omitted the {@link SecureStorageAdapter} is used.
  * @returns An object that satisfies the {@link Storage} interface expected by `@openfort/openfort-js`.
  */
-export function createNormalizedStorage(customStorage?: OpenfortStorage): Storage {
+export function createNormalizedStorage(publishableKey: string, customStorage?: OpenfortStorage): Storage {
   const baseStorage = customStorage || SecureStorageAdapter
+  const scope = createScope(publishableKey)
+
+  /**
+   * Prefixes a storage key with the scope.
+   * e.g., "openfort.authentication" -> "abc123xy.openfort.authentication"
+   */
+  function scopeKey(key: StorageKeys): string {
+    return `${scope}.${key}`
+  }
 
   return {
     async get(key: unknown): Promise<string | null> {
       // Convert the unknown key to our StorageKeys enum
       const storageKey = keyToStorageKeys(key)
-      const result = await baseStorage.get(storageKey)
+      const scopedKey = scopeKey(storageKey)
+      const result = await baseStorage.get(scopedKey)
       return result
     },
 
     save(key: unknown, value: string): void {
       logger.info(`Saving to storage key: ${key}, value: ${value}`)
       const storageKey = keyToStorageKeys(key)
+      const scopedKey = scopeKey(storageKey)
       // Fire and forget - don't await as the SDK expects synchronous behavior
-      baseStorage.save(storageKey, value).catch((error) => {
+      baseStorage.save(scopedKey, value).catch((error) => {
         logger.error('Failed to save to storage', error)
       })
     },
@@ -146,15 +192,22 @@ export function createNormalizedStorage(customStorage?: OpenfortStorage): Storag
     remove(key: unknown): void {
       logger.info(`Removing from storage key: ${key}`)
       const storageKey = keyToStorageKeys(key)
+      const scopedKey = scopeKey(storageKey)
       // Fire and forget - don't await as the SDK expects synchronous behavior
-      baseStorage.remove(storageKey).catch((error) => {
+      baseStorage.remove(scopedKey).catch((error) => {
         logger.error('Failed to remove from storage', error)
       })
     },
 
     flush(): void {
       logger.info('Flushing storage')
-      baseStorage.flush()
+      // Remove all scoped keys for this project
+      for (const key of Object.values(StorageKeys)) {
+        const scopedKey = scopeKey(key)
+        baseStorage.remove(scopedKey).catch((error) => {
+          logger.error('Failed to remove from storage during flush', error)
+        })
+      }
     },
   }
 }
