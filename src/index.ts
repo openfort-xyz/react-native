@@ -18,6 +18,7 @@ export {
   AuthInitPayload,
   AuthPlayerResponse,
   AuthResponse,
+  ChainTypeEnum,
   EmbeddedAccount,
   EmbeddedState,
   OAuthProvider,
