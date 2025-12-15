@@ -52,10 +52,10 @@ type WalletOptions = {
 type WalletFlowStatus =
   | BaseFlowState
   | {
-    status: 'creating' | 'connecting' | 'disconnected'
-    address?: Hex
-    error?: never
-  }
+      status: 'creating' | 'connecting' | 'disconnected'
+      address?: Hex
+      error?: never
+    }
 
 const mapWalletStatus = (status: WalletFlowStatus) => {
   return {
@@ -346,7 +346,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
   }, [client.embeddedWallet])
 
   useEffect(() => {
-    ; (async () => {
+    ;(async () => {
       try {
         const embeddedAccount = await client.embeddedWallet.get()
         setActiveWalletId(embeddedAccount.id)
