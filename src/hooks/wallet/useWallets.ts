@@ -52,10 +52,10 @@ type WalletOptions = {
 type WalletFlowStatus =
   | BaseFlowState
   | {
-      status: 'creating' | 'connecting' | 'disconnected'
-      address?: Hex
-      error?: never
-    }
+    status: 'creating' | 'connecting' | 'disconnected'
+    address?: Hex
+    error?: never
+  }
 
 const mapWalletStatus = (status: WalletFlowStatus) => {
   return {
@@ -104,7 +104,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
   const { client, user, supportedChains, walletConfig, embeddedState, _internal } = useOpenfortContext()
   const [embeddedAccounts, setEmbeddedAccounts] = useState<EmbeddedAccount[]>([])
   const recoverPromiseRef = useRef<Promise<SetActiveWalletResult> | null>(null)
-  const [activeWalletId, setActiveWalletId] = useState<string | null>(null) // OPENFORT-JS Should provide this
+  const [activeWalletId, setActiveWalletId] = useState<string | null>(null)
 
   const [status, setStatus] = useState<WalletFlowStatus>({
     status: 'idle',
@@ -230,7 +230,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
             const errorMsg =
               walletConfig?.accountType === AccountTypeEnum.EOA
                 ? `No embedded EOA account found for address ${address}`
-                : `No embedded account found for address ${address} on chain ID ${chainId}`
+                : `No embedded smart account found for address ${address} on chain ID ${chainId}`
             throw new OpenfortError(errorMsg, OpenfortErrorType.WALLET_ERROR)
           } else {
             let recoveryParams: RecoveryParams
@@ -346,7 +346,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
   }, [client.embeddedWallet])
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       try {
         const embeddedAccount = await client.embeddedWallet.get()
         setActiveWalletId(embeddedAccount.id)
@@ -399,7 +399,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         })
 
         // Validate chainId if provided
-        let chainId: number
+        let chainId: number | undefined
         if (options?.chainId) {
           if (!supportedChains || !supportedChains.some((chain) => chain.id === options.chainId)) {
             throw new OpenfortError(
@@ -411,10 +411,9 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         } else if (supportedChains && supportedChains.length > 0) {
           // Use the first supported chain as default
           chainId = supportedChains[0].id
-        } else {
+        } else if (options?.chainType !== ChainTypeEnum.SVM) {
           throw new OpenfortError('No supported chains available for wallet creation', OpenfortErrorType.WALLET_ERROR)
         }
-        logger.info('Using chain ID for wallet creation', chainId)
 
         let recoveryParams: RecoveryParams
         if (options?.recoveryPassword) {

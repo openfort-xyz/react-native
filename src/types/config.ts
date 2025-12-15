@@ -1,25 +1,4 @@
 /**
- * Custom authentication provider configuration
- */
-export type CustomAuthProviderConfig = {
-  /**
-   * If true, enable custom authentication integration.
-   * This enables a JWT from a custom auth provider to be used to authenticate Openfort embedded wallets.
-   * Defaults to true.
-   */
-  enabled?: boolean
-  /**
-   * A callback that returns the user's custom auth provider's access token as a string.
-   * Can be left blank if using cookies to store and send access tokens
-   */
-  getCustomAccessToken: () => Promise<string | undefined>
-  /**
-   * Custom auth providers loading state
-   */
-  isLoading: boolean
-}
-
-/**
  * Create guest account interface
  */
 export interface UseGuestAuth {

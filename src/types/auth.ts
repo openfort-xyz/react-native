@@ -56,27 +56,6 @@ export type RecoveryFlowState = {
 }
 
 /**
- * Custom authentication flow state
- */
-export type CustomAuthFlowState =
-  | {
-      status: 'initial'
-    }
-  | {
-      status: 'loading'
-    }
-  | {
-      status: 'not-enabled'
-    }
-  | {
-      status: 'done'
-    }
-  | {
-      status: 'error'
-      error: Error | null
-    }
-
-/**
  * Authentication success callback
  */
 export type AuthSuccessCallback = (user: OpenfortUser, isNewUser?: boolean) => void

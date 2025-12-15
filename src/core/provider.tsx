@@ -15,15 +15,6 @@ import type { OAuthFlowState, PasswordFlowState, RecoveryFlowState, SiweFlowStat
 import { createOpenfortClient, setDefaultClient } from './client'
 import { OpenfortContext, type OpenfortContextValue } from './context'
 
-/**
- * Shape for configuring custom authentication synchronization behavior.
- */
-interface CustomAuthConfig {
-  enabled: boolean
-  isLoading: boolean
-  getCustomAccessToken: () => Promise<string | null>
-}
-
 type PolicyConfig = string | Record<number, string>
 
 export type CommonEmbeddedWalletConfiguration = {
@@ -150,7 +141,6 @@ function startEmbeddedStatePolling(
  */
 export interface OpenfortProviderProps {
   children: React.ReactNode
-  customAuth?: CustomAuthConfig
   /**
    * Openfort application ID (can be found in the Openfort developer dashboard).
    */
@@ -208,7 +198,6 @@ export interface OpenfortProviderProps {
 export const OpenfortProvider = ({
   children,
   publishableKey,
-  customAuth,
   supportedChains,
   walletConfig,
   overrides,
@@ -381,34 +370,10 @@ export const OpenfortProvider = ({
     }
   }, [client, isUserInitialized, handleUserChange, refreshUserState])
 
-  // Custom auth state management
-  useEffect(() => {
-    if (customAuth?.enabled && isUserInitialized && isClientReady) {
-      ;(async () => {
-        try {
-          const { getCustomAccessToken, isLoading } = customAuth!
-
-          if (isLoading) return
-
-          const customToken = await getCustomAccessToken()
-
-          if (customToken) {
-            // Custom auth sync implementation would go here
-            // This would typically handle SIWE authentication with the custom token
-            logger.debug('Custom token available for authentication sync')
-          }
-        } catch (err) {
-          logger.error('Custom auth sync failed', err)
-        }
-      })()
-    }
-  }, [client, customAuth, isUserInitialized, isClientReady])
-
   // Determine if SDK is ready
   const isReady = useMemo(() => {
-    const customAuthReady = !customAuth?.enabled || !customAuth.isLoading
-    return isUserInitialized && isClientReady && customAuthReady
-  }, [isUserInitialized, isClientReady, customAuth?.enabled, customAuth?.isLoading])
+    return isUserInitialized && isClientReady
+  }, [isUserInitialized, isClientReady])
 
   // Context value
   const contextValue: OpenfortContextValue = useMemo(

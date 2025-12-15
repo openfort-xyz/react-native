@@ -18,7 +18,6 @@ export interface UseOpenfort {
 export type {
   AuthLinkSuccessCallback,
   AuthSuccessCallback,
-  CustomAuthFlowState,
   EmailLinkHookOptions,
   EmailLinkHookResult,
   EmailLoginHookOptions,
@@ -36,7 +35,6 @@ export type {
 } from './auth'
 // Configuration and utility types
 export type {
-  CustomAuthProviderConfig,
   SetRecoveryParams,
   UseGuestAuth,
   UseOnEmbeddedWalletStateChange,
