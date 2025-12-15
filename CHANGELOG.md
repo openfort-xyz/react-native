@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.20
+
+### Patch Changes
+
+- [#31](https://github.com/openfort-xyz/react-native/pull/31) [`8a9daf4`](https://github.com/openfort-xyz/react-native/commit/8a9daf4e4edcd6eded0ffdecfbc58c291398b138) Thanks [@jamalavedra](https://github.com/jamalavedra)! - svm create account
+
 ## 0.1.19
 
 ### Patch Changes
