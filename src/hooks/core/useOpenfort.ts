@@ -4,7 +4,7 @@ import type { UseOpenfort } from '../../types'
 /**
  * Hook that exposes the core state of the Openfort SDK.
  *
- * This hook provides access to the current authenticated user object, SDK initialization status, and core authentication methods.
+ * This hook provides access to the current SDK initialization status.
  *
  * @returns The Openfort SDK's core state and methods.
  *
@@ -14,7 +14,7 @@ import type { UseOpenfort } from '../../types'
  * import { useOpenfort } from '@openfort/react-native/hooks';
  *
  * export function HomeScreen() {
- *   const { user, isReady, error, logout } = useOpenfort();
+ *   const { isReady, error } = useOpenfort();
  *
  *   if (!isReady) {
  *     return <ActivityIndicator size="large" />;
@@ -24,27 +24,13 @@ import type { UseOpenfort } from '../../types'
  *     return <Text>{`Failed to initialise: ${error.message}`}</Text>;
  *   }
  *
- *   if (!user) {
- *     return <Text>Please sign in</Text>;
- *   }
- *
- *   return (
- *     <View>
- *       <Text>{`Welcome, ${user.id}`}</Text>
- *       <Button title="Log out" onPress={() => void logout()} />
- *     </View>
- *   );
- * }
  * ```
  */
 export function useOpenfort(): UseOpenfort {
-  const { user, isReady, error, logout, getAccessToken } = useOpenfortContext()
+  const { isReady, error } = useOpenfortContext()
 
   return {
-    user,
     isReady,
     error,
-    logout,
-    getAccessToken,
   }
 }

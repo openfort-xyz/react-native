@@ -8,6 +8,9 @@ import type { OpenfortError } from '../types/openfortError'
  * ensuring consistent callback execution across all hooks in the SDK.
  *
  * @param params - Object containing hook options and success data
+ * @param params.hookOptions - Primary hook options (from the hook itself)
+ * @param params.options - Secondary hook options (from the action call)
+ * @param params.data - The success data to pass to callbacks
  * @returns The success data that was passed in
  *
  * @example
@@ -42,6 +45,9 @@ export const onSuccess = <T>({
  * and optionally throws the error if throwOnError is configured.
  *
  * @param params - Object containing hook options and error information
+ * @param params.hookOptions - Primary hook options (from the hook itself)
+ * @param params.options - Secondary hook options (from the action call)
+ * @param params.error - The error that occurred during the operation
  * @returns Object containing the error, or throws if throwOnError is enabled
  *
  * @example

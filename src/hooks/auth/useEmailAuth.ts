@@ -2,10 +2,10 @@ import type { AuthPlayerResponse as OpenfortUser } from '@openfort/openfort-js'
 import { useCallback } from 'react'
 import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
+import { createOAuthRedirectUri } from '../../native/oauth'
 import type { PasswordFlowState } from '../../types'
 import type { OpenfortHookOptions } from '../../types/hookOption'
 import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
-import type { CreateWalletPostAuthOptions } from './useCreateWalletPostAuth'
 
 export type EmailAuthResult = {
   error?: OpenfortError
@@ -18,16 +18,14 @@ export type SignInEmailOptions = {
   email: string
   password: string
   emailVerificationRedirectTo?: string
-} & OpenfortHookOptions<EmailAuthResult> &
-  CreateWalletPostAuthOptions
+} & OpenfortHookOptions<EmailAuthResult>
 
 export type SignUpEmailOptions = {
   email: string
   password: string
   name?: string
   emailVerificationRedirectTo?: string
-} & OpenfortHookOptions<EmailAuthResult> &
-  CreateWalletPostAuthOptions
+} & OpenfortHookOptions<EmailAuthResult>
 
 export type RequestResetPasswordOptions = {
   email: string
@@ -58,8 +56,7 @@ export type EmailVerificationResult = {
 
 export type UseEmailHookOptions = {
   emailVerificationRedirectTo?: string
-} & OpenfortHookOptions<EmailAuthResult | EmailVerificationResult> &
-  CreateWalletPostAuthOptions
+} & OpenfortHookOptions<EmailAuthResult | EmailVerificationResult>
 
 const mapStatus = (status: PasswordFlowState) => {
   return {
@@ -267,11 +264,112 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
     [client, setPasswordState, _internal, hookOptions]
   )
 
-  const verifyEmail = () => {} // TODO
+  const requestResetPassword = useCallback(
+    async (options: RequestResetPasswordOptions): Promise<EmailAuthResult> => {
+      try {
+        setPasswordState({ status: 'sending-verification-code' })
 
-  const resetPassword = () => {} // TODO
+        // Request password reset email
+        await client.auth.requestResetPassword({
+          email: options.email,
+          redirectUrl: options.emailVerificationRedirectTo || createOAuthRedirectUri('/password/reset'),
+        })
 
-  const requestResetPassword = () => {} // TODO
+        setPasswordState({ status: 'awaiting-code-input' })
+
+        return onSuccess({
+          hookOptions,
+          options,
+          data: { requiresEmailVerification: true },
+        })
+      } catch (e) {
+        const error = new OpenfortError('Failed to request password reset', OpenfortErrorType.AUTHENTICATION_ERROR, {
+          error: e,
+        })
+        setPasswordState({
+          status: 'error',
+          error,
+        })
+        return onError({
+          hookOptions,
+          options,
+          error,
+        })
+      }
+    },
+    [client, setPasswordState, hookOptions]
+  )
+
+  const resetPassword = useCallback(
+    async (options: ResetPasswordOptions): Promise<EmailAuthResult> => {
+      try {
+        setPasswordState({ status: 'submitting-code' })
+
+        // Reset password with new password and state token
+        await client.auth.resetPassword({
+          email: options.email,
+          password: options.password,
+          state: options.state,
+        })
+
+        setPasswordState({ status: 'done' })
+
+        return onSuccess({
+          hookOptions,
+          options,
+          data: {},
+        })
+      } catch (e) {
+        const error = new OpenfortError('Failed to reset password', OpenfortErrorType.AUTHENTICATION_ERROR, {
+          error: e,
+        })
+        setPasswordState({
+          status: 'error',
+          error,
+        })
+        return onError({
+          hookOptions,
+          options,
+          error,
+        })
+      }
+    },
+    [client, setPasswordState, hookOptions]
+  )
+
+  const verifyEmail = useCallback(
+    async (options: VerifyEmailOptions): Promise<EmailVerificationResult> => {
+      try {
+        setPasswordState({ status: 'submitting-code' })
+
+        // Verify email with state token
+        await client.auth.verifyEmail({
+          email: options.email,
+          state: options.state,
+        })
+
+        setPasswordState({ status: 'done' })
+
+        return onSuccess({
+          hookOptions,
+          options,
+          data: { email: options.email },
+        })
+      } catch (e) {
+        const error = new OpenfortError('Failed to verify email', OpenfortErrorType.AUTHENTICATION_ERROR, { error: e })
+        setPasswordState({
+          status: 'error',
+          error,
+        })
+        return onError({
+          hookOptions,
+          options,
+          error,
+        })
+      }
+    },
+    [client, setPasswordState, hookOptions]
+  )
 
   const reset = () => {
     setPasswordState({ status: 'initial' })

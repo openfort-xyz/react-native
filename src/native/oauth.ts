@@ -37,6 +37,11 @@ export interface OAuthSessionConfig {
 
 /**
  * Opens an OAuth authentication session
+ *
+ * @param config - OAuth session configuration
+ * @param config.url - OAuth provider URL to open
+ * @param config.redirectUri - Redirect URI for OAuth flow callback
+ * @returns Promise resolving to OAuth result indicating success, cancellation, or error
  */
 export async function openOAuthSession(config: OAuthSessionConfig): Promise<OAuthResult> {
   try {
@@ -72,6 +77,12 @@ export async function openOAuthSession(config: OAuthSessionConfig): Promise<OAut
 
 /**
  * Handles Apple Sign-In authentication for iOS
+ *
+ * @param options - Options for Apple authentication
+ * @param options.state - State parameter for the OAuth flow
+ * @param options.isLogin - Whether this is a login or link operation (affects error codes)
+ * @returns Promise resolving to Apple authentication result with authorization code and user info
+ * @throws {Error} When not running on iOS platform or authentication fails
  */
 export async function authenticateWithApple(options: { state: string; isLogin: boolean }): Promise<AppleAuthResult> {
   if (Platform.OS !== 'ios') {
@@ -116,6 +127,8 @@ export async function authenticateWithApple(options: { state: string; isLogin: b
 
 /**
  * Checks if Apple Sign-In is available on the current device
+ *
+ * @returns Promise resolving to true if Apple Sign-In is available, false otherwise
  */
 export async function isAppleSignInAvailable(): Promise<boolean> {
   if (Platform.OS !== 'ios') {

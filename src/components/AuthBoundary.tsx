@@ -1,4 +1,5 @@
 import type React from 'react'
+import { useUser } from '../hooks'
 import { useOpenfort } from '../hooks/core/useOpenfort'
 
 /**
@@ -37,6 +38,7 @@ export interface AuthBoundaryProps {
  * 3. **Unauthenticated** – the user is not logged in.
  * 4. **Authenticated** – the user is logged in and the SDK is ready.
  *
+ * @param props - Component props, see {@link AuthBoundaryProps}
  * @example
  * ```tsx
  * import { AuthBoundary } from '@openfort/react-native';
@@ -92,7 +94,8 @@ export const AuthBoundary: React.FC<AuthBoundaryProps> = ({
   error: errorComponent,
   children,
 }) => {
-  const { user, isReady, error } = useOpenfort()
+  const { isReady, error } = useOpenfort()
+  const { user } = useUser()
 
   // SDK encountered an error during initialization
   if (error && errorComponent) {
