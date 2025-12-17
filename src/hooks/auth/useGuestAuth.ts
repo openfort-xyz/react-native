@@ -5,7 +5,6 @@ import { onError, onSuccess } from '../../lib/hookConsistency'
 import { type BaseFlowState, mapStatus } from '../../types/baseFlowState'
 import type { OpenfortHookOptions } from '../../types/hookOption'
 import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
-import type { CreateWalletPostAuthOptions } from './useCreateWalletPostAuth'
 
 export type GuestHookResult = {
   error?: OpenfortError
@@ -13,7 +12,7 @@ export type GuestHookResult = {
   // wallet?: UserWallet;
 }
 
-export type GuestHookOptions = OpenfortHookOptions<GuestHookResult> & CreateWalletPostAuthOptions
+export type GuestHookOptions = OpenfortHookOptions<GuestHookResult>
 
 /**
  * Hook for creating guest accounts.

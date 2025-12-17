@@ -25,6 +25,8 @@ interface EmbeddedWalletWebViewProps {
  * WebView component for embedded wallet integration
  * Handles secure communication between React Native and the embedded wallet WebView
  * This component is hidden and only used for wallet communication
+ *
+ * @param props - Component props, see {@link EmbeddedWalletWebViewProps}
  */
 export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
   client,
@@ -66,7 +68,7 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
   // Set up WebView reference with client immediately when both are available
   useEffect(() => {
     if (webViewRef.current) {
-      // Simple message poster that uses WebView's postMessage directly
+      // Message poster with Uint8Array preprocessing for React Native
       const messagePoster = {
         postMessage: (message: string) => {
           webViewRef.current?.postMessage(message)
@@ -142,6 +144,8 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
 export const WebViewUtils = {
   /**
    * Checks if WebView is supported on the current platform
+   *
+   * @returns True if the platform is iOS or Android, false otherwise
    */
   isSupported(): boolean {
     return Platform.OS === 'ios' || Platform.OS === 'android'
@@ -149,6 +153,8 @@ export const WebViewUtils = {
 
   /**
    * Gets platform-specific WebView configuration
+   *
+   * @returns Platform-specific WebView configuration object
    */
   getPlatformConfig(): Partial<React.ComponentProps<typeof WebView>> {
     if (Platform.OS === 'ios') {
@@ -172,6 +178,9 @@ export const WebViewUtils = {
 
   /**
    * Creates a secure message for WebView communication
+   *
+   * @param data - Data to include in the message
+   * @returns JSON-stringified message with timestamp and platform information
    */
   createSecureMessage(data: any): string {
     return JSON.stringify({
@@ -183,6 +192,9 @@ export const WebViewUtils = {
 
   /**
    * Validates a message received from WebView
+   *
+   * @param message - JSON string message to validate
+   * @returns Validation result with parsed data or error information
    */
   validateMessage(message: string): { isValid: boolean; data?: any; error?: string } {
     try {
@@ -204,6 +216,8 @@ export const WebViewUtils = {
 
   /**
    * Gets WebView user agent for the current platform
+   *
+   * @returns User agent string including platform and version information
    */
   getUserAgent(): string {
     const baseAgent = 'OpenfortEmbeddedWallet/1.0'

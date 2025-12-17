@@ -5,7 +5,6 @@ import { onError, onSuccess } from '../../lib/hookConsistency'
 import type { PasswordFlowState } from '../../types'
 import type { OpenfortHookOptions } from '../../types/hookOption'
 import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
-import type { CreateWalletPostAuthOptions } from './useCreateWalletPostAuth'
 
 export type EmailAuthResult = {
   error?: OpenfortError
@@ -18,16 +17,14 @@ export type SignInEmailOptions = {
   email: string
   password: string
   emailVerificationRedirectTo?: string
-} & OpenfortHookOptions<EmailAuthResult> &
-  CreateWalletPostAuthOptions
+} & OpenfortHookOptions<EmailAuthResult>
 
 export type SignUpEmailOptions = {
   email: string
   password: string
   name?: string
   emailVerificationRedirectTo?: string
-} & OpenfortHookOptions<EmailAuthResult> &
-  CreateWalletPostAuthOptions
+} & OpenfortHookOptions<EmailAuthResult>
 
 export type RequestResetPasswordOptions = {
   email: string
@@ -58,8 +55,7 @@ export type EmailVerificationResult = {
 
 export type UseEmailHookOptions = {
   emailVerificationRedirectTo?: string
-} & OpenfortHookOptions<EmailAuthResult | EmailVerificationResult> &
-  CreateWalletPostAuthOptions
+} & OpenfortHookOptions<EmailAuthResult | EmailVerificationResult>
 
 const mapStatus = (status: PasswordFlowState) => {
   return {

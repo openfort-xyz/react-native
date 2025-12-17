@@ -61,11 +61,6 @@ export type RecoveryFlowState = {
 export type AuthSuccessCallback = (user: OpenfortUser, isNewUser?: boolean) => void
 
 /**
- * Authentication link success callback
- */
-export type AuthLinkSuccessCallback = (user: OpenfortUser) => void
-
-/**
  * Error callback
  */
 export type ErrorCallback = (error: OpenfortError | Error) => void
@@ -79,27 +74,11 @@ export interface EmailLoginHookOptions {
 }
 
 /**
- * Email link hook options
- */
-export interface EmailLinkHookOptions {
-  onError?: ErrorCallback
-  onSuccess?: AuthLinkSuccessCallback
-}
-
-/**
  * Email login hook result
  */
 export interface EmailLoginHookResult {
   login: (credentials: { email: string; password: string }) => Promise<OpenfortUser | undefined>
   signup: (credentials: { email: string; password: string; name?: string }) => Promise<OpenfortUser | undefined>
-  state: PasswordFlowState
-}
-
-/**
- * Email link hook result
- */
-export interface EmailLinkHookResult {
-  link: (credentials: { email: string; password: string }) => Promise<OpenfortUser | undefined>
   state: PasswordFlowState
 }
 
@@ -136,15 +115,6 @@ export interface SiweLoginHookOptions {
 }
 
 /**
- * SIWE link hook options
- */
-export interface SiweLinkHookOptions {
-  onError?: ErrorCallback
-  onSuccess?: AuthLinkSuccessCallback
-  onGenerateMessage?: (message: string) => void
-}
-
-/**
  * SIWE login hook result
  */
 export interface SiweLoginHookResult {
@@ -156,13 +126,4 @@ export interface SiweLoginHookResult {
     messageOverride?: string
     disableSignup?: boolean
   }) => Promise<OpenfortUser>
-}
-
-/**
- * SIWE link hook result
- */
-export interface SiweLinkHookResult {
-  generateSiweMessage: GenerateSiweMessage
-  state: SiweFlowState
-  linkWithSiwe: (opts: { signature: string; messageOverride?: string; walletAddress: string }) => Promise<OpenfortUser>
 }

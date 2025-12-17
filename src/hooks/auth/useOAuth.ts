@@ -13,7 +13,6 @@ import {
 import type { OpenfortHookOptions } from '../../types/hookOption'
 import { mapOAuthStatus } from '../../types/oauth'
 import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
-import type { CreateWalletPostAuthOptions } from './useCreateWalletPostAuth'
 
 export type InitializeOAuthOptions = {
   provider: OAuthProvider
@@ -35,8 +34,7 @@ export type InitOAuthReturnType = {
 
 export type AuthHookOptions = {
   redirectTo?: string
-} & OpenfortHookOptions<StoreCredentialsResult | InitOAuthReturnType> &
-  CreateWalletPostAuthOptions
+} & OpenfortHookOptions<StoreCredentialsResult | InitOAuthReturnType>
 
 /**
  * Hook for OAuth-based authentication with supported providers.

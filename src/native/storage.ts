@@ -190,6 +190,8 @@ function normalizeKey(key: string): string {
 export const NativeStorageUtils = {
   /**
    * Checks if secure storage is available on the current platform.
+   *
+   * @returns True if the platform is iOS or Android, false otherwise
    */
   isAvailable(): boolean {
     return Platform.OS === 'ios' || Platform.OS === 'android'
@@ -197,6 +199,8 @@ export const NativeStorageUtils = {
 
   /**
    * Gets the platform-specific storage options.
+   *
+   * @returns Secure store options with keychain accessibility configuration
    */
   getStorageOptions(): SecureStore.SecureStoreOptions {
     return {
