@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.21
+
+### Patch Changes
+
+- [#33](https://github.com/openfort-xyz/react-native/pull/33) [`1f4d6bf`](https://github.com/openfort-xyz/react-native/commit/1f4d6bf8644a0da46600a32ec9c4d2f1edf0a655) Thanks [@jamalavedra](https://github.com/jamalavedra)! - improve svm and email creation
+
 ## 0.1.20
 
 ### Patch Changes
