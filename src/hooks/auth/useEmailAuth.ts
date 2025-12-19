@@ -71,12 +71,23 @@ const mapStatus = (status: PasswordFlowState) => {
 /**
  * Hook for email and password authentication.
  *
- * This hook provides email/password authentication flows including sign-in, sign-up, and
- * account linking. Password reset and verification helpers are exposed but currently stubbed
- * (TODOs) until the SDK wiring is complete.
+ * This hook provides comprehensive email/password authentication flows including sign-in,
+ * sign-up, account linking, password reset, and email verification functionality.
  *
- * @param hookOptions - Optional configuration with callback functions and email verification settings.
- * @returns Email authentication state and methods with flow status indicators.
+ * @param hookOptions - Optional configuration with callback functions and email verification settings
+ * @returns Email authentication state and methods with flow status indicators including:
+ *   - `signInEmail` - Sign in with email and password
+ *   - `signUpEmail` - Create new account with email and password
+ *   - `linkEmail` - Link email/password to existing authenticated account
+ *   - `requestResetPassword` - Request password reset email
+ *   - `resetPassword` - Complete password reset with token from email
+ *   - `verifyEmail` - Verify email address with verification code
+ *   - `reset` - Reset flow state to initial
+ *   - `isLoading` - Whether an operation is in progress
+ *   - `isError` - Whether the last operation failed
+ *   - `isSuccess` - Whether the last operation succeeded
+ *   - `requiresEmailVerification` - Whether email verification is pending
+ *   - `error` - Error from the last failed operation
  *
  * @example
  * ```tsx
@@ -85,12 +96,14 @@ const mapStatus = (status: PasswordFlowState) => {
  *   onError: ({ error }) => console.error('Email auth failed:', error?.message),
  * });
  *
+ * // Sign up a new user
  * await signUpEmail({ email: 'user@example.com', password: 'securePassword123' });
  *
  * if (requiresEmailVerification) {
  *   console.log('Check email for verification code');
  * }
  *
+ * // Sign in existing user
  * await signInEmail({ email: 'user@example.com', password: 'securePassword123' });
  * ```
  */

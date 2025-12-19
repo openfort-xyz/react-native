@@ -51,36 +51,100 @@ type WalletFlowStatus =
 /**
  * Hook for managing embedded Solana wallets.
  *
- * This hook provides comprehensive Solana wallet management including creation, activation,
- * and recovery. It returns a discriminated union state that enables type-safe wallet interactions.
+ * This hook provides comprehensive management of embedded Solana (SVM) wallets including
+ * creation, recovery, activation, and transaction signing. Returns a discriminated union
+ * state that enables type-safe wallet interactions based on connection status.
  *
- * @param options - Configuration with callback functions
- * @returns Discriminated union state object. The `status` field determines available properties.
- * Possible states: 'disconnected', 'connecting', 'reconnecting', 'creating', 'needs-recovery',
- * 'connected', 'error'. When connected, includes `provider` and `activeWallet`. All states include
- * `create`, `setActive`, and `wallets` methods/properties.
+ * **Note:** Solana wallets are always EOA (Externally Owned Accounts) and work across
+ * all Solana networks (mainnet, devnet, testnet).
+ *
+ * **Recovery Methods:**
+ * - Automatic recovery (via encryption session)
+ * - Password-based recovery
+ *
+ * @param options - Configuration options including:
+ *   - `onCreateSuccess` - Callback when wallet is created
+ *   - `onCreateError` - Callback when wallet creation fails
+ *   - `onSetActiveSuccess` - Callback when wallet is activated/recovered
+ *   - `onSetActiveError` - Callback when wallet activation fails
+ *
+ * @returns Discriminated union state based on `status` field:
+ *   - **'disconnected'**: No active wallet. Properties: `create`, `setActive`, `wallets`
+ *   - **'connecting'**: Activating wallet. Properties: same as disconnected
+ *   - **'reconnecting'**: Reconnecting to wallet. Properties: same as disconnected + `activeWallet`
+ *   - **'creating'**: Creating new wallet. Properties: same as disconnected
+ *   - **'needs-recovery'**: Recovery required. Properties: same as reconnecting
+ *   - **'connected'**: Wallet ready. Properties: all + `provider` (Solana wallet adapter)
+ *   - **'error'**: Operation failed. Properties: all + `error` message + optional `activeWallet`
  *
  * @example
  * ```tsx
- * import { useEmbeddedSolanaWallet, isConnected, isLoading } from '@openfort/react-native';
+ * import { useEmbeddedSolanaWallet } from '@openfort/react-native';
+ * import { Transaction } from '@solana/web3.js';
+ * import { ActivityIndicator } from 'react-native';
  *
- * const solana = useEmbeddedSolanaWallet({
- *   onCreateSuccess: (account, provider) => console.log('Wallet created:', account.address),
- * });
+ * function SolanaWalletComponent() {
+ *   const solana = useEmbeddedSolanaWallet({
+ *     onCreateSuccess: (account, provider) => {
+ *       console.log('Solana wallet created:', account.address);
+ *       console.log('Public key:', provider.publicKey);
+ *     },
+ *   });
  *
- * if (isLoading(solana)) {
- *   return <ActivityIndicator />;
- * }
+ *   // Handle loading states
+ *   if (solana.status === 'creating' || solana.status === 'connecting') {
+ *     return <ActivityIndicator />;
+ *   }
  *
- * if (isConnected(solana)) {
- *   // TypeScript knows provider and activeWallet are available
- *   const signed = await solana.provider.signTransaction(transaction);
- *   const publicKey = solana.provider.publicKey;
- * }
+ *   // Create first wallet
+ *   if (solana.status === 'disconnected' && solana.wallets.length === 0) {
+ *     return (
+ *       <Button
+ *         onPress={() => solana.create({ recoveryPassword: 'optional' })}
+ *         title="Create Solana Wallet"
+ *       />
+ *     );
+ *   }
  *
- * // Create wallet if none exist
- * if (solana.status === 'disconnected' && solana.wallets.length === 0) {
- *   await solana.create({ recoveryMethod: 'automatic' });
+ *   // Activate existing wallet
+ *   if (solana.status === 'disconnected' && solana.wallets.length > 0) {
+ *     return (
+ *       <Button
+ *         onPress={() => solana.setActive({
+ *           address: solana.wallets[0].address,
+ *           recoveryPassword: 'optional'
+ *         })}
+ *         title="Connect Solana Wallet"
+ *       />
+ *     );
+ *   }
+ *
+ *   // Use connected wallet
+ *   if (solana.status === 'connected') {
+ *     const signTransaction = async () => {
+ *       const transaction = new Transaction();
+ *       // ... add instructions to transaction
+ *
+ *       const signed = await solana.provider.signTransaction(transaction);
+ *       console.log('Signed transaction:', signed);
+ *     };
+ *
+ *     const signMessage = async () => {
+ *       const message = 'Hello Solana!';
+ *       const signature = await solana.provider.signMessage(message);
+ *       console.log('Message signature:', signature);
+ *     };
+ *
+ *     return (
+ *       <View>
+ *         <Text>Connected: {solana.activeWallet.address}</Text>
+ *         <Button onPress={signTransaction} title="Sign Transaction" />
+ *         <Button onPress={signMessage} title="Sign Message" />
+ *       </View>
+ *     );
+ *   }
+ *
+ *   return null;
  * }
  * ```
  */
