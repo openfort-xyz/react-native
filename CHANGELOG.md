@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.22
+
+### Patch Changes
+
+- [#35](https://github.com/openfort-xyz/react-native/pull/35) [`4cd60e9`](https://github.com/openfort-xyz/react-native/commit/4cd60e96ab042058ab19ec70822865e0b7b12f19) Thanks [@jamalavedra](https://github.com/jamalavedra)! - fix: EOA create
+
 ## 0.1.21
 
 ### Patch Changes
