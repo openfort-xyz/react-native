@@ -15,24 +15,34 @@ export type GuestHookResult = {
 export type GuestHookOptions = OpenfortHookOptions<GuestHookResult>
 
 /**
- * Hook for creating guest accounts.
+ * Hook for guest account authentication.
  *
- * Guest accounts allow users to access certain features without full authentication and can later be upgraded to full accounts
- * by linking additional authentication methods.
+ * This hook provides functionality for creating anonymous guest accounts that allow
+ * users to access features without full authentication. Guest accounts can later be
+ * upgraded to permanent accounts by linking email, OAuth, or wallet authentication.
  *
- * @param hookOptions - Configuration options including success and error callbacks.
- * @returns Current guest authentication helpers with flow status indicators.
+ * @param hookOptions - Configuration options including success and error callbacks
+ * @returns Guest authentication method and flow state including:
+ *   - `signUpGuest` - Create anonymous guest account
+ *   - `isLoading` - Whether guest account creation is in progress
+ *   - `isError` - Whether guest account creation failed
+ *   - `isSuccess` - Whether guest account was created successfully
+ *   - `error` - Error from the last failed operation
  *
  * @example
  * ```tsx
  * const { signUpGuest, isLoading } = useGuestAuth({
- *   onSuccess: ({ user }) => console.log('Guest account created:', user),
+ *   onSuccess: ({ user }) => console.log('Guest account created:', user?.id),
  *   onError: ({ error }) => console.error('Failed to create guest account:', error),
  * });
  *
+ * // Create guest account for anonymous access
  * if (!isLoading) {
  *   await signUpGuest();
  * }
+ *
+ * // Later, upgrade to permanent account by linking authentication
+ * // Use linkEmail, linkOauth, or linkSiwe from other hooks
  * ```
  */
 export const useGuestAuth = (hookOptions: GuestHookOptions = {}) => {

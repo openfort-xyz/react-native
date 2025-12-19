@@ -71,39 +71,90 @@ type WalletFlowStatus =
 /**
  * Hook for managing embedded Ethereum wallets.
  *
- * This hook provides comprehensive Ethereum wallet management including creation, activation,
- * and recovery. It returns a discriminated union state that enables type-safe wallet interactions.
+ * This hook provides comprehensive management of embedded Ethereum wallets including creation,
+ * recovery, activation, and EIP-1193 provider access. Returns a discriminated union state that
+ * enables type-safe wallet interactions based on connection status.
  *
- * @param options - Configuration with default chainId and callback functions
- * @returns Discriminated union state object. The `status` field determines available properties.
- * Possible states: 'disconnected', 'connecting', 'reconnecting', 'creating', 'needs-recovery',
- * 'connected', 'error'. When connected, includes `provider` and `activeWallet`. All states include
- * `create`, `setActive`, `setRecovery`, `exportPrivateKey`, and `wallets` methods/properties.
+ * **Wallet Types Supported:**
+ * - Smart Contract Accounts (Account Abstraction)
+ * - EOA (Externally Owned Accounts)
+ *
+ * **Recovery Methods:**
+ * - Automatic recovery (via encryption session)
+ * - Password-based recovery
+ *
+ * @param options - Configuration options including:
+ *   - `chainId` - Default chain ID for wallet operations
+ *   - `onCreateSuccess` - Callback when wallet is created
+ *   - `onCreateError` - Callback when wallet creation fails
+ *   - `onSetActiveSuccess` - Callback when wallet is activated/recovered
+ *   - `onSetActiveError` - Callback when wallet activation fails
+ *   - `onSetRecoverySuccess` - Callback when recovery method is updated
+ *   - `onSetRecoveryError` - Callback when recovery update fails
+ *
+ * @returns Discriminated union state based on `status` field:
+ *   - **'disconnected'**: No active wallet. Properties: `create`, `setActive`, `wallets`, `setRecovery`, `exportPrivateKey`
+ *   - **'connecting'**: Activating wallet. Properties: same as disconnected + `activeWallet`
+ *   - **'reconnecting'**: Reconnecting to wallet. Properties: same as connecting
+ *   - **'creating'**: Creating new wallet. Properties: same as disconnected
+ *   - **'needs-recovery'**: Recovery required. Properties: same as connecting
+ *   - **'connected'**: Wallet ready. Properties: all + `provider` (EIP-1193 provider)
+ *   - **'error'**: Operation failed. Properties: all + `error` message
  *
  * @example
  * ```tsx
- * import { useEmbeddedEthereumWallet, isConnected, isLoading } from '@openfort/react-native';
+ * import { useEmbeddedEthereumWallet } from '@openfort/react-native';
+ * import { ActivityIndicator } from 'react-native';
  *
- * const ethereum = useEmbeddedEthereumWallet({
- *   chainId: 1,
- *   onCreateSuccess: (account, provider) => console.log('Wallet created:', account.address),
- * });
- *
- * if (isLoading(ethereum)) {
- *   return <ActivityIndicator />;
- * }
- *
- * if (isConnected(ethereum)) {
- *   // TypeScript knows provider and activeWallet are available
- *   const tx = await ethereum.provider.request({
- *     method: 'eth_sendTransaction',
- *     params: [{ from: ethereum.activeWallet.address, to: '0x...', value: '0x0' }]
+ * function WalletComponent() {
+ *   const ethereum = useEmbeddedEthereumWallet({
+ *     chainId: 137, // Polygon
+ *     onCreateSuccess: (account, provider) => {
+ *       console.log('Wallet created:', account.address);
+ *     },
  *   });
- * }
  *
- * // Create wallet if none exist
- * if (ethereum.status === 'disconnected' && ethereum.wallets.length === 0) {
- *   await ethereum.create({ chainId: 1 });
+ *   // Handle loading states
+ *   if (ethereum.status === 'creating' || ethereum.status === 'connecting') {
+ *     return <ActivityIndicator />;
+ *   }
+ *
+ *   // Create first wallet
+ *   if (ethereum.status === 'disconnected' && ethereum.wallets.length === 0) {
+ *     return <Button onPress={() => ethereum.create()} title="Create Wallet" />;
+ *   }
+ *
+ *   // Activate existing wallet
+ *   if (ethereum.status === 'disconnected' && ethereum.wallets.length > 0) {
+ *     return (
+ *       <Button
+ *         onPress={() => ethereum.setActive({
+ *           address: ethereum.wallets[0].address,
+ *           recoveryPassword: 'optional-password'
+ *         })}
+ *         title="Connect Wallet"
+ *       />
+ *     );
+ *   }
+ *
+ *   // Use connected wallet
+ *   if (ethereum.status === 'connected') {
+ *     const sendTransaction = async () => {
+ *       const tx = await ethereum.provider.request({
+ *         method: 'eth_sendTransaction',
+ *         params: [{
+ *           from: ethereum.activeWallet.address,
+ *           to: '0x...',
+ *           value: '0x0'
+ *         }]
+ *       });
+ *       console.log('Transaction hash:', tx);
+ *     };
+ *
+ *     return <Button onPress={sendTransaction} title="Send Transaction" />;
+ *   }
+ *
+ *   return null;
  * }
  * ```
  */
@@ -284,11 +335,11 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
 
         // Build recovery params
         const recoveryParams = await buildRecoveryParams(createOptions, walletConfig)
-
+        const accountType = createOptions?.accountType || walletConfig?.accountType || AccountTypeEnum.SMART_ACCOUNT
         // Create embedded wallet
         const embeddedAccount = await client.embeddedWallet.create({
-          chainId,
-          accountType: createOptions?.accountType || walletConfig?.accountType || AccountTypeEnum.SMART_ACCOUNT,
+          chainId: accountType === AccountTypeEnum.EOA ? undefined : chainId,
+          accountType,
           chainType: ChainTypeEnum.EVM,
           recoveryParams,
         })

@@ -165,13 +165,22 @@ export interface OpenfortProviderProps {
 }
 
 /**
- * Provider component that initialises the Openfort SDK and exposes its state via {@link OpenfortContext}
+ * Root provider component that initializes the Openfort SDK and makes it available throughout your app.
  *
- * This component must wrap your React Native app to provide Openfort functionality to all child components.
- * It initializes the SDK with the provided configuration and manages authentication state.
+ * This component must wrap your React Native application to enable Openfort functionality.
+ * It initializes the SDK, manages authentication state, handles embedded wallet connections,
+ * and provides context to all child components through {@link OpenfortContext}.
  *
- * @param props - Provider configuration including the publishable key and optional overrides
- * @returns A React element that provides the Openfort context to its children
+ * **Key Features:**
+ * - Initializes Openfort client with platform-specific configuration
+ * - Manages user authentication state and session persistence
+ * - Polls embedded wallet state for real-time status updates
+ * - Provides hidden WebView for embedded wallet communication
+ * - Supports multiple blockchain networks via supportedChains
+ * - Integrates Shield for secure embedded wallet management
+ *
+ * @param props - Provider configuration, see {@link OpenfortProviderProps}
+ * @returns React element that provides Openfort context to all children
  *
  * @example
  * ```tsx
@@ -185,7 +194,12 @@ export interface OpenfortProviderProps {
  *       supportedChains={[polygon, polygonMumbai]}
  *       walletConfig={{
  *         shieldPublishableKey: "shield_pk_...",
- *         getEncryptionSession: () => fetchEncryptionSession(),
+ *         getEncryptionSession: async () => {
+ *           // Fetch session from your backend
+ *           const response = await fetch('/api/encryption-session');
+ *           return response.text();
+ *         },
+ *         recoveryMethod: 'automatic',
  *       }}
  *       verbose={true}
  *     >

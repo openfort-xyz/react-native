@@ -39,15 +39,24 @@ export type AuthHookOptions = {
 /**
  * Hook for OAuth-based authentication with supported providers.
  *
- * This hook provides helpers for starting OAuth login flows (`initOAuth`) and linking
- * additional providers to an authenticated user (`linkOauth`). Some advanced flows may
- * require manual credential storage via `storeCredentials`, which is currently a TODO.
+ * This hook provides OAuth authentication flows including login and account linking
+ * for various OAuth providers (Google, Apple, Discord, Twitter, Facebook, etc.).
+ * Supports both web-based OAuth flows and native Apple Sign-In on iOS.
  *
- * @param hookOptions - Configuration options including success and error callbacks.
- * @returns OAuth helpers and derived flow state flags.
+ * @param hookOptions - Configuration options including success and error callbacks
+ * @returns OAuth authentication methods and flow state including:
+ *   - `initOAuth` - Start OAuth login flow for authentication
+ *   - `linkOauth` - Link additional OAuth provider to authenticated account
+ *   - `storeCredentials` - (Reserved for future use)
+ *   - `isLoading` - Whether OAuth flow is in progress
+ *   - `isError` - Whether the last OAuth flow failed
+ *   - `isSuccess` - Whether the last OAuth flow succeeded
+ *   - `error` - Error from the last failed OAuth operation
  *
  * @example
  * ```tsx
+ * import { OAuthProvider } from '@openfort/openfort-js';
+ *
  * const { initOAuth, linkOauth, isLoading, isError, error } = useOAuth({
  *   onSuccess: ({ user }) => console.log('OAuth completed for', user?.id),
  * });

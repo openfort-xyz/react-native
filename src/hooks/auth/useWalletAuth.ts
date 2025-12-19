@@ -56,28 +56,47 @@ const mapStatus = (status: SiweFlowState) => {
 }
 
 /**
- * Hook for handling Sign-In With Ethereum (SIWE) flows.
+ * Hook for Sign-In With Ethereum (SIWE) authentication flows.
  *
- * This hook orchestrates SIWE message generation, signature submission, and state
- * tracking so that external wallets can either authenticate a user (`signInWithSiwe`)
- * or be linked to an existing account (`linkSiwe`).
+ * This hook provides SIWE authentication functionality allowing users to authenticate
+ * or link accounts using their external Ethereum wallets. It handles message generation,
+ * signature verification, and state management throughout the authentication flow.
  *
- * @param hookOptions - Optional callbacks for handling success or error events from the SIWE flows.
- * @returns SIWE helpers for generating messages, signing in, linking wallets, and inspecting flow status.
+ * @param hookOptions - Optional callbacks for handling success or error events from SIWE flows
+ * @returns SIWE authentication methods and flow state including:
+ *   - `generateSiweMessage` - Generate SIWE message for wallet to sign
+ *   - `signInWithSiwe` - Authenticate user with signed SIWE message
+ *   - `linkSiwe` - Link external wallet to existing authenticated account
+ *   - `isLoading` - Whether a SIWE operation is in progress
+ *   - `isError` - Whether the last SIWE operation failed
+ *   - `isSuccess` - Whether the last SIWE operation succeeded
+ *   - `isAwaitingSignature` - Whether waiting for user to sign message
+ *   - `isGeneratingMessage` - Whether generating SIWE message
+ *   - `isSubmittingSignature` - Whether submitting signature to server
+ *   - `error` - Error from the last failed operation
  *
  * @example
  * ```tsx
- * const { generateSiweMessage, signInWithSiwe, linkSiwe, isAwaitingSignature } = useWalletAuth({
- *   onSuccess: ({ user }) => console.log('SIWE flow completed for', user?.id),
+ * // Using with an external wallet like WalletConnect or MetaMask
+ * const { generateSiweMessage, signInWithSiwe, isAwaitingSignature } = useWalletAuth({
+ *   onSuccess: ({ user }) => console.log('SIWE authentication successful:', user?.id),
  * });
  *
+ * // Step 1: Generate SIWE message
  * const { message } = await generateSiweMessage({
  *   wallet: connectedWallet.address,
- *   from: { domain: 'app.openfort.io', uri: 'https://app.openfort.io' },
+ *   from: { domain: 'myapp.com', uri: 'https://myapp.com' },
  * });
  *
+ * // Step 2: Request signature from user's wallet
  * const signature = await connectedWallet.signMessage(message);
- * await signInWithSiwe({ walletAddress: connectedWallet.address, signature, messageOverride: message });
+ *
+ * // Step 3: Authenticate with signed message
+ * await signInWithSiwe({
+ *   walletAddress: connectedWallet.address,
+ *   signature,
+ *   messageOverride: message
+ * });
  * ```
  */
 export function useWalletAuth(hookOptions?: WalletHookOptions) {
