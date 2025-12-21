@@ -30,11 +30,37 @@ export type {
 } from './oauth'
 // Wallet types
 export type {
+  // Connected wallet types
   ConnectedEmbeddedEthereumWallet,
   ConnectedEmbeddedSolanaWallet,
+  // Ethereum action types
+  CreateEthereumWalletOptions,
+  CreateEthereumWalletResult,
+  // Solana action types
   CreateSolanaEmbeddedWalletOpts,
+  CreateSolanaWalletOptions,
+  CreateSolanaWalletResult,
+  // Provider types
+  EIP1193EventHandler,
+  EIP1193EventName,
+  EIP1193RequestArguments,
+  // State types
   EmbeddedEthereumWalletState,
   EmbeddedSolanaWalletState,
+  // Action interfaces
+  EthereumWalletActions,
   OpenfortEmbeddedEthereumWalletProvider,
   OpenfortEmbeddedSolanaWalletProvider,
+  SetActiveEthereumWalletOptions,
+  SetActiveEthereumWalletResult,
+  SetActiveSolanaWalletOptions,
+  SetActiveSolanaWalletResult,
+  SetRecoveryOptions,
+  SetRecoveryResult,
+  SignedSolanaTransaction,
+  SolanaRequestArguments,
+  SolanaSignMessageRequest,
+  SolanaSignTransactionRequest,
+  SolanaTransaction,
+  SolanaWalletActions,
 } from './wallet'

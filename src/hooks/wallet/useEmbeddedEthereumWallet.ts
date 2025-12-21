@@ -4,49 +4,17 @@ import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
 import { logger } from '../../lib/logger'
 import type { BaseFlowState } from '../../types/baseFlowState'
-import type { Hex } from '../../types/hex'
-import type { OpenfortHookOptions } from '../../types/hookOption'
 import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
 import type {
   ConnectedEmbeddedEthereumWallet,
+  CreateEthereumWalletOptions,
   EmbeddedEthereumWalletState,
   OpenfortEmbeddedEthereumWalletProvider,
+  SetActiveEthereumWalletOptions,
+  SetActiveEthereumWalletResult,
+  SetRecoveryOptions,
 } from '../../types/wallet'
 import { buildRecoveryParams } from './utils'
-
-type CreateEthereumWalletResult = {
-  error?: OpenfortError
-  account?: EmbeddedAccount
-  provider?: OpenfortEmbeddedEthereumWalletProvider
-}
-
-type CreateEthereumWalletOptions = {
-  chainId?: number
-  recoveryPassword?: string
-  accountType?: AccountTypeEnum
-  policyId?: string
-} & OpenfortHookOptions<CreateEthereumWalletResult>
-
-type SetActiveEthereumWalletResult = {
-  error?: OpenfortError
-  wallet?: ConnectedEmbeddedEthereumWallet
-  provider?: OpenfortEmbeddedEthereumWalletProvider
-}
-
-type SetActiveEthereumWalletOptions = {
-  address: Hex
-  chainId?: number
-  recoveryPassword?: string
-} & OpenfortHookOptions<SetActiveEthereumWalletResult>
-
-type SetRecoveryResult = {
-  error?: OpenfortError
-}
-
-type SetRecoveryOptions = {
-  previousRecovery: import('@openfort/openfort-js').RecoveryParams
-  newRecovery: import('@openfort/openfort-js').RecoveryParams
-} & OpenfortHookOptions<SetRecoveryResult>
 
 type UseEmbeddedEthereumWalletOptions = {
   chainId?: number
