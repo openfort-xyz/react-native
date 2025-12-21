@@ -1,7 +1,7 @@
 {
   "name": "@openfort/react-native",
   "main": "dist/index.js",
-  "version": "0.1.22",
+  "version": "0.1.23",
   "license": "MIT",
   "description": "React Native SDK for Openfort platform integration",
   "scripts": {
