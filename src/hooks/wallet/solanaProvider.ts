@@ -1,21 +1,13 @@
 import type { EmbeddedAccount } from '@openfort/openfort-js'
-import type { OpenfortEmbeddedSolanaWalletProvider } from '../../types/wallet'
+import type {
+  OpenfortEmbeddedSolanaWalletProvider,
+  SignedSolanaTransaction,
+  SolanaSignMessageRequest,
+  SolanaSignTransactionRequest,
+  SolanaTransaction,
+} from '../../types/wallet'
 
-type SignMessageRequestArguments = {
-  method: 'signMessage'
-  params: {
-    message: string
-  }
-}
-
-type SignTransactionRequestArguments<T = any> = {
-  method: 'signTransaction'
-  params: {
-    transaction: T
-  }
-}
-
-type RequestArguments = SignMessageRequestArguments | SignTransactionRequestArguments
+type SolanaRequestArguments = SolanaSignMessageRequest | SolanaSignTransactionRequest
 
 /**
  * Embedded Solana wallet provider implementation for Openfort.
@@ -25,8 +17,8 @@ type RequestArguments = SignMessageRequestArguments | SignTransactionRequestArgu
  */
 export class OpenfortSolanaProvider implements OpenfortEmbeddedSolanaWalletProvider {
   private _account: EmbeddedAccount
-  private _signTransaction: (transaction: any) => Promise<any>
-  private _signAllTransactions: (transactions: any[]) => Promise<any[]>
+  private _signTransaction: (transaction: SolanaTransaction) => Promise<SignedSolanaTransaction>
+  private _signAllTransactions: (transactions: SolanaTransaction[]) => Promise<SignedSolanaTransaction[]>
   private _signMessage: (message: string) => Promise<string>
 
   /**
@@ -45,8 +37,8 @@ export class OpenfortSolanaProvider implements OpenfortEmbeddedSolanaWalletProvi
    */
   constructor(params: {
     account: EmbeddedAccount
-    signTransaction: (transaction: any) => Promise<any>
-    signAllTransactions: (transactions: any[]) => Promise<any[]>
+    signTransaction: (transaction: SolanaTransaction) => Promise<SignedSolanaTransaction>
+    signAllTransactions: (transactions: SolanaTransaction[]) => Promise<SignedSolanaTransaction[]>
     signMessage: (message: string) => Promise<string>
   }) {
     this._account = params.account
@@ -66,36 +58,34 @@ export class OpenfortSolanaProvider implements OpenfortEmbeddedSolanaWalletProvi
   /**
    * Request-based API for wallet operations
    */
-  async request(args: SignMessageRequestArguments): Promise<{ signature: string }>
-  async request(args: SignTransactionRequestArguments): Promise<{ signedTransaction: any }>
-  async request(args: RequestArguments): Promise<any> {
+  request(args: SolanaSignMessageRequest): Promise<{ signature: string }>
+  request(args: SolanaSignTransactionRequest): Promise<{ signedTransaction: SignedSolanaTransaction }>
+  async request(
+    args: SolanaRequestArguments
+  ): Promise<{ signature: string } | { signedTransaction: SignedSolanaTransaction }> {
     switch (args.method) {
       case 'signMessage': {
-        // Convert message string to Uint8Array
         const signature = await this._signMessage(args.params.message)
-        return { signature: signature }
+        return { signature }
       }
       case 'signTransaction': {
         const signedTransaction = await this._signTransaction(args.params.transaction)
         return { signedTransaction }
       }
-
-      default:
-        throw new Error(`Unsupported method: ${(args as any).method}`)
     }
   }
 
   /**
    * Sign a single transaction (direct method)
    */
-  async signTransaction(transaction: any): Promise<any> {
+  async signTransaction(transaction: SolanaTransaction): Promise<SignedSolanaTransaction> {
     return await this._signTransaction(transaction)
   }
 
   /**
    * Sign multiple transactions (direct method)
    */
-  async signAllTransactions(transactions: any[]): Promise<any[]> {
+  async signAllTransactions(transactions: SolanaTransaction[]): Promise<SignedSolanaTransaction[]> {
     return await this._signAllTransactions(transactions)
   }
 

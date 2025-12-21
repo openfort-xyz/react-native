@@ -4,35 +4,19 @@ import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
 import { logger } from '../../lib/logger'
 import type { BaseFlowState } from '../../types/baseFlowState'
-import type { OpenfortHookOptions } from '../../types/hookOption'
 import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
 import type {
   ConnectedEmbeddedSolanaWallet,
-  CreateSolanaEmbeddedWalletOpts,
+  CreateSolanaWalletOptions,
   EmbeddedSolanaWalletState,
   OpenfortEmbeddedSolanaWalletProvider,
+  SetActiveSolanaWalletOptions,
+  SetActiveSolanaWalletResult,
+  SignedSolanaTransaction,
+  SolanaTransaction,
 } from '../../types/wallet'
 import { OpenfortSolanaProvider } from './solanaProvider'
 import { buildRecoveryParams } from './utils'
-
-type CreateSolanaWalletResult = {
-  error?: OpenfortError
-  account?: EmbeddedAccount
-  provider?: OpenfortEmbeddedSolanaWalletProvider
-}
-
-type CreateSolanaWalletOptions = CreateSolanaEmbeddedWalletOpts & OpenfortHookOptions<CreateSolanaWalletResult>
-
-type SetActiveSolanaWalletResult = {
-  error?: OpenfortError
-  wallet?: ConnectedEmbeddedSolanaWallet
-  provider?: OpenfortEmbeddedSolanaWalletProvider
-}
-
-type SetActiveSolanaWalletOptions = {
-  address: string
-  recoveryPassword?: string
-} & OpenfortHookOptions<SetActiveSolanaWalletResult>
 
 type UseEmbeddedSolanaWalletOptions = {
   onCreateSuccess?: (account: EmbeddedAccount, provider: OpenfortEmbeddedSolanaWalletProvider) => void
@@ -207,20 +191,20 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
   const getSolanaProvider = useCallback(
     async (account: EmbeddedAccount): Promise<OpenfortEmbeddedSolanaWalletProvider> => {
       // Helper function to sign a single transaction
-      const signSingleTransaction = async (transaction: any) => {
+      const signSingleTransaction = async (transaction: SolanaTransaction): Promise<SignedSolanaTransaction> => {
         // Extract the message bytes from the transaction
         // For @solana/kit compiledTransaction, the messageBytes property contains what needs to be signed
         let messageBytes: Uint8Array
 
-        if (transaction.messageBytes) {
-          // @solana/kit compiled transaction
-          messageBytes = transaction.messageBytes
-        } else if (transaction.serializeMessage) {
-          // @solana/web3.js Transaction
-          messageBytes = transaction.serializeMessage()
-        } else if (transaction instanceof Uint8Array) {
+        if (transaction instanceof Uint8Array) {
           // Raw bytes
           messageBytes = transaction
+        } else if ('messageBytes' in transaction) {
+          // @solana/kit compiled transaction
+          messageBytes = transaction.messageBytes
+        } else if ('serializeMessage' in transaction) {
+          // @solana/web3.js Transaction
+          messageBytes = transaction.serializeMessage()
         } else {
           throw new OpenfortError(
             'Unsupported transaction format. Expected @solana/kit compiled transaction, @solana/web3.js Transaction, or Uint8Array',
@@ -237,14 +221,13 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
         }
 
         // Sign the message bytes (hashMessage: false for Solana - Ed25519 signs raw bytes)
-        // Note: We cast to any because the iframe will deserialize the Buffer format correctly,
+        // Note: We cast to unknown because the iframe will deserialize the Buffer format correctly,
         // but TypeScript doesn't know about this serialization detail
-        const signatureBase58 = await client.embeddedWallet.signMessage(bufferFormatMessage as any, {
+        const signatureBase58 = await client.embeddedWallet.signMessage(bufferFormatMessage as unknown as Uint8Array, {
           hashMessage: false,
         })
 
         // Return the signature in the expected format
-        // Different libraries expect different return formats, so we return a flexible object
         return {
           signature: signatureBase58,
           publicKey: account.address,
@@ -254,16 +237,16 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
       const provider = new OpenfortSolanaProvider({
         account,
         signTransaction: signSingleTransaction,
-        signAllTransactions: async (transactions: any[]): Promise<any[]> => {
+        signAllTransactions: async (transactions: SolanaTransaction[]): Promise<SignedSolanaTransaction[]> => {
           // Sign each transaction sequentially
-          const signedTransactions: any[] = []
+          const signedTransactions: SignedSolanaTransaction[] = []
           for (const transaction of transactions) {
             const signed = await signSingleTransaction(transaction)
             signedTransactions.push(signed)
           }
           return signedTransactions
         },
-        signMessage: async (message: string) => {
+        signMessage: async (message: string): Promise<string> => {
           // Sign message using openfort-js (with hashMessage: false for Solana)
           const result = await client.embeddedWallet.signMessage(message, { hashMessage: false })
           return result
