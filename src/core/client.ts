@@ -75,3 +75,42 @@ function getNativeApplicationId(): string {
   }
   return applicationId
 }
+
+/**
+ * Default {@link OpenfortClient} instance used when an application does not supply its own.
+ *
+ * Applications should generally manage their own instance via {@link createOpenfortClient}
+ * instead of relying on this singleton.
+ */
+let defaultClient: OpenfortClient | null = null
+
+/**
+ * Retrieves the lazily initialised default {@link OpenfortClient} instance.
+ *
+ * @param options - Optional configuration used to create the client when it does not yet exist.
+ * @returns The cached {@link OpenfortClient} instance.
+ * @throws {Error} When the client has not been initialised and no configuration was provided.
+ * @internal
+ */
+export function getDefaultClient(options?: OpenfortSDKConfiguration): OpenfortClient {
+  if (!defaultClient && options) {
+    defaultClient = createOpenfortClient(options)
+  }
+
+  if (!defaultClient) {
+    throw new Error('Openfort client not initialized. Make sure to wrap your app with OpenfortProvider.')
+  }
+
+  return defaultClient
+}
+
+/**
+ * Overrides the global default {@link OpenfortClient} instance that will be returned by
+ * {@link getDefaultClient}.
+ *
+ * @param client - The client instance to set as the default.
+ * @internal
+ */
+export function setDefaultClient(client: OpenfortClient): void {
+  defaultClient = client
+}
