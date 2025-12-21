@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.23
+
+### Patch Changes
+
+- [#37](https://github.com/openfort-xyz/react-native/pull/37) [`d8e0cf6`](https://github.com/openfort-xyz/react-native/commit/d8e0cf64737bb2873342a8b0f09d184098431081) Thanks [@jamalavedra](https://github.com/jamalavedra)! - fix wallet types
+
 ## 0.1.22
 
 ### Patch Changes
