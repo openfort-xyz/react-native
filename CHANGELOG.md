@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.24
+
+### Patch Changes
+
+- [#40](https://github.com/openfort-xyz/react-native/pull/40) [`a675d2e`](https://github.com/openfort-xyz/react-native/commit/a675d2e8806f72937888b4c2685d478d9360a463) Thanks [@jamalavedra](https://github.com/jamalavedra)! - fix signout
+
 ## 0.1.23
 
 ### Patch Changes
