@@ -320,8 +320,15 @@ export const OpenfortProvider = ({
 
   // Internal refresh function for auth hooks to use
   const refreshUserState = useCallback(
-    async (user?: AuthPlayerResponse) => {
+    async (user?: AuthPlayerResponse | null) => {
       try {
+        // If null is passed explicitly, clear the user state without API call
+        if (user === null) {
+          logger.info('Clearing user state explicitly')
+          handleUserChange(null)
+          return null
+        }
+
         if (user === undefined) {
           logger.info('Refreshing user state, no user provided')
         } else if ('id' in user) {
