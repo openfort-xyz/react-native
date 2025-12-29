@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useOpenfortContext } from '../../core'
 import { onError, onSuccess } from '../../lib/hookConsistency'
 import { type BaseFlowState, mapStatus } from '../../types/baseFlowState'
@@ -45,39 +45,40 @@ export function useSignOut(hookOptions: OpenfortHookOptions = {}) {
     status: 'idle',
   })
 
+  // Use refs for unstable values to prevent infinite re-renders
+  const userRef = useRef(user)
+  const internalRef = useRef(_internal)
+  const hookOptionsRef = useRef(hookOptions)
+  userRef.current = user
+  internalRef.current = _internal
+  hookOptionsRef.current = hookOptions
+
   const signOut = useCallback(
     async (options: OpenfortHookOptions = {}) => {
-      if (!user) return
+      if (!userRef.current) return
 
-      setStatus({
-        status: 'loading',
-      })
+      setStatus({ status: 'loading' })
       try {
         await client.auth.logout()
-        _internal.refreshUserState()
-        setStatus({
-          status: 'success',
-        })
+        await internalRef.current.refreshUserState(null)
+        setStatus({ status: 'success' })
 
         return onSuccess({
-          hookOptions,
+          hookOptions: hookOptionsRef.current,
           options,
           data: {},
         })
       } catch (e) {
         const error = new OpenfortError('Failed to sign out', OpenfortErrorType.AUTHENTICATION_ERROR, { error: e })
-        setStatus({
-          status: 'error',
-          error,
-        })
+        setStatus({ status: 'error', error })
         return onError({
-          hookOptions,
+          hookOptions: hookOptionsRef.current,
           options,
           error,
         })
       }
     },
-    [client, user, _internal.refreshUserState, setStatus, hookOptions]
+    [client]
   )
 
   return {

@@ -48,7 +48,7 @@ export interface OpenfortContextValue {
   /** @internal Refreshes user state after authentication changes. */
   _internal: {
     refreshUserState: (
-      user?: import('@openfort/openfort-js').AuthPlayerResponse
+      user?: import('@openfort/openfort-js').AuthPlayerResponse | null
     ) => Promise<import('@openfort/openfort-js').AuthPlayerResponse | null>
   }
 }
