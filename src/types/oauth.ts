@@ -41,5 +41,5 @@ export type LinkWithOAuthInput = {
  */
 export interface UseLoginWithOAuth {
   state: OAuthFlowState
-  login: (input: LoginWithOAuthInput) => Promise<import('@openfort/openfort-js').AuthPlayerResponse | undefined>
+  login: (input: LoginWithOAuthInput) => Promise<import('@openfort/openfort-js').AuthResponse | undefined>
 }

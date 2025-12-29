@@ -1,4 +1,4 @@
-import { OAuthProvider, type AuthPlayerResponse as OpenfortUser } from '@openfort/openfort-js'
+import { OAuthProvider, type AuthResponse as OpenfortUser } from '@openfort/openfort-js'
 import { useCallback } from 'react'
 import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
@@ -84,60 +84,63 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
         const redirectUri = options.redirectTo || createOAuthRedirectUri('/oauth/callback')
         const result = await client.auth.initOAuth({
           provider: options.provider,
+          redirectTo: redirectUri,
           options: {
             skipBrowserRedirect: true,
-            redirectTo: redirectUri,
           },
         })
+
+        console.log('initOAuth result', result)
 
         // Handle OAuth flow using native utilities
         setOAuthState({ status: 'awaiting-redirect' })
 
         // Check if we should use native Apple authentication
-        if (options.provider === 'apple' && !options.isLegacyAppleIosBehaviorEnabled) {
-          const isAppleAvailable = await isAppleSignInAvailable()
-          if (isAppleAvailable) {
-            try {
-              const appleResult = await authenticateWithApple({
-                state: result.key || '',
-                isLogin: true,
-              })
+        // TODO: V2 AUTH
+        // if (options.provider === 'apple' && !options.isLegacyAppleIosBehaviorEnabled) {
+        //   const isAppleAvailable = await isAppleSignInAvailable()
+        //   if (isAppleAvailable) {
+        //     try {
+        //       const appleResult = await authenticateWithApple({
+        //         state: result.key || '',
+        //         isLogin: true,
+        //       })
 
-              // Complete OAuth flow with Apple credentials
-              const authResult = await client.auth.loginWithIdToken({
-                provider: OAuthProvider.APPLE,
-                token: appleResult.identityToken!,
-              })
+        //       // Complete OAuth flow with Apple credentials
+        //       const authResult = await client.auth.loginWithIdToken({
+        //         provider: OAuthProvider.APPLE,
+        //         token: appleResult.identityToken!,
+        //       })
 
-              setOAuthState({ status: 'done' })
-              const user = authResult.player
-              // Refresh user state in provider
-              await _internal.refreshUserState(user)
+        //       setOAuthState({ status: 'done' })
+        //       const user = authResult.player
+        //       // Refresh user state in provider
+        //       await _internal.refreshUserState(user)
 
-              return onSuccess({
-                options,
-                hookOptions,
-                data: { user },
-              })
-            } catch (e) {
-              const error = new OpenfortError('Apple authentication failed', OpenfortErrorType.AUTHENTICATION_ERROR, {
-                error: e,
-              })
-              setOAuthState({
-                status: 'error',
-                error,
-              })
-              return onError({
-                options,
-                hookOptions,
-                error,
-              })
-            }
-          }
-        }
+        //       return onSuccess({
+        //         options,
+        //         hookOptions,
+        //         data: { user },
+        //       })
+        //     } catch (e) {
+        //       const error = new OpenfortError('Apple authentication failed', OpenfortErrorType.AUTHENTICATION_ERROR, {
+        //         error: e,
+        //       })
+        //       setOAuthState({
+        //         status: 'error',
+        //         error,
+        //       })
+        //       return onError({
+        //         options,
+        //         hookOptions,
+        //         error,
+        //       })
+        //     }
+        //   }
+        // }
 
         // For other providers, use web-based OAuth
-        const providerUrl = OAuthUtils.getProviderUrl(options.provider, result.url)
+        const providerUrl = OAuthUtils.getProviderUrl(options.provider, result)
 
         const oauthResult = await OAuthUtils.withTimeout(
           openOAuthSession({
@@ -146,18 +149,22 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
           }),
           120000 // 2 minute timeout
         )
+        console.log('oauthResult', oauthResult)
 
         if (oauthResult.type === 'success' && oauthResult.url) {
           // Parse OAuth response from redirect URL
-          const { access_token, refresh_token, player_id, error, errorDescription } = parseOAuthUrl(oauthResult.url)
+          const { access_token, user_id, error, errorDescription } = parseOAuthUrl(oauthResult.url)
 
-          if (error) {
+          if (error || !user_id) {
             throw new Error(errorDescription || error)
           }
+          console.log('storeCredentials called with', {
+            userId: user_id,
+            token: access_token!,
+          })
           await client.auth.storeCredentials({
-            player: player_id,
-            accessToken: access_token!,
-            refreshToken: refresh_token!,
+            userId: user_id,
+            token: access_token!,
           })
 
           setOAuthState({ status: 'done' })
@@ -231,10 +238,10 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
         const redirectUri = options.redirectTo || createOAuthRedirectUri('/oauth/callback')
         const result = await client.auth.initLinkOAuth({
           provider: options.provider,
-          authToken: accessToken,
+          // authToken: accessToken,
+          redirectTo: redirectUri,
           options: {
             skipBrowserRedirect: true,
-            redirectTo: redirectUri,
           },
         })
 
@@ -242,49 +249,50 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
         setOAuthState({ status: 'awaiting-redirect' })
 
         // Check if we should use native Apple authentication for linking
-        if (options.provider === 'apple' && !options.isLegacyAppleIosBehaviorEnabled) {
-          const isAppleAvailable = await isAppleSignInAvailable()
-          if (isAppleAvailable) {
-            try {
-              const appleResult = await authenticateWithApple({
-                state: result.key || '',
-                isLogin: false, // This is a linking operation
-              })
+        // TODO: V2 AUTH
+        // if (options.provider === 'apple' && !options.isLegacyAppleIosBehaviorEnabled) {
+        //   const isAppleAvailable = await isAppleSignInAvailable()
+        //   if (isAppleAvailable) {
+        //     try {
+        //       const appleResult = await authenticateWithApple({
+        //         state: result.key || '',
+        //         isLogin: false, // This is a linking operation
+        //       })
 
-              // Complete OAuth linking flow with Apple credentials
-              const linkResult = await client.auth.loginWithIdToken({
-                provider: OAuthProvider.APPLE,
-                token: appleResult.identityToken!,
-              })
+        //       // Complete OAuth linking flow with Apple credentials
+        //       const linkResult = await client.auth.loginWithIdToken({
+        //         provider: OAuthProvider.APPLE,
+        //         token: appleResult.identityToken!,
+        //       })
 
-              setOAuthState({ status: 'done' })
-              const user = linkResult.player
-              // Refresh user state to reflect OAuth linking
-              await _internal.refreshUserState()
-              return onSuccess({
-                options,
-                hookOptions,
-                data: { user },
-              })
-            } catch (e) {
-              const error = new OpenfortError('Apple linking failed', OpenfortErrorType.AUTHENTICATION_ERROR, {
-                error: e,
-              })
-              setOAuthState({
-                status: 'error',
-                error,
-              })
-              return onError({
-                options,
-                hookOptions,
-                error,
-              })
-            }
-          }
-        }
+        //       setOAuthState({ status: 'done' })
+        //       const user = linkResult.player
+        //       // Refresh user state to reflect OAuth linking
+        //       await _internal.refreshUserState()
+        //       return onSuccess({
+        //         options,
+        //         hookOptions,
+        //         data: { user },
+        //       })
+        //     } catch (e) {
+        //       const error = new OpenfortError('Apple linking failed', OpenfortErrorType.AUTHENTICATION_ERROR, {
+        //         error: e,
+        //       })
+        //       setOAuthState({
+        //         status: 'error',
+        //         error,
+        //       })
+        //       return onError({
+        //         options,
+        //         hookOptions,
+        //         error,
+        //       })
+        //     }
+        //   }
+        // }
 
         // For other providers, use web-based OAuth
-        const providerUrl = OAuthUtils.getProviderUrl(options.provider, result.url)
+        const providerUrl = OAuthUtils.getProviderUrl(options.provider, result)
 
         const oauthResult = await OAuthUtils.withTimeout(
           openOAuthSession({
@@ -296,15 +304,14 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
 
         if (oauthResult.type === 'success' && oauthResult.url) {
           // Parse OAuth response from redirect URL
-          const { access_token, refresh_token, player_id, error, errorDescription } = parseOAuthUrl(oauthResult.url)
+          const { access_token, user_id, error, errorDescription } = parseOAuthUrl(oauthResult.url)
 
-          if (error) {
+          if (error || !user_id) {
             throw new Error(errorDescription || error)
           }
           await client.auth.storeCredentials({
-            player: player_id,
-            accessToken: access_token!,
-            refreshToken: refresh_token!,
+            userId: user_id,
+            token: access_token!,
           })
 
           setOAuthState({ status: 'done' })

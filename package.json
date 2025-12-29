@@ -30,7 +30,7 @@
     }
   },
   "dependencies": {
-    "@openfort/openfort-js": "^0.10.39"
+    "@openfort/openfort-js": "file:./openfort-openfort-js-0.10.36-beta.3.5.tgz"
   },
   "peerDependencies": {
     "expo-apple-authentication": "*",

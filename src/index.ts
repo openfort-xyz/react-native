@@ -16,7 +16,6 @@
 export {
   AccountTypeEnum,
   AuthInitPayload,
-  AuthPlayerResponse,
   AuthResponse,
   ChainTypeEnum,
   EmbeddedAccount,

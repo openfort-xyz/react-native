@@ -1,11 +1,12 @@
 import {
   type AccountTypeEnum,
-  type AuthPlayerResponse,
+  type AuthResponse,
   EmbeddedState,
   type Openfort as OpenfortClient,
   type SDKOverrides,
   ShieldConfiguration,
   type ThirdPartyAuthConfiguration,
+  User,
 } from '@openfort/openfort-js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { validateEnvironment } from '../lib/environmentValidation'
@@ -276,7 +277,7 @@ export const OpenfortProvider = ({
   }, [client])
 
   // Core state
-  const [user, setUser] = useState<AuthPlayerResponse | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [isUserInitialized, setIsUserInitialized] = useState(false)
   const [isClientReady, setIsClientReady] = useState(false)
   const [error, setError] = useState<Error | null>(null)
@@ -288,7 +289,7 @@ export const OpenfortProvider = ({
   const [recoveryFlowState, setRecoveryFlowState] = useState<RecoveryFlowState>({ status: 'initial' })
 
   // User state management
-  const handleUserChange = useCallback((newUser: AuthPlayerResponse | null) => {
+  const handleUserChange = useCallback((newUser: User | null) => {
     if (newUser === null) {
       logger.info('User not authenticated. User state changed to: null')
     } else if ('id' in newUser) {
@@ -320,7 +321,7 @@ export const OpenfortProvider = ({
 
   // Internal refresh function for auth hooks to use
   const refreshUserState = useCallback(
-    async (user?: AuthPlayerResponse) => {
+    async (user?: User) => {
       try {
         if (user === undefined) {
           logger.info('Refreshing user state, no user provided')

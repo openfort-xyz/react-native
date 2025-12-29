@@ -1,4 +1,4 @@
-import type { AuthPlayerResponse as OpenfortUser } from '@openfort/openfort-js'
+import type { User as OpenfortUser } from '@openfort/openfort-js'
 import { useCallback } from 'react'
 import type { SiweFlowState } from '../..'
 import { useOpenfortContext } from '../../core/context'
@@ -166,10 +166,11 @@ export function useWalletAuth(hookOptions?: WalletHookOptions) {
           message: message,
           walletClientType: 'unknown',
           connectorType: 'unknown',
+          address: opts.walletAddress,
         })
 
         setSiweState({ status: 'done' })
-        const user = result.player
+        const user = result.user
         // Refresh user state to reflect SIWE linking
         await _internal.refreshUserState()
 
@@ -213,10 +214,11 @@ export function useWalletAuth(hookOptions?: WalletHookOptions) {
           message: message,
           walletClientType: 'unknown',
           connectorType: 'unknown',
+          address: opts.walletAddress,
         })
 
         setSiweState({ status: 'done' })
-        const user = result.player
+        const user = result.user
         // Refresh user state in provider
         await _internal.refreshUserState(user)
         return onSuccess({
