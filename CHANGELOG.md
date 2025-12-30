@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.25
+
+### Patch Changes
+
+- [#42](https://github.com/openfort-xyz/react-native/pull/42) [`a99b7cc`](https://github.com/openfort-xyz/react-native/commit/a99b7ccf78e2339d92dba60321a408ea2fe9a47e) Thanks [@jamalavedra](https://github.com/jamalavedra)! - otp shield
+
 ## 0.1.24
 
 ### Patch Changes
