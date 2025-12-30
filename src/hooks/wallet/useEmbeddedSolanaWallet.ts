@@ -133,7 +133,7 @@ type WalletFlowStatus =
  * ```
  */
 export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions = {}): EmbeddedSolanaWalletState {
-  const { client, walletConfig, embeddedState } = useOpenfortContext()
+  const { client, walletConfig, embeddedState, user } = useOpenfortContext()
   const [embeddedAccounts, setEmbeddedAccounts] = useState<EmbeddedAccount[]>([])
   const [activeWalletId, setActiveWalletId] = useState<string | null>(null)
   const [activeAccount, setActiveAccount] = useState<EmbeddedAccount | null>(null)
@@ -315,9 +315,11 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
       try {
         setStatus({ status: 'creating' })
 
-        // Build recovery params (only use recoveryPassword, ignore createAdditional)
+        // Build recovery params (only use recoveryPassword, otpCode, and userId, ignore createAdditional)
         const recoveryParams = await buildRecoveryParams(
-          createOptions?.recoveryPassword ? { recoveryPassword: createOptions.recoveryPassword } : undefined,
+          createOptions?.recoveryPassword || createOptions?.otpCode || user?.id
+            ? { recoveryPassword: createOptions?.recoveryPassword, otpCode: createOptions?.otpCode, userId: user?.id }
+            : undefined,
           walletConfig
         )
 
@@ -425,7 +427,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
           }
 
           // Build recovery params
-          const recoveryParams = await buildRecoveryParams(setActiveOptions, walletConfig)
+          const recoveryParams = await buildRecoveryParams({ ...setActiveOptions, userId: user?.id }, walletConfig)
 
           // Recover the embedded wallet
           const embeddedAccount = await client.embeddedWallet.recover({

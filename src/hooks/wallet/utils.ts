@@ -10,19 +10,25 @@ import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
  * It supports both callback-based session retrieval and endpoint-based session creation.
  *
  * @param walletConfig - The embedded wallet configuration from the provider
+ * @param otpCode - Optional OTP code for Shield verification
+ * @param userId - Optional user ID for the encryption session
  * @returns A promise that resolves to the encryption session string
  * @throws {OpenfortError} When wallet config is missing or session cannot be retrieved
  *
  * @internal
  */
-async function resolveEncryptionSession(walletConfig?: EmbeddedWalletConfiguration): Promise<string> {
+async function resolveEncryptionSession(
+  walletConfig?: EmbeddedWalletConfiguration,
+  otpCode?: string,
+  userId?: string
+): Promise<string> {
   if (!walletConfig) {
     throw new OpenfortError('Encryption session configuration is required', OpenfortErrorType.WALLET_ERROR)
   }
 
   // Try callback-based session retrieval first
   if (walletConfig.getEncryptionSession) {
-    return await walletConfig.getEncryptionSession()
+    return await walletConfig.getEncryptionSession({ otpCode, userId })
   }
 
   // Try endpoint-based session creation
@@ -33,6 +39,7 @@ async function resolveEncryptionSession(walletConfig?: EmbeddedWalletConfigurati
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ otp_code: otpCode, user_id: userId }),
       })
 
       if (!response.ok) {
@@ -67,14 +74,14 @@ async function resolveEncryptionSession(walletConfig?: EmbeddedWalletConfigurati
  * This utility constructs the appropriate RecoveryParams object based on whether
  * a recovery password is provided or automatic recovery should be used.
  *
- * @param options - Options containing optional recovery password
+ * @param options - Options containing optional recovery password, OTP code, and/or user ID
  * @param walletConfig - The embedded wallet configuration from the provider
  * @returns A promise that resolves to RecoveryParams for the SDK
  *
  * @internal
  */
 export async function buildRecoveryParams(
-  options: { recoveryPassword?: string } | undefined,
+  options: { recoveryPassword?: string; otpCode?: string; userId?: string } | undefined,
   walletConfig?: EmbeddedWalletConfiguration
 ): Promise<RecoveryParams> {
   if (options?.recoveryPassword) {
@@ -86,6 +93,6 @@ export async function buildRecoveryParams(
 
   return {
     recoveryMethod: RecoveryMethod.AUTOMATIC,
-    encryptionSession: await resolveEncryptionSession(walletConfig),
+    encryptionSession: await resolveEncryptionSession(walletConfig, options?.otpCode, options?.userId),
   }
 }

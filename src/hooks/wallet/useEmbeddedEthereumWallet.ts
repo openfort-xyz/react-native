@@ -127,7 +127,7 @@ type WalletFlowStatus =
  * ```
  */
 export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOptions = {}): EmbeddedEthereumWalletState {
-  const { client, supportedChains, walletConfig, embeddedState } = useOpenfortContext()
+  const { client, supportedChains, walletConfig, embeddedState, user } = useOpenfortContext()
   const [embeddedAccounts, setEmbeddedAccounts] = useState<EmbeddedAccount[]>([])
   const [activeWalletId, setActiveWalletId] = useState<string | null>(null)
   const [activeAccount, setActiveAccount] = useState<EmbeddedAccount | null>(null)
@@ -302,7 +302,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
         }
 
         // Build recovery params
-        const recoveryParams = await buildRecoveryParams(createOptions, walletConfig)
+        const recoveryParams = await buildRecoveryParams({ ...createOptions, userId: user?.id }, walletConfig)
         const accountType = createOptions?.accountType || walletConfig?.accountType || AccountTypeEnum.SMART_ACCOUNT
         // Create embedded wallet
         const embeddedAccount = await client.embeddedWallet.create({
@@ -437,7 +437,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
           }
 
           // Build recovery params
-          const recoveryParams = await buildRecoveryParams(setActiveOptions, walletConfig)
+          const recoveryParams = await buildRecoveryParams({ ...setActiveOptions, userId: user?.id }, walletConfig)
 
           // Recover the embedded wallet
           const embeddedAccount = await client.embeddedWallet.recover({

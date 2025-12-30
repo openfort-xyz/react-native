@@ -28,10 +28,20 @@ export type CommonEmbeddedWalletConfiguration = {
   recoveryMethod?: 'automatic' | 'password'
 }
 
+/**
+ * Parameters passed to the encryption session callback
+ */
+export type EncryptionSessionParams = {
+  /** OTP code for Shield verification (if required) */
+  otpCode?: string
+  /** User ID for the encryption session */
+  userId?: string
+}
+
 export type EncryptionSession =
   | {
-      /** Function to retrieve an encryption session using a session ID */
-      getEncryptionSession?: () => Promise<string>
+      /** Function to retrieve an encryption session, optionally with OTP verification */
+      getEncryptionSession?: (params?: EncryptionSessionParams) => Promise<string>
       createEncryptedSessionEndpoint?: never
     }
   | {
