@@ -159,6 +159,8 @@ export type CreateEthereumWalletResult = {
 export type CreateEthereumWalletOptions = {
   chainId?: number
   recoveryPassword?: string
+  /** OTP code for Shield verification when using automatic recovery */
+  otpCode?: string
   accountType?: AccountTypeEnum
   policyId?: string
 } & OpenfortHookOptions<CreateEthereumWalletResult>
@@ -179,6 +181,8 @@ export type SetActiveEthereumWalletOptions = {
   address: Hex
   chainId?: number
   recoveryPassword?: string
+  /** OTP code for Shield verification when using automatic recovery */
+  otpCode?: string
 } & OpenfortHookOptions<SetActiveEthereumWalletResult>
 
 /**
@@ -209,6 +213,10 @@ export type CreateSolanaEmbeddedWalletOpts = {
    * If omitted, automatic recovery will be used.
    */
   recoveryPassword?: string
+  /**
+   * OTP code for Shield verification when using automatic recovery
+   */
+  otpCode?: string
   /**
    * Create additional wallet if one already exists
    */
@@ -244,6 +252,8 @@ export type SetActiveSolanaWalletResult = {
 export type SetActiveSolanaWalletOptions = {
   address: string
   recoveryPassword?: string
+  /** OTP code for Shield verification when using automatic recovery */
+  otpCode?: string
 } & OpenfortHookOptions<SetActiveSolanaWalletResult>
 
 // ============================================================================
