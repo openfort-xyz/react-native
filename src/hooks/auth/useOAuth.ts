@@ -1,15 +1,8 @@
-import { OAuthProvider, type AuthResponse as OpenfortUser } from '@openfort/openfort-js'
+import type { OAuthProvider, AuthResponse as OpenfortUser } from '@openfort/openfort-js'
 import { useCallback } from 'react'
 import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
-import {
-  authenticateWithApple,
-  createOAuthRedirectUri,
-  isAppleSignInAvailable,
-  OAuthUtils,
-  openOAuthSession,
-  parseOAuthUrl,
-} from '../../native'
+import { createOAuthRedirectUri, OAuthUtils, openOAuthSession, parseOAuthUrl } from '../../native'
 import type { OpenfortHookOptions } from '../../types/hookOption'
 import { mapOAuthStatus } from '../../types/oauth'
 import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
@@ -90,8 +83,6 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
           },
         })
 
-        console.log('initOAuth result', result)
-
         // Handle OAuth flow using native utilities
         setOAuthState({ status: 'awaiting-redirect' })
 
@@ -149,7 +140,6 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
           }),
           120000 // 2 minute timeout
         )
-        console.log('oauthResult', oauthResult)
 
         if (oauthResult.type === 'success' && oauthResult.url) {
           // Parse OAuth response from redirect URL
@@ -158,10 +148,6 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
           if (error || !user_id) {
             throw new Error(errorDescription || error)
           }
-          console.log('storeCredentials called with', {
-            userId: user_id,
-            token: access_token!,
-          })
           await client.auth.storeCredentials({
             userId: user_id,
             token: access_token!,

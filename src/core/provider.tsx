@@ -1,12 +1,11 @@
 import {
   type AccountTypeEnum,
-  type AuthResponse,
   EmbeddedState,
   type Openfort as OpenfortClient,
   type SDKOverrides,
   ShieldConfiguration,
   type ThirdPartyAuthConfiguration,
-  User,
+  type User,
 } from '@openfort/openfort-js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { validateEnvironment } from '../lib/environmentValidation'
