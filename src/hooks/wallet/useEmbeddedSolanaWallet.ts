@@ -380,7 +380,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
         throw error
       }
     },
-    [client, walletConfig, options, getSolanaProvider, fetchEmbeddedAccounts]
+    [client, walletConfig, options, getSolanaProvider, fetchEmbeddedAccounts, user]
   )
 
   // Set active wallet action
@@ -498,7 +498,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
 
       await recoverPromiseRef.current
     },
-    [client, walletConfig, embeddedAccounts, options, wallets.length, getSolanaProvider]
+    [client, walletConfig, embeddedAccounts, options, wallets.length, getSolanaProvider, user]
   )
 
   // Build active wallet from embeddedWallet.get()

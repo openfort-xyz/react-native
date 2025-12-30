@@ -362,7 +362,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
         throw error
       }
     },
-    [client, supportedChains, walletConfig, options, getEthereumProvider, fetchEmbeddedAccounts]
+    [client, supportedChains, walletConfig, options, getEthereumProvider, fetchEmbeddedAccounts, user]
   )
 
   // Set active wallet action
@@ -512,7 +512,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
 
       await recoverPromiseRef.current
     },
-    [client, supportedChains, walletConfig, embeddedAccounts, options, wallets.length, getEthereumProvider]
+    [client, supportedChains, walletConfig, embeddedAccounts, options, wallets.length, getEthereumProvider, user]
   )
 
   // Set recovery method action
