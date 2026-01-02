@@ -327,6 +327,10 @@ export type EmbeddedEthereumWalletState =
       activeWallet: null
     })
   | (EthereumWalletActions & {
+      status: 'fetching-wallets'
+      activeWallet: null
+    })
+  | (EthereumWalletActions & {
       status: 'connecting'
       activeWallet: ConnectedEmbeddedEthereumWallet
     })
@@ -363,6 +367,10 @@ export type EmbeddedEthereumWalletState =
 export type EmbeddedSolanaWalletState =
   | (SolanaWalletActions & {
       status: 'disconnected'
+      activeWallet: null
+    })
+  | (SolanaWalletActions & {
+      status: 'fetching-wallets'
       activeWallet: null
     })
   | (SolanaWalletActions & {

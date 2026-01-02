@@ -32,7 +32,7 @@ type UseEmbeddedEthereumWalletOptions = {
 type WalletFlowStatus =
   | BaseFlowState
   | {
-      status: 'creating' | 'connecting' | 'reconnecting' | 'disconnected' | 'needs-recovery'
+      status: 'creating' | 'connecting' | 'reconnecting' | 'disconnected' | 'needs-recovery' | 'fetching-wallets'
       error?: never
     }
 
@@ -139,24 +139,37 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
   })
 
   // Fetch Ethereum embedded accounts
-  const fetchEmbeddedAccounts = useCallback(async () => {
-    if (!client || embeddedState === EmbeddedState.NONE || embeddedState === EmbeddedState.UNAUTHENTICATED) {
-      setEmbeddedAccounts([])
-      return
-    }
+  const fetchEmbeddedAccounts = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!client || embeddedState === EmbeddedState.NONE || embeddedState === EmbeddedState.UNAUTHENTICATED) {
+        setEmbeddedAccounts([])
+        return
+      }
 
-    try {
-      const accounts = await client.embeddedWallet.list({
-        limit: 100,
-        chainType: ChainTypeEnum.EVM,
-        accountType: walletConfig?.accountType === AccountTypeEnum.EOA ? undefined : AccountTypeEnum.SMART_ACCOUNT,
-      })
-      // Filter for Ethereum accounts only
-      setEmbeddedAccounts(accounts)
-    } catch {
-      setEmbeddedAccounts([])
-    }
-  }, [client, embeddedState, walletConfig])
+      try {
+        // Only set fetching status if not called silently (e.g., during create/setActive)
+        if (!options?.silent) {
+          setStatus({ status: 'fetching-wallets' })
+        }
+        const accounts = await client.embeddedWallet.list({
+          limit: 100,
+          chainType: ChainTypeEnum.EVM,
+          accountType: walletConfig?.accountType === AccountTypeEnum.EOA ? undefined : AccountTypeEnum.SMART_ACCOUNT,
+        })
+        // Filter for Ethereum accounts only
+        setEmbeddedAccounts(accounts)
+        if (!options?.silent) {
+          setStatus({ status: 'idle' })
+        }
+      } catch {
+        setEmbeddedAccounts([])
+        if (!options?.silent) {
+          setStatus({ status: 'idle' })
+        }
+      }
+    },
+    [client, embeddedState, walletConfig]
+  )
 
   useEffect(() => {
     fetchEmbeddedAccounts()
@@ -317,8 +330,8 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
         const ethProvider = await getEthereumProvider()
         setProvider(ethProvider)
 
-        // Refresh accounts and set as active
-        await fetchEmbeddedAccounts()
+        // Refresh accounts silently (don't override 'creating' status) and set as active
+        await fetchEmbeddedAccounts({ silent: true })
         setActiveWalletId(embeddedAccount.id)
         setActiveAccount(embeddedAccount)
 
@@ -588,6 +601,10 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
     }
 
     // Priority 1: Explicit action states (user-initiated operations)
+    if (status.status === 'fetching-wallets') {
+      return { ...baseActions, status: 'fetching-wallets', activeWallet: null }
+    }
+
     if (status.status === 'creating') {
       return { ...baseActions, status: 'creating', activeWallet: null }
     }
