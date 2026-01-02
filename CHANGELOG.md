@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.26
+
+### Patch Changes
+
+- [#44](https://github.com/openfort-xyz/react-native/pull/44) [`a45d181`](https://github.com/openfort-xyz/react-native/commit/a45d18119c6888c18c61b7b7ec0d3861b82aba62) Thanks [@jamalavedra](https://github.com/jamalavedra)! - add fetchin state'
+
 ## 0.1.25
 
 ### Patch Changes
