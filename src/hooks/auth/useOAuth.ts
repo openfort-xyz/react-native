@@ -1,8 +1,15 @@
-import type { OAuthProvider, AuthResponse as OpenfortUser } from '@openfort/openfort-js'
+import { OAuthProvider, type User as OpenfortUser } from '@openfort/openfort-js'
 import { useCallback } from 'react'
 import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
-import { createOAuthRedirectUri, OAuthUtils, openOAuthSession, parseOAuthUrl } from '../../native'
+import {
+  authenticateWithApple,
+  createOAuthRedirectUri,
+  isAppleSignInAvailable,
+  OAuthUtils,
+  openOAuthSession,
+  parseOAuthUrl,
+} from '../../native'
 import type { OpenfortHookOptions } from '../../types/hookOption'
 import { mapOAuthStatus } from '../../types/oauth'
 import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
@@ -88,47 +95,47 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
 
         // Check if we should use native Apple authentication
         // TODO: V2 AUTH
-        // if (options.provider === 'apple' && !options.isLegacyAppleIosBehaviorEnabled) {
-        //   const isAppleAvailable = await isAppleSignInAvailable()
-        //   if (isAppleAvailable) {
-        //     try {
-        //       const appleResult = await authenticateWithApple({
-        //         state: result.key || '',
-        //         isLogin: true,
-        //       })
+        if (options.provider === 'apple' && !options.isLegacyAppleIosBehaviorEnabled) {
+          const isAppleAvailable = await isAppleSignInAvailable()
+          if (isAppleAvailable) {
+            try {
+              const appleResult = await authenticateWithApple({
+                state: result || '',
+                isLogin: true,
+              })
 
-        //       // Complete OAuth flow with Apple credentials
-        //       const authResult = await client.auth.loginWithIdToken({
-        //         provider: OAuthProvider.APPLE,
-        //         token: appleResult.identityToken!,
-        //       })
+              // Complete OAuth flow with Apple credentials
+              const authResult = await client.auth.logInWithIdToken({
+                provider: OAuthProvider.APPLE,
+                token: appleResult.identityToken!,
+              })
 
-        //       setOAuthState({ status: 'done' })
-        //       const user = authResult.player
-        //       // Refresh user state in provider
-        //       await _internal.refreshUserState(user)
+              setOAuthState({ status: 'done' })
+              const user = authResult.user
+              // Refresh user state in provider
+              await _internal.refreshUserState(user)
 
-        //       return onSuccess({
-        //         options,
-        //         hookOptions,
-        //         data: { user },
-        //       })
-        //     } catch (e) {
-        //       const error = new OpenfortError('Apple authentication failed', OpenfortErrorType.AUTHENTICATION_ERROR, {
-        //         error: e,
-        //       })
-        //       setOAuthState({
-        //         status: 'error',
-        //         error,
-        //       })
-        //       return onError({
-        //         options,
-        //         hookOptions,
-        //         error,
-        //       })
-        //     }
-        //   }
-        // }
+              return onSuccess({
+                options,
+                hookOptions,
+                data: { user },
+              })
+            } catch (e) {
+              const error = new OpenfortError('Apple authentication failed', OpenfortErrorType.AUTHENTICATION_ERROR, {
+                error: e,
+              })
+              setOAuthState({
+                status: 'error',
+                error,
+              })
+              return onError({
+                options,
+                hookOptions,
+                error,
+              })
+            }
+          }
+        }
 
         // For other providers, use web-based OAuth
         const providerUrl = OAuthUtils.getProviderUrl(options.provider, result)
@@ -236,46 +243,46 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
 
         // Check if we should use native Apple authentication for linking
         // TODO: V2 AUTH
-        // if (options.provider === 'apple' && !options.isLegacyAppleIosBehaviorEnabled) {
-        //   const isAppleAvailable = await isAppleSignInAvailable()
-        //   if (isAppleAvailable) {
-        //     try {
-        //       const appleResult = await authenticateWithApple({
-        //         state: result.key || '',
-        //         isLogin: false, // This is a linking operation
-        //       })
+        if (options.provider === 'apple' && !options.isLegacyAppleIosBehaviorEnabled) {
+          const isAppleAvailable = await isAppleSignInAvailable()
+          if (isAppleAvailable) {
+            try {
+              const appleResult = await authenticateWithApple({
+                state: result || '',
+                isLogin: false, // This is a linking operation
+              })
 
-        //       // Complete OAuth linking flow with Apple credentials
-        //       const linkResult = await client.auth.loginWithIdToken({
-        //         provider: OAuthProvider.APPLE,
-        //         token: appleResult.identityToken!,
-        //       })
+              // Complete OAuth linking flow with Apple credentials
+              const linkResult = await client.auth.logInWithIdToken({
+                provider: OAuthProvider.APPLE,
+                token: appleResult.identityToken!,
+              })
 
-        //       setOAuthState({ status: 'done' })
-        //       const user = linkResult.player
-        //       // Refresh user state to reflect OAuth linking
-        //       await _internal.refreshUserState()
-        //       return onSuccess({
-        //         options,
-        //         hookOptions,
-        //         data: { user },
-        //       })
-        //     } catch (e) {
-        //       const error = new OpenfortError('Apple linking failed', OpenfortErrorType.AUTHENTICATION_ERROR, {
-        //         error: e,
-        //       })
-        //       setOAuthState({
-        //         status: 'error',
-        //         error,
-        //       })
-        //       return onError({
-        //         options,
-        //         hookOptions,
-        //         error,
-        //       })
-        //     }
-        //   }
-        // }
+              setOAuthState({ status: 'done' })
+              const user = linkResult.user
+              // Refresh user state to reflect OAuth linking
+              await _internal.refreshUserState()
+              return onSuccess({
+                options,
+                hookOptions,
+                data: { user },
+              })
+            } catch (e) {
+              const error = new OpenfortError('Apple linking failed', OpenfortErrorType.AUTHENTICATION_ERROR, {
+                error: e,
+              })
+              setOAuthState({
+                status: 'error',
+                error,
+              })
+              return onError({
+                options,
+                hookOptions,
+                error,
+              })
+            }
+          }
+        }
 
         // For other providers, use web-based OAuth
         const providerUrl = OAuthUtils.getProviderUrl(options.provider, result)
