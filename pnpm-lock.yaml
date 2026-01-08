@@ -13,8 +13,8 @@ importers:
   .:
     dependencies:
       '@openfort/openfort-js':
-        specifier: file:./openfort-openfort-js-0.10.36-beta.3.5.tgz
-        version: file:openfort-openfort-js-0.10.36-beta.3.5.tgz
+        specifier: https://pkg.pr.new/@openfort/openfort-js@160
+        version: https://pkg.pr.new/@openfort/openfort-js@160
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.2.4
@@ -1009,8 +1009,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@openfort/openfort-js@file:openfort-openfort-js-0.10.36-beta.3.5.tgz':
-    resolution: {integrity: sha512-URLBqJNsmsegQrZ9T/G5fi/YqFs+c4J++xzwLFDvGOru46ZTuubpayNuKrhLN+O1T8JhETr7+cIp85HNhZ0ksA==, tarball: file:openfort-openfort-js-0.10.36-beta.3.5.tgz}
+  '@openfort/openfort-js@https://pkg.pr.new/@openfort/openfort-js@160':
+    resolution: {tarball: https://pkg.pr.new/@openfort/openfort-js@160}
     version: 0.10.36-beta.3
 
   '@openfort/shield-js@0.1.33':
@@ -2134,9 +2134,6 @@ packages:
   jiti@2.6.1:
     resolution: {integrity: sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ==}
     hasBin: true
-
-  jose@5.10.0:
-    resolution: {integrity: sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg==}
 
   js-sha3@0.8.0:
     resolution: {integrity: sha512-gF1cRrHhIzNfToc802P800N8PpXS+evLLXfsVpowqmAFR9uwbi89WvXg2QspOmXL8QL86J4T1EpFu+yUkwJY3Q==}
@@ -4309,7 +4306,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
 
-  '@openfort/openfort-js@file:openfort-openfort-js-0.10.36-beta.3.5.tgz':
+  '@openfort/openfort-js@https://pkg.pr.new/@openfort/openfort-js@160':
     dependencies:
       '@ethersproject/abi': 5.8.0
       '@ethersproject/bytes': 5.8.0
@@ -4324,7 +4321,6 @@ snapshots:
       axios-retry: 4.5.0(axios@1.13.2)
       eventemitter3: 5.0.1
       human-id: 4.1.3
-      jose: 5.10.0
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -5565,8 +5561,6 @@ snapshots:
       supports-color: 8.1.1
 
   jiti@2.6.1: {}
-
-  jose@5.10.0: {}
 
   js-sha3@0.8.0: {}
 
