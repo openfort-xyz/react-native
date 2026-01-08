@@ -8,6 +8,10 @@
     "type": "git",
     "url": "git+https://github.com/openfort-xyz/react-native.git"
   },
+  "homepage": "https://github.com/openfort-xyz/react-native#readme",
+  "bugs": {
+    "url": "https://github.com/openfort-xyz/react-native/issues"
+  },
   "scripts": {
     "build": "tsc",
     "check": "biome check",
