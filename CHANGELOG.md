@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.1.26
+
+### Patch Changes
+
+- [#44](https://github.com/openfort-xyz/react-native/pull/44) [`a45d181`](https://github.com/openfort-xyz/react-native/commit/a45d18119c6888c18c61b7b7ec0d3861b82aba62) Thanks [@jamalavedra](https://github.com/jamalavedra)! - add fetchin state'
+
+## 0.1.25
+
+### Patch Changes
+
+- [#42](https://github.com/openfort-xyz/react-native/pull/42) [`a99b7cc`](https://github.com/openfort-xyz/react-native/commit/a99b7ccf78e2339d92dba60321a408ea2fe9a47e) Thanks [@jamalavedra](https://github.com/jamalavedra)! - otp shield
+
+## 0.1.24
+
+### Patch Changes
+
+- [#40](https://github.com/openfort-xyz/react-native/pull/40) [`a675d2e`](https://github.com/openfort-xyz/react-native/commit/a675d2e8806f72937888b4c2685d478d9360a463) Thanks [@jamalavedra](https://github.com/jamalavedra)! - fix signout
+
 ## 0.1.23
 
 ### Patch Changes

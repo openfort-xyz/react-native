@@ -28,7 +28,7 @@ type UseEmbeddedSolanaWalletOptions = {
 type WalletFlowStatus =
   | BaseFlowState
   | {
-      status: 'creating' | 'connecting' | 'reconnecting' | 'disconnected' | 'needs-recovery'
+      status: 'creating' | 'connecting' | 'reconnecting' | 'disconnected' | 'needs-recovery' | 'fetching-wallets'
       error?: never
     }
 
@@ -133,7 +133,7 @@ type WalletFlowStatus =
  * ```
  */
 export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions = {}): EmbeddedSolanaWalletState {
-  const { client, walletConfig, embeddedState } = useOpenfortContext()
+  const { client, walletConfig, embeddedState, user } = useOpenfortContext()
   const [embeddedAccounts, setEmbeddedAccounts] = useState<EmbeddedAccount[]>([])
   const [activeWalletId, setActiveWalletId] = useState<string | null>(null)
   const [activeAccount, setActiveAccount] = useState<EmbeddedAccount | null>(null)
@@ -145,23 +145,36 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
   })
 
   // Fetch Solana embedded accounts
-  const fetchEmbeddedAccounts = useCallback(async () => {
-    if (!client || embeddedState === EmbeddedState.NONE || embeddedState === EmbeddedState.UNAUTHENTICATED) {
-      setEmbeddedAccounts([])
-      return
-    }
+  const fetchEmbeddedAccounts = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!client || embeddedState === EmbeddedState.NONE || embeddedState === EmbeddedState.UNAUTHENTICATED) {
+        setEmbeddedAccounts([])
+        return
+      }
 
-    try {
-      const accounts = await client.embeddedWallet.list({
-        chainType: ChainTypeEnum.SVM,
-        accountType: AccountTypeEnum.EOA,
-        limit: 100,
-      })
-      setEmbeddedAccounts(accounts)
-    } catch {
-      setEmbeddedAccounts([])
-    }
-  }, [client, embeddedState])
+      try {
+        // Only set fetching status if not called silently (e.g., during create/setActive)
+        if (!options?.silent) {
+          setStatus({ status: 'fetching-wallets' })
+        }
+        const accounts = await client.embeddedWallet.list({
+          chainType: ChainTypeEnum.SVM,
+          accountType: AccountTypeEnum.EOA,
+          limit: 100,
+        })
+        setEmbeddedAccounts(accounts)
+        if (!options?.silent) {
+          setStatus({ status: 'idle' })
+        }
+      } catch {
+        setEmbeddedAccounts([])
+        if (!options?.silent) {
+          setStatus({ status: 'idle' })
+        }
+      }
+    },
+    [client, embeddedState]
+  )
 
   useEffect(() => {
     fetchEmbeddedAccounts()
@@ -315,9 +328,11 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
       try {
         setStatus({ status: 'creating' })
 
-        // Build recovery params (only use recoveryPassword, ignore createAdditional)
+        // Build recovery params (only use recoveryPassword, otpCode, and userId, ignore createAdditional)
         const recoveryParams = await buildRecoveryParams(
-          createOptions?.recoveryPassword ? { recoveryPassword: createOptions.recoveryPassword } : undefined,
+          createOptions?.recoveryPassword || createOptions?.otpCode || user?.id
+            ? { recoveryPassword: createOptions?.recoveryPassword, otpCode: createOptions?.otpCode, userId: user?.id }
+            : undefined,
           walletConfig
         )
 
@@ -333,8 +348,8 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
         const solProvider = await getSolanaProvider(embeddedAccount)
         setProvider(solProvider)
 
-        // Refresh accounts and set as active
-        await fetchEmbeddedAccounts()
+        // Refresh accounts silently (don't override 'creating' status) and set as active
+        await fetchEmbeddedAccounts({ silent: true })
         setActiveWalletId(embeddedAccount.id)
         setActiveAccount(embeddedAccount)
 
@@ -378,7 +393,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
         throw error
       }
     },
-    [client, walletConfig, options, getSolanaProvider, fetchEmbeddedAccounts]
+    [client, walletConfig, options, getSolanaProvider, fetchEmbeddedAccounts, user]
   )
 
   // Set active wallet action
@@ -425,7 +440,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
           }
 
           // Build recovery params
-          const recoveryParams = await buildRecoveryParams(setActiveOptions, walletConfig)
+          const recoveryParams = await buildRecoveryParams({ ...setActiveOptions, userId: user?.id }, walletConfig)
 
           // Recover the embedded wallet
           const embeddedAccount = await client.embeddedWallet.recover({
@@ -496,7 +511,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
 
       await recoverPromiseRef.current
     },
-    [client, walletConfig, embeddedAccounts, options, wallets.length, getSolanaProvider]
+    [client, walletConfig, embeddedAccounts, options, wallets.length, getSolanaProvider, user]
   )
 
   // Build active wallet from embeddedWallet.get()
@@ -523,6 +538,10 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
     }
 
     // Priority 1: Explicit action states (user-initiated operations)
+    if (status.status === 'fetching-wallets') {
+      return { ...baseActions, status: 'fetching-wallets', activeWallet: null }
+    }
+
     if (status.status === 'creating') {
       return { ...baseActions, status: 'creating', activeWallet: null }
     }

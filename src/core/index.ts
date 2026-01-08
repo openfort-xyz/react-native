@@ -12,6 +12,7 @@ export type {
   CommonEmbeddedWalletConfiguration,
   EmbeddedWalletConfiguration,
   EncryptionSession,
+  EncryptionSessionParams,
   OpenfortProviderProps,
 } from './provider'
 // Main provider component
