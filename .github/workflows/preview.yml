@@ -9,6 +9,8 @@ concurrency:
 jobs:
   preview:
     name: Preview
+    # Prevents this action from running on forks
+    if: github.repository == 'openfort-xyz/react-native'
     runs-on: ubuntu-latest
     permissions:
       contents: read

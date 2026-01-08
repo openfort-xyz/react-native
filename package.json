@@ -4,6 +4,10 @@
   "version": "0.1.26",
   "license": "MIT",
   "description": "React Native SDK for Openfort platform integration",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openfort-xyz/react-native.git"
+  },
   "scripts": {
     "build": "tsc",
     "check": "biome check",
