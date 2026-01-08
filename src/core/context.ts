@@ -86,7 +86,7 @@ export function useOpenfortContext(): OpenfortContextValue {
   if (!context) {
     throw new Error(
       'useOpenfortContext must be used within a OpenfortProvider. ' +
-      'Make sure to wrap your app with <OpenfortProvider>.'
+        'Make sure to wrap your app with <OpenfortProvider>.'
     )
   }
 
