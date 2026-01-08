@@ -17,7 +17,6 @@ import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
 export type InitializeOAuthOptions = {
   provider: OAuthProvider
   redirectTo?: string
-  isLegacyAppleIosBehaviorEnabled?: boolean
 } & OpenfortHookOptions<InitOAuthReturnType>
 
 export type StoreCredentialsResult = {
@@ -94,7 +93,7 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
         setOAuthState({ status: 'awaiting-redirect' })
 
         // Check if we should use native Apple authentication
-        if (options.provider === 'apple' && !options.isLegacyAppleIosBehaviorEnabled) {
+        if (options.provider === 'apple') {
           const isAppleAvailable = await isAppleSignInAvailable()
           if (isAppleAvailable) {
             try {
@@ -242,7 +241,7 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
         setOAuthState({ status: 'awaiting-redirect' })
 
         // Check if we should use native Apple authentication for linking
-        if (options.provider === 'apple' && !options.isLegacyAppleIosBehaviorEnabled) {
+        if (options.provider === 'apple') {
           const isAppleAvailable = await isAppleSignInAvailable()
           if (isAppleAvailable) {
             try {
@@ -358,7 +357,7 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
     [client, setOAuthState, _internal]
   )
 
-  const storeCredentials = () => {} // TODO
+  const storeCredentials = () => { } // TODO
 
   return {
     initOAuth,
