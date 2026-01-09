@@ -171,6 +171,7 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
         const result = await client.auth.signUpWithEmailPassword({
           email: options.email,
           password: options.password,
+          callbackURL: options.emailVerificationRedirectTo || createOAuthRedirectUri(),
           ...(options.name && { name: options.name }),
         })
 
