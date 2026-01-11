@@ -29,6 +29,7 @@ export function createOpenfortClient({
   baseConfiguration,
   overrides,
   shieldConfiguration,
+  thirdPartyAuth,
 }: OpenfortSDKConfiguration): OpenfortClient {
   const nativeAppId = getNativeApplicationId()
   logger.info('Creating Openfort client with native app ID', nativeAppId)
@@ -57,6 +58,7 @@ export function createOpenfortClient({
       storage: createNormalizedStorage(baseConfiguration.publishableKey, SecureStorageAdapter),
     },
     shieldConfiguration,
+    thirdPartyAuth,
   })
 }
 
