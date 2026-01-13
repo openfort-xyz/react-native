@@ -1,4 +1,4 @@
-import type { AuthPlayerResponse as OpenfortUser } from '@openfort/openfort-js'
+import type { User as OpenfortUser } from '@openfort/openfort-js'
 import { useCallback, useState } from 'react'
 import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
@@ -63,7 +63,8 @@ export const useGuestAuth = (hookOptions: GuestHookOptions = {}) => {
 
         const result = await client.auth.signUpGuest()
 
-        const user = result.player
+        const user = result.user
+
         await updateUser(user)
 
         // const { wallet } = await tryUseWallet({

@@ -166,7 +166,7 @@ export async function isAppleSignInAvailable(): Promise<boolean> {
 export function parseOAuthUrl(url: string): {
   access_token?: string
   refresh_token?: string
-  player_id?: string
+  user_id?: string
   error?: string
   errorDescription?: string
 } {
@@ -176,8 +176,7 @@ export function parseOAuthUrl(url: string): {
 
     return {
       access_token: queryParams?.access_token as string,
-      refresh_token: queryParams?.refresh_token as string,
-      player_id: queryParams?.player_id as string,
+      user_id: queryParams?.user_id as string,
       error: queryParams?.error as string,
       errorDescription: queryParams?.error_description as string,
     }

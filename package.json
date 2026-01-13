@@ -4,6 +4,14 @@
   "version": "0.1.26",
   "license": "MIT",
   "description": "React Native SDK for Openfort platform integration",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openfort-xyz/react-native.git"
+  },
+  "homepage": "https://github.com/openfort-xyz/react-native#readme",
+  "bugs": {
+    "url": "https://github.com/openfort-xyz/react-native/issues"
+  },
   "scripts": {
     "build": "tsc",
     "check": "biome check",
@@ -16,7 +24,9 @@
     "lint": "tsc -b && biome lint .",
     "link": "pnpm link",
     "unlink": "pnpm unlink",
-    "docs:build": "typedoc"
+    "docs:build": "typedoc",
+    "size": "size-limit",
+    "size:check": "size-limit --ci"
   },
   "types": "dist/types/index.d.ts",
   "files": [
@@ -30,7 +40,7 @@
     }
   },
   "dependencies": {
-    "@openfort/openfort-js": "^0.10.39"
+    "@openfort/openfort-js": "^1.0.0"
   },
   "peerDependencies": {
     "expo-apple-authentication": "*",
@@ -47,6 +57,7 @@
     "@biomejs/biome": "^2.2.4",
     "@changesets/changelog-github": "^0.5.1",
     "@changesets/cli": "^2.29.7",
+    "@size-limit/preset-small-lib": "^11.2.0",
     "@types/react": "~18.3.12",
     "buffer": "^5.4.3",
     "expo-apple-authentication": "^7.2.4",
@@ -59,59 +70,38 @@
     "react": "^18.3.1",
     "react-native": "0.77.1",
     "react-native-webview": "^13.15.0",
+    "size-limit": "^11.2.0",
     "typedoc": "^0.28.14",
     "typescript": "^5.9.3"
   },
   "knip": {
+    "entry": [
+      "src/index.ts!"
+    ],
     "ignore": [
       ".github/**",
       ".husky/**",
-      ".parcel-cache/**",
-      "**/.next/**",
       "**/dist/**",
-      "**/stats.html",
-      "sdk/copyVersion.cjs",
-      "sdk/scripts/**",
-      "test/**",
-      "**/next-env.d.ts",
-      "**/vite-env.d.ts"
+      "test/**"
     ],
     "ignoreDependencies": [
       "buffer"
     ],
-    "jest": {
-      "entry": [
-        "**/*.{test,spec}.{js,ts,tsx}"
-      ]
-    },
-    "workspaces": {
-      ".": {
-        "entry": [
-          "typedoc.json!"
-        ]
-      },
-      "sdk": {
-        "entry": [
-          "src/index.ts!"
-        ],
-        "ignore": [
-          "version.ts"
-        ],
-        "ignoreDependencies": [
-          "axios-retry"
-        ]
-      },
-      "packages/internal/openapi-clients": {
-        "entry": [
-          "src/backend-api-clients.ts!",
-          "src/backend/index.ts!"
-        ],
-        "ignore": [
-          "src/backend-openapi.json"
-        ]
-      }
-    }
+    "ignoreExportsUsedInFile": true
   },
   "private": false,
-  "packageManager": "pnpm@10.19.0"
+  "packageManager": "pnpm@10.19.0",
+  "size-limit": [
+    {
+      "path": "dist/index.js",
+      "limit": "250 KB"
+    }
+  ],
+  "pnpm": {
+    "auditConfig": {
+      "ignoreCves": [
+        "CVE-2025-14505"
+      ]
+    }
+  }
 }

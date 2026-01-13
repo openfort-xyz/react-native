@@ -1,5 +1,4 @@
-name: Publish to NPM
-
+name: Publish
 on:
   push:
     branches: [main]
@@ -9,20 +8,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  verify:
+    name: Verify
+    uses: ./.github/workflows/verify.yml
+
   publish:
-    name: publish
+    name: Publish
+    needs: verify
     runs-on: ubuntu-latest
     permissions:
-      contents: write       # To push commits and tags
-      pull-requests: write  # To create and update PRs
-      id-token: write       # For OIDC and provenance
+      contents: write
+      pull-requests: write
+      id-token: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -34,14 +38,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Publish to GitHub Packages
+      - name: Create release PR or publish
         uses: changesets/action@v1
         with:
           publish: pnpm changeset:publish
           version: pnpm changeset:version
-          commit: "chore: version package" # Default is `Version Packages`
-          title: "chore: version package"  # Default is `Version Packages`
+          commit: 'chore: version package'
+          title: 'chore: version package'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}    # we need this for PRs
-          NPM_TOKEN: '' # bug in changesets/action - https://github.com/changesets/changesets/issues/1152#issuecomment-3190884868
-
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ''
