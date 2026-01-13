@@ -97,7 +97,7 @@
       "limit": "250 KB"
     }
   ],
-  "pnpm":{
+  "pnpm": {
     "auditConfig": {
       "ignoreCves": [
         "CVE-2025-14505"
