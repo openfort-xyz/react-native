@@ -1,14 +1,15 @@
-name: Run pnpm build
+name: Verify
 on:
-    pull_request:
+  pull_request:
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  pnpm-build:
-    name: pnpm build
+  check:
+    name: Check
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -18,7 +19,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -33,11 +34,74 @@ jobs:
       - name: Security audit
         run: pnpm audit
 
-      - name: Lint (Biome)
+      - name: Lint
         run: pnpm lint
 
-      - name: Code check (Biome)
+      - name: Check formatting
         run: pnpm biome check
 
-      - name: Build project
+      - name: Build
         run: pnpm build
+
+      - name: Check unused exports
+        run: pnpm check:unused
+
+  types:
+    name: Types (TS ${{ matrix.typescript-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        typescript-version: ['5.7', '5.8', '5.9', 'latest']
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install TypeScript ${{ matrix.typescript-version }}
+        run: pnpm add -D typescript@${{ matrix.typescript-version }}
+
+      - name: Type check
+        run: pnpm tsc --noEmit
+
+  size:
+    name: Size
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Check bundle size
+        run: pnpm size

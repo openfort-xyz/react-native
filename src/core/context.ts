@@ -10,7 +10,7 @@ export interface OpenfortContextValue {
   /** The Openfort client instance. */
   client: OpenfortClient
   /** The current authenticated user, or null when unauthenticated. */
-  user: import('@openfort/openfort-js').AuthPlayerResponse | null
+  user: import('@openfort/openfort-js').User | null
   /** Whether the SDK has initialized and is ready for use. */
   isReady: boolean
   /** Any error encountered during SDK initialization. */
@@ -48,8 +48,8 @@ export interface OpenfortContextValue {
   /** @internal Refreshes user state after authentication changes. */
   _internal: {
     refreshUserState: (
-      user?: import('@openfort/openfort-js').AuthPlayerResponse | null
-    ) => Promise<import('@openfort/openfort-js').AuthPlayerResponse | null>
+      user?: import('@openfort/openfort-js').User
+    ) => Promise<import('@openfort/openfort-js').AuthResponse | null>
   }
 }
 

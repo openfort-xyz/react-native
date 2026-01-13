@@ -60,7 +60,7 @@ export function useSignOut(hookOptions: OpenfortHookOptions = {}) {
       setStatus({ status: 'loading' })
       try {
         await client.auth.logout()
-        await internalRef.current.refreshUserState(null)
+        await internalRef.current.refreshUserState(undefined)
         setStatus({ status: 'success' })
 
         return onSuccess({

@@ -16,9 +16,15 @@ export type {
   UseEmailHookOptions,
   VerifyEmailOptions,
 } from './useEmailAuth'
-
 // Email authentication
 export { useEmailAuth } from './useEmailAuth'
+export type {
+  EmailOtpAuthResult,
+  LoginWithEmailOtpOptions,
+  RequestEmailOtpOptions,
+  UseEmailOtpHookOptions,
+} from './useEmailAuthOtp'
+export { useEmailAuthOtp } from './useEmailAuthOtp'
 export type { GuestHookOptions, GuestHookResult } from './useGuestAuth'
 // Guest accounts
 export { useGuestAuth } from './useGuestAuth'
@@ -30,6 +36,13 @@ export type {
 } from './useOAuth'
 // OAuth authentication
 export { useOAuth } from './useOAuth'
+export type {
+  LoginWithPhoneOtpOptions,
+  PhoneOtpAuthResult,
+  RequestPhoneOtpOptions,
+  UsePhoneOtpHookOptions,
+} from './usePhoneAuthOtp'
+export { usePhoneAuthOtp } from './usePhoneAuthOtp'
 export { useSignOut } from './useSignOut'
 export type { WalletHookOptions, WalletHookResult } from './useWalletAuth'
 // Wallet-based authentication (SIWE)

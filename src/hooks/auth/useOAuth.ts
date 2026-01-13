@@ -1,4 +1,4 @@
-import { OAuthProvider, type AuthPlayerResponse as OpenfortUser } from '@openfort/openfort-js'
+import { OAuthProvider, type User as OpenfortUser } from '@openfort/openfort-js'
 import { useCallback } from 'react'
 import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
@@ -84,9 +84,9 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
         const redirectUri = options.redirectTo || createOAuthRedirectUri('/oauth/callback')
         const result = await client.auth.initOAuth({
           provider: options.provider,
+          redirectTo: redirectUri,
           options: {
             skipBrowserRedirect: true,
-            redirectTo: redirectUri,
           },
         })
 
@@ -94,23 +94,24 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
         setOAuthState({ status: 'awaiting-redirect' })
 
         // Check if we should use native Apple authentication
+        // TODO: V2 AUTH
         if (options.provider === 'apple' && !options.isLegacyAppleIosBehaviorEnabled) {
           const isAppleAvailable = await isAppleSignInAvailable()
           if (isAppleAvailable) {
             try {
               const appleResult = await authenticateWithApple({
-                state: result.key || '',
+                state: result || '',
                 isLogin: true,
               })
 
               // Complete OAuth flow with Apple credentials
-              const authResult = await client.auth.loginWithIdToken({
+              const authResult = await client.auth.logInWithIdToken({
                 provider: OAuthProvider.APPLE,
                 token: appleResult.identityToken!,
               })
 
               setOAuthState({ status: 'done' })
-              const user = authResult.player
+              const user = authResult.user
               // Refresh user state in provider
               await _internal.refreshUserState(user)
 
@@ -137,7 +138,7 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
         }
 
         // For other providers, use web-based OAuth
-        const providerUrl = OAuthUtils.getProviderUrl(options.provider, result.url)
+        const providerUrl = OAuthUtils.getProviderUrl(options.provider, result)
 
         const oauthResult = await OAuthUtils.withTimeout(
           openOAuthSession({
@@ -149,15 +150,14 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
 
         if (oauthResult.type === 'success' && oauthResult.url) {
           // Parse OAuth response from redirect URL
-          const { access_token, refresh_token, player_id, error, errorDescription } = parseOAuthUrl(oauthResult.url)
+          const { access_token, user_id, error, errorDescription } = parseOAuthUrl(oauthResult.url)
 
-          if (error) {
+          if (error || !user_id) {
             throw new Error(errorDescription || error)
           }
           await client.auth.storeCredentials({
-            player: player_id,
-            accessToken: access_token!,
-            refreshToken: refresh_token!,
+            userId: user_id,
+            token: access_token!,
           })
 
           setOAuthState({ status: 'done' })
@@ -231,10 +231,10 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
         const redirectUri = options.redirectTo || createOAuthRedirectUri('/oauth/callback')
         const result = await client.auth.initLinkOAuth({
           provider: options.provider,
-          authToken: accessToken,
+          // authToken: accessToken,
+          redirectTo: redirectUri,
           options: {
             skipBrowserRedirect: true,
-            redirectTo: redirectUri,
           },
         })
 
@@ -242,23 +242,24 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
         setOAuthState({ status: 'awaiting-redirect' })
 
         // Check if we should use native Apple authentication for linking
+        // TODO: V2 AUTH
         if (options.provider === 'apple' && !options.isLegacyAppleIosBehaviorEnabled) {
           const isAppleAvailable = await isAppleSignInAvailable()
           if (isAppleAvailable) {
             try {
               const appleResult = await authenticateWithApple({
-                state: result.key || '',
+                state: result || '',
                 isLogin: false, // This is a linking operation
               })
 
               // Complete OAuth linking flow with Apple credentials
-              const linkResult = await client.auth.loginWithIdToken({
+              const linkResult = await client.auth.logInWithIdToken({
                 provider: OAuthProvider.APPLE,
                 token: appleResult.identityToken!,
               })
 
               setOAuthState({ status: 'done' })
-              const user = linkResult.player
+              const user = linkResult.user
               // Refresh user state to reflect OAuth linking
               await _internal.refreshUserState()
               return onSuccess({
@@ -284,7 +285,7 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
         }
 
         // For other providers, use web-based OAuth
-        const providerUrl = OAuthUtils.getProviderUrl(options.provider, result.url)
+        const providerUrl = OAuthUtils.getProviderUrl(options.provider, result)
 
         const oauthResult = await OAuthUtils.withTimeout(
           openOAuthSession({
@@ -296,15 +297,14 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
 
         if (oauthResult.type === 'success' && oauthResult.url) {
           // Parse OAuth response from redirect URL
-          const { access_token, refresh_token, player_id, error, errorDescription } = parseOAuthUrl(oauthResult.url)
+          const { access_token, user_id, error, errorDescription } = parseOAuthUrl(oauthResult.url)
 
-          if (error) {
+          if (error || !user_id) {
             throw new Error(errorDescription || error)
           }
           await client.auth.storeCredentials({
-            player: player_id,
-            accessToken: access_token!,
-            refreshToken: refresh_token!,
+            userId: user_id,
+            token: access_token!,
           })
 
           setOAuthState({ status: 'done' })
