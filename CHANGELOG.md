@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0
+
+### Major Changes
+
+- [#39](https://github.com/openfort-xyz/react-native/pull/39) [`0753bd7`](https://github.com/openfort-xyz/react-native/commit/0753bd7146cc785bf02507033a4c22195a43ee49) Thanks [@martimayoral](https://github.com/martimayoral)! - Update openfort-js version (v1.0.0). Using AuthV2.
+
 ## 0.1.26
 
 ### Patch Changes
