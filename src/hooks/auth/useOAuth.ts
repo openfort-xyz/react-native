@@ -355,12 +355,9 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
     [client, setOAuthState, _internal]
   )
 
-  const storeCredentials = () => { } // TODO
-
   return {
     initOAuth,
     linkOauth,
-    storeCredentials,
     ...mapOAuthStatus(oAuthState),
   }
 }
