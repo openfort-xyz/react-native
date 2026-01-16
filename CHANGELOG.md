@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+### Patch Changes
+
+- [#51](https://github.com/openfort-xyz/react-native/pull/51) [`985feb4`](https://github.com/openfort-xyz/react-native/commit/985feb4f36375f1e43687d9bee862b801c24f54f) Thanks [@jamalavedra](https://github.com/jamalavedra)! - fix third party auth and update version sdk'
+
 ## 1.0.0
 
 ### Major Changes
