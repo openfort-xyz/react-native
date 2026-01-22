@@ -110,7 +110,7 @@ export function useWalletAuth(hookOptions?: WalletHookOptions) {
         // Get wallet address from the external wallet
         const walletAddress = typeof args.wallet === 'string' ? args.wallet : args.wallet.address
 
-        const result = await client.auth.initSIWE({
+        const result = await client.auth.initSiwe({
           address: walletAddress,
         })
 
@@ -161,7 +161,7 @@ export function useWalletAuth(hookOptions?: WalletHookOptions) {
           throw new Error('User must be authenticated to link wallet')
         }
 
-        const result = await client.auth.authenticateWithSIWE({
+        const result = await client.auth.loginWithSiwe({
           signature: opts.signature,
           message: message,
           walletClientType: 'unknown',
@@ -209,7 +209,7 @@ export function useWalletAuth(hookOptions?: WalletHookOptions) {
           throw new Error('SIWE message is required. Call generateSiweMessage first.')
         }
 
-        const result = await client.auth.authenticateWithSIWE({
+        const result = await client.auth.loginWithSiwe({
           signature: opts.signature,
           message: message,
           walletClientType: 'unknown',
