@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2
+
+### Patch Changes
+
+- [#53](https://github.com/openfort-xyz/react-native/pull/53) [`dc79d56`](https://github.com/openfort-xyz/react-native/commit/dc79d5691fd45bb38af61674f261c2abdf6129b6) Thanks [@jamalavedra](https://github.com/jamalavedra)! - update openfort-js
+
 ## 1.0.1
 
 ### Patch Changes
