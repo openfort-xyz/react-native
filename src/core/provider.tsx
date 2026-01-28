@@ -24,8 +24,12 @@ export type CommonEmbeddedWalletConfiguration = {
   ethereumProviderPolicyId?: PolicyConfig
   accountType?: AccountTypeEnum
   debug?: boolean
-  /** Recovery method for the embedded wallet: 'automatic' or 'password' */
-  recoveryMethod?: 'automatic' | 'password'
+  /** Recovery method for the embedded wallet: 'automatic', 'password', or 'passkey' */
+  recoveryMethod?: 'automatic' | 'password' | 'passkey'
+  /** Passkey Relying Party ID (domain) for passkey-based recovery */
+  passkeyRpId?: string
+  /** Passkey Relying Party Name for passkey-based recovery */
+  passkeyRpName?: string
 }
 
 /**
@@ -258,6 +262,8 @@ export const OpenfortProvider = ({
         ? new ShieldConfiguration({
             shieldPublishableKey: walletConfig.shieldPublishableKey,
             shieldDebug: walletConfig.debug,
+            passkeyRpId: walletConfig.passkeyRpId,
+            passkeyRpName: walletConfig.passkeyRpName,
           })
         : undefined,
       overrides,

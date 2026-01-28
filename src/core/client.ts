@@ -4,6 +4,7 @@ import { digest } from 'expo-crypto'
 import { logger } from '../lib/logger'
 import { createNormalizedStorage, SecureStorageAdapter } from './storage'
 
+import { NativePasskeyHandler } from '../native/passkey'
 /**
  * Creates an {@link OpenfortClient} configured for Expo and React Native environments.
  *
@@ -56,6 +57,14 @@ export function createOpenfortClient({
         digest: digest as any,
       },
       storage: createNormalizedStorage(baseConfiguration.publishableKey, SecureStorageAdapter),
+      ...(shieldConfiguration?.passkeyRpId &&
+        !overrides?.passkeyHandler && {
+          passkeyHandler: new NativePasskeyHandler({
+            rpId: shieldConfiguration.passkeyRpId,
+            rpName: shieldConfiguration.passkeyRpName,
+            extractableKey: true,
+          }),
+        }),
     },
     shieldConfiguration,
     thirdPartyAuth,

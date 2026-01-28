@@ -163,6 +163,10 @@ export type CreateEthereumWalletOptions = {
   otpCode?: string
   accountType?: AccountTypeEnum
   policyId?: string
+  /** Recovery method to use: 'automatic', 'password', or 'passkey' */
+  recoveryMethod?: 'automatic' | 'password' | 'passkey'
+  /** Passkey ID for passkey recovery (required when recoveryMethod is 'passkey' for recovery) */
+  passkeyId?: string
 } & OpenfortHookOptions<CreateEthereumWalletResult>
 
 /**
@@ -183,6 +187,10 @@ export type SetActiveEthereumWalletOptions = {
   recoveryPassword?: string
   /** OTP code for Shield verification when using automatic recovery */
   otpCode?: string
+  /** Recovery method to use: 'automatic', 'password', or 'passkey' */
+  recoveryMethod?: 'automatic' | 'password' | 'passkey'
+  /** Passkey ID for passkey recovery (required when recoveryMethod is 'passkey' for recovery) */
+  passkeyId?: string
 } & OpenfortHookOptions<SetActiveEthereumWalletResult>
 
 /**
@@ -221,6 +229,10 @@ export type CreateSolanaEmbeddedWalletOpts = {
    * Create additional wallet if one already exists
    */
   createAdditional?: boolean
+  /** Recovery method to use: 'automatic', 'password', or 'passkey' */
+  recoveryMethod?: 'automatic' | 'password' | 'passkey'
+  /** Passkey ID for passkey recovery (required when recoveryMethod is 'passkey' for recovery) */
+  passkeyId?: string
 }
 
 /**
@@ -254,6 +266,10 @@ export type SetActiveSolanaWalletOptions = {
   recoveryPassword?: string
   /** OTP code for Shield verification when using automatic recovery */
   otpCode?: string
+  /** Recovery method to use: 'automatic', 'password', or 'passkey' */
+  recoveryMethod?: 'automatic' | 'password' | 'passkey'
+  /** Passkey ID for passkey recovery (required when recoveryMethod is 'passkey' for recovery) */
+  passkeyId?: string
 } & OpenfortHookOptions<SetActiveSolanaWalletResult>
 
 // ============================================================================

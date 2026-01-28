@@ -25,3 +25,6 @@ export {
   NativeStorageUtils,
 } from './storage'
 export { EmbeddedWalletWebView, WebViewUtils } from './webview'
+// Passkey handler
+export { NativePasskeyHandler } from './passkey'
+export type { NativePasskeyHandlerConfig } from './passkey'
