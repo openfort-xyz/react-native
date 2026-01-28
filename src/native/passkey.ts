@@ -191,33 +191,28 @@ export class NativePasskeyHandler implements IPasskeyHandler {
     if (!PasskeysAPI.create || typeof PasskeysAPI.create !== 'function') {
       throw new Error('Passkeys API create method not available')
     }
+    const credential = await PasskeysAPI.create(publicKey as any)
+    if (!credential) {
+      throw new Error('could not create passkey')
+    }
 
-    try {
-      const credential = await PasskeysAPI.create(publicKey as any)
-      if (!credential) {
-        throw new Error('could not create passkey')
-      }
+    const prfResults = credential.clientExtensionResults?.prf
+    if (!prfResults || !prfResults.results?.first) {
+      throw new Error('PRF extension not supported or missing results')
+    }
 
-      const prfResults = credential.clientExtensionResults?.prf
-      if (!prfResults || !prfResults.results?.first) {
-        throw new Error('PRF extension not supported or missing results')
-      }
+    const prfResultBuffer = this.base64ToArrayBuffer(prfResults.results.first)
+    const derivedKey = await this.deriveFromPRFResult(prfResultBuffer)
 
-      const prfResultBuffer = this.base64ToArrayBuffer(prfResults.results.first)
-      const derivedKey = await this.deriveFromPRFResult(prfResultBuffer)
+    let key: Uint8Array | undefined
+    if (this.extractableKey) {
+      key = new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))
+    }
 
-      let key: Uint8Array | undefined
-      if (this.extractableKey) {
-        key = new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))
-      }
-
-      return {
-        id: credential.id,
-        displayName: config.displayName,
-        key,
-      }
-    } catch (error) {
-      throw error
+    return {
+      id: credential.id,
+      displayName: config.displayName,
+      key,
     }
   }
 
