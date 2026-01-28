@@ -15,6 +15,9 @@ importers:
       '@openfort/openfort-js':
         specifier: https://pkg.pr.new/@openfort/openfort-js@224
         version: https://pkg.pr.new/@openfort/openfort-js@224
+      react-native-passkeys:
+        specifier: 0.4.0
+        version: 0.4.0(react-native@0.77.1(@babel/core@7.28.6)(@types/react@18.3.27)(react@18.3.1))(react@18.3.1)
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.2.4
@@ -2585,6 +2588,13 @@ packages:
 
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
+
+  react-native-passkeys@0.4.0:
+    resolution: {integrity: sha512-WX0jw60tDyZ3SwhnKvAdddwC27efT4CWWcq/j8O+RyGU/wIidQXeaAtX0kX1CMGNsXnoDDgbMAhUbIG+Ia786Q==}
+    peerDependencies:
+      expo: '>=48.0.0'
+      react: '*'
+      react-native: '>=0.71.0'
 
   react-native-webview@13.16.0:
     resolution: {integrity: sha512-Nh13xKZWW35C0dbOskD7OX01nQQavOzHbCw9XoZmar4eXCo7AvrYJ0jlUfRVVIJzqINxHlpECYLdmAdFsl9xDA==}
@@ -6100,6 +6110,11 @@ snapshots:
       - utf-8-validate
 
   react-is@18.3.1: {}
+
+  react-native-passkeys@0.4.0(react-native@0.77.1(@babel/core@7.28.6)(@types/react@18.3.27)(react@18.3.1))(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+      react-native: 0.77.1(@babel/core@7.28.6)(@types/react@18.3.27)(react@18.3.1)
 
   react-native-webview@13.16.0(react-native@0.77.1(@babel/core@7.28.6)(@types/react@18.3.27)(react@18.3.1))(react@18.3.1):
     dependencies:
