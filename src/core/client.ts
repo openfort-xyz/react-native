@@ -2,9 +2,9 @@ import { Openfort as OpenfortClient, type OpenfortSDKConfiguration } from '@open
 import { applicationId } from 'expo-application'
 import { digest } from 'expo-crypto'
 import { logger } from '../lib/logger'
+import { NativePasskeyHandler } from '../native/passkey'
 import { createNormalizedStorage, SecureStorageAdapter } from './storage'
 
-import { NativePasskeyHandler } from '../native/passkey'
 /**
  * Creates an {@link OpenfortClient} configured for Expo and React Native environments.
  *

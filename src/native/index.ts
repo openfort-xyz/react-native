@@ -1,5 +1,4 @@
 // WebView integration
-
 export type {
   AppleAuthResult,
   OAuthResult,
@@ -14,6 +13,9 @@ export {
   openOAuthSession,
   parseOAuthUrl,
 } from './oauth'
+export type { NativePasskeyHandlerConfig } from './passkey'
+// Passkey handler
+export { NativePasskeyHandler } from './passkey'
 export type {
   SecureStorageMessage,
   SecureStorageResponse,
@@ -25,6 +27,3 @@ export {
   NativeStorageUtils,
 } from './storage'
 export { EmbeddedWalletWebView, WebViewUtils } from './webview'
-// Passkey handler
-export { NativePasskeyHandler } from './passkey'
-export type { NativePasskeyHandlerConfig } from './passkey'
