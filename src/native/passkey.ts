@@ -106,6 +106,28 @@ export class NativePasskeyHandler implements IPasskeyHandler {
   }
 
   /**
+   * Normalizes prf.results.first from the native module to Uint8Array.
+   * On Android, the bridge may return base64 string or array of numbers; crypto.subtle.importKey
+   * requires a BufferSource (e.g. Uint8Array) and some React Native polyfills reject plain ArrayBuffer.
+   */
+  private normalizePRFResultFirst(first: unknown): Uint8Array {
+    if (typeof first === 'string') {
+      const buffer = this.base64ToArrayBuffer(first)
+      return new Uint8Array(buffer)
+    }
+    if (first instanceof ArrayBuffer) {
+      return new Uint8Array(first)
+    }
+    if (ArrayBuffer.isView(first)) {
+      return new Uint8Array(first.buffer, first.byteOffset, first.byteLength)
+    }
+    if (Array.isArray(first) || (typeof first === 'object' && first !== null && 'length' in first)) {
+      return new Uint8Array(first as ArrayLike<number>)
+    }
+    throw new Error('PRF result first: expected base64 string, ArrayBuffer, TypedArray, or array of numbers')
+  }
+
+  /**
    * Converts ArrayBuffer to base64url (URL-safe base64) as required by WebAuthn spec
    */
   private arrayBufferToBase64URL(buffer: ArrayBuffer | ArrayBufferLike): string {
@@ -135,8 +157,8 @@ export class NativePasskeyHandler implements IPasskeyHandler {
    * Produces raw key bytes from PRF result when crypto.subtle is unavailable (React Native).
    * Truncates to derivedKeyLengthBytes or pads with zeros if shorter.
    */
-  private getRawKeyBytes(prfResult: ArrayBuffer): Uint8Array {
-    const bytes = new Uint8Array(prfResult)
+  private getRawKeyBytes(prfResult: ArrayBuffer | Uint8Array): Uint8Array {
+    const bytes = prfResult instanceof Uint8Array ? prfResult : new Uint8Array(prfResult)
     if (bytes.length >= this.derivedKeyLengthBytes) {
       return bytes.slice(0, this.derivedKeyLengthBytes)
     }
@@ -145,10 +167,18 @@ export class NativePasskeyHandler implements IPasskeyHandler {
     return key
   }
 
-  private async deriveFromPRFResult(prfResult: ArrayBuffer): Promise<CryptoKey> {
+  /**
+   * Derives a CryptoKey from PRF result. Passes Uint8Array to importKey so React Native
+   * crypto polyfills accept the key data (BufferSource).
+   */
+  private async deriveFromPRFResult(prfResult: ArrayBuffer | Uint8Array): Promise<CryptoKey> {
+    const bytes = prfResult instanceof Uint8Array ? prfResult : new Uint8Array(prfResult)
+    const keyBytes = this.getRawKeyBytes(bytes)
+    // Copy to plain ArrayBuffer-backed view so polyfills and BufferSource typing are satisfied
+    const keyData = new Uint8Array(keyBytes)
     return crypto.subtle.importKey(
       'raw',
-      prfResult,
+      keyData,
       { name: 'AES-CBC', length: this.derivedKeyLengthBytes * 8 },
       this.extractableKey,
       ['encrypt', 'decrypt']
@@ -223,17 +253,17 @@ export class NativePasskeyHandler implements IPasskeyHandler {
       throw new Error('PRF extension not supported or missing results')
     }
 
-    const prfResultBuffer = this.base64ToArrayBuffer(prfResults.results.first)
+    const prfResultBytes = this.normalizePRFResultFirst(prfResults.results.first)
 
     let key: Uint8Array | undefined
     if (this.hasSubtle()) {
-      const derivedKey = await this.deriveFromPRFResult(prfResultBuffer)
+      const derivedKey = await this.deriveFromPRFResult(prfResultBytes)
       if (this.extractableKey) {
         key = new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))
       }
     } else {
       if (this.extractableKey) {
-        key = this.getRawKeyBytes(prfResultBuffer)
+        key = this.getRawKeyBytes(prfResultBytes)
       }
     }
 
@@ -295,9 +325,9 @@ export class NativePasskeyHandler implements IPasskeyHandler {
       throw new Error('PRF extension not supported or missing results')
     }
 
-    const prfResultBuffer = this.base64ToArrayBuffer(prfResults.results.first)
+    const prfResultBytes = this.normalizePRFResultFirst(prfResults.results.first)
     if (this.hasSubtle()) {
-      return this.deriveFromPRFResult(prfResultBuffer)
+      return this.deriveFromPRFResult(prfResultBytes)
     }
     throw new Error('deriveKey (CryptoKey) is not supported in React Native; passkey recovery uses deriveAndExportKey.')
   }
@@ -320,7 +350,12 @@ export class NativePasskeyHandler implements IPasskeyHandler {
     const publicKey: PublicKeyCredentialRequestOptions = {
       challenge: challengeBase64URL,
       rpId: this.rpId,
-      allowCredentials: [{ id: this.arrayBufferToBase64(credentialIdBuffer), type: 'public-key' }],
+      allowCredentials: [
+        {
+          id: this.arrayBufferToBase64(credentialIdBuffer),
+          type: 'public-key',
+        },
+      ],
       userVerification: 'required',
       extensions: {
         prf: {
@@ -346,8 +381,8 @@ export class NativePasskeyHandler implements IPasskeyHandler {
     if (!prfResults || !prfResults.results?.first) {
       throw new Error('PRF extension not supported or missing results')
     }
-    const prfResultBuffer = this.base64ToArrayBuffer(prfResults.results.first)
-    return this.getRawKeyBytes(prfResultBuffer)
+    const prfResultBytes = this.normalizePRFResultFirst(prfResults.results.first)
+    return this.getRawKeyBytes(prfResultBytes)
   }
 }
 
