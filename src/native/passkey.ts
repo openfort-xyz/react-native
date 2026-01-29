@@ -176,9 +176,13 @@ export class NativePasskeyHandler implements IPasskeyHandler {
     const keyBytes = this.getRawKeyBytes(bytes)
     // Copy to plain ArrayBuffer-backed view so polyfills and BufferSource typing are satisfied
     const keyData = new Uint8Array(keyBytes)
+    const keyBuffer =
+      keyData.byteOffset === 0 && keyData.byteLength === keyData.buffer.byteLength
+        ? keyData.buffer
+        : keyData.buffer.slice(keyData.byteOffset, keyData.byteOffset + keyData.byteLength)
     return crypto.subtle.importKey(
       'raw',
-      keyData,
+      keyBuffer,
       { name: 'AES-CBC', length: this.derivedKeyLengthBytes * 8 },
       this.extractableKey,
       ['encrypt', 'decrypt']
