@@ -123,6 +123,28 @@ export class NativePasskeyHandler implements IPasskeyHandler {
     return btoa(String.fromCharCode(...bytes))
   }
 
+  /**
+   * Returns true when Web Crypto subtle API is available (e.g. browser).
+   * In React Native, crypto.subtle is typically undefined.
+   */
+  private hasSubtle(): boolean {
+    return typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.subtle !== 'undefined'
+  }
+
+  /**
+   * Produces raw key bytes from PRF result when crypto.subtle is unavailable (React Native).
+   * Truncates to derivedKeyLengthBytes or pads with zeros if shorter.
+   */
+  private getRawKeyBytes(prfResult: ArrayBuffer): Uint8Array {
+    const bytes = new Uint8Array(prfResult)
+    if (bytes.length >= this.derivedKeyLengthBytes) {
+      return bytes.slice(0, this.derivedKeyLengthBytes)
+    }
+    const key = new Uint8Array(this.derivedKeyLengthBytes)
+    key.set(bytes)
+    return key
+  }
+
   private async deriveFromPRFResult(prfResult: ArrayBuffer): Promise<CryptoKey> {
     return crypto.subtle.importKey(
       'raw',
@@ -202,11 +224,17 @@ export class NativePasskeyHandler implements IPasskeyHandler {
     }
 
     const prfResultBuffer = this.base64ToArrayBuffer(prfResults.results.first)
-    const derivedKey = await this.deriveFromPRFResult(prfResultBuffer)
 
     let key: Uint8Array | undefined
-    if (this.extractableKey) {
-      key = new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))
+    if (this.hasSubtle()) {
+      const derivedKey = await this.deriveFromPRFResult(prfResultBuffer)
+      if (this.extractableKey) {
+        key = new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))
+      }
+    } else {
+      if (this.extractableKey) {
+        key = this.getRawKeyBytes(prfResultBuffer)
+      }
     }
 
     return {
@@ -268,14 +296,136 @@ export class NativePasskeyHandler implements IPasskeyHandler {
     }
 
     const prfResultBuffer = this.base64ToArrayBuffer(prfResults.results.first)
-    return this.deriveFromPRFResult(prfResultBuffer)
+    if (this.hasSubtle()) {
+      return this.deriveFromPRFResult(prfResultBuffer)
+    }
+    throw new Error('deriveKey (CryptoKey) is not supported in React Native; passkey recovery uses deriveAndExportKey.')
   }
 
   async deriveAndExportKey(config: { id: string; seed: string }): Promise<Uint8Array> {
     if (!this.extractableKey) {
       throw new Error('Derived keys cannot be exported if extractableKey is not set to true')
     }
-    const derivedKey = await this.deriveKey(config)
-    return new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))
+    if (this.hasSubtle()) {
+      const derivedKey = await this.deriveKey(config)
+      return new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))
+    }
+    // React Native path: get assertion and use raw PRF bytes (same flow as deriveKey up to buffer)
+    if (!this.rpId) {
+      throw new Error('rpId must be configured')
+    }
+    const challenge = this.getChallengeBytes()
+    const challengeBase64URL = this.arrayBufferToBase64URL(challenge.buffer)
+    const credentialIdBuffer = this.base64ToArrayBuffer(config.id)
+    const publicKey: PublicKeyCredentialRequestOptions = {
+      challenge: challengeBase64URL,
+      rpId: this.rpId,
+      allowCredentials: [{ id: this.arrayBufferToBase64(credentialIdBuffer), type: 'public-key' }],
+      userVerification: 'required',
+      extensions: {
+        prf: {
+          eval: {
+            first: this.arrayBufferToBase64(new TextEncoder().encode(config.seed).buffer),
+          },
+        },
+      },
+    }
+    const passkeysModule = getPasskeys()
+    if (!passkeysModule) {
+      throw new Error('react-native-passkeys is not available. Please ensure it is installed and the app is rebuilt.')
+    }
+    const PasskeysAPI = passkeysModule.Passkeys || passkeysModule
+    if (!PasskeysAPI.get) {
+      throw new Error('Passkeys API does not have get method')
+    }
+    const assertion = await PasskeysAPI.get(publicKey as any)
+    if (!assertion) {
+      throw new Error('could not get passkey assertion')
+    }
+    const prfResults = assertion.clientExtensionResults?.prf
+    if (!prfResults || !prfResults.results?.first) {
+      throw new Error('PRF extension not supported or missing results')
+    }
+    const prfResultBuffer = this.base64ToArrayBuffer(prfResults.results.first)
+    return this.getRawKeyBytes(prfResultBuffer)
+  }
+}
+
+function arrayBufferToBase64URL(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer)
+  const base64 = btoa(String.fromCharCode(...bytes))
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer)
+  return btoa(String.fromCharCode(...bytes))
+}
+
+/**
+ * Performs a real PRF support check by creating a minimal test credential with the PRF extension.
+ * Use this to gate "Create with passkey" on actual PRF availability (e.g. after assetlinks.json is configured on Android).
+ *
+ * @param options - Must include rpId and rpName (same values as your passkey handler config).
+ * @returns true if PRF is supported and a test credential was created with prf.results.first; false otherwise. Does not throw.
+ *
+ * @example
+ * ```ts
+ * const supported = await checkPRFSupport({ rpId: 'your.domain.com', rpName: 'Openfort - Embedded Wallet' });
+ * if (supported) {
+ *   // Show "Create Wallet with Passkey" button
+ * }
+ * ```
+ */
+export async function checkPRFSupport(options: { rpId: string; rpName: string }): Promise<boolean> {
+  const { rpId, rpName } = options
+  try {
+    const passkeysModule = getPasskeys()
+    if (!passkeysModule) {
+      return false
+    }
+    const PasskeysAPI = passkeysModule.Passkeys || passkeysModule
+    if (typeof PasskeysAPI.create !== 'function') {
+      return false
+    }
+    const isSupported =
+      typeof PasskeysAPI.isSupported === 'function' ? await PasskeysAPI.isSupported() : PasskeysAPI.isSupported
+    if (!isSupported) {
+      return false
+    }
+    if (!rpId || !rpName) {
+      return false
+    }
+    const challenge = crypto.getRandomValues(new Uint8Array(32))
+    const challengeBase64URL = arrayBufferToBase64URL(challenge.buffer)
+    const testUserId = `prf-check-${Date.now()}`
+    const userIdBase64URL = arrayBufferToBase64URL(new TextEncoder().encode(testUserId).buffer)
+    const testSeed = 'prf-check-seed'
+    const seedBase64 = arrayBufferToBase64(new TextEncoder().encode(testSeed).buffer)
+    const publicKey = {
+      challenge: challengeBase64URL,
+      rp: { id: rpId, name: rpName },
+      user: {
+        id: userIdBase64URL,
+        name: testUserId,
+        displayName: rpName,
+      },
+      pubKeyCredParams: [
+        { type: 'public-key', alg: -7 },
+        { type: 'public-key', alg: -257 },
+      ],
+      authenticatorSelection: { requireResidentKey: true },
+      excludeCredentials: [],
+      extensions: { prf: { eval: { first: seedBase64 } } },
+      timeout: 60_000,
+      attestation: 'none',
+    }
+    const credential = await PasskeysAPI.create(publicKey as PublicKeyCredentialCreationOptions)
+    if (!credential?.clientExtensionResults?.prf?.results?.first) {
+      return false
+    }
+    return true
+  } catch {
+    return false
   }
 }

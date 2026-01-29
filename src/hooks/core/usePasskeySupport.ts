@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { checkPRFSupport } from '../../native/passkey'
 
 // Lazy import to avoid blocking app initialization if react-native-passkeys is not available
 type PasskeysModule = {
@@ -37,15 +38,30 @@ function getPasskeys(): PasskeysModule | null {
   return Passkeys
 }
 
+export type UsePasskeySupportOptions = {
+  /** When provided with rpName, runs a real PRF check (create test credential) and sets isPRFSupported from the result. Omit to get isPRFSupported false and call checkPRFSupport() yourself when needed. */
+  rpId?: string
+  /** Required with rpId for the hook to run the real PRF check. */
+  rpName?: string
+}
+
 /**
  * Hook to detect if the platform supports passkeys and PRF extension.
  *
+ * When options.rpId and options.rpName are provided, runs a real PRF check (same as checkPRFSupport)
+ * and sets isPRFSupported from the result. When omitted, isPRFSupported is false so apps don't hit
+ * DataError from an optimistic value; use checkPRFSupport({ rpId, rpName }) when you need a real check.
+ *
+ * @param options - Optional { rpId, rpName }. When both are set, the hook runs the real PRF check.
  * @returns Object containing passkey support information
  */
-export function usePasskeySupport() {
+export function usePasskeySupport(options?: UsePasskeySupportOptions) {
   const [isSupported, setIsSupported] = useState<boolean>(false)
   const [isPRFSupported, setIsPRFSupported] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(true)
+
+  const rpId = options?.rpId
+  const rpName = options?.rpName
 
   useEffect(() => {
     async function checkSupport() {
@@ -58,7 +74,6 @@ export function usePasskeySupport() {
           return
         }
 
-        // Check if passkeys are available
         if (!PasskeysAPI.isSupported) {
           setIsSupported(false)
           setIsPRFSupported(false)
@@ -69,15 +84,10 @@ export function usePasskeySupport() {
         const available = await PasskeysAPI.isSupported()
         setIsSupported(available)
 
-        if (available) {
-          // Check PRF support by attempting to create a test credential
-          // Note: This is a simplified check - in production you might want
-          // to check the actual PRF capability more carefully
+        if (available && rpId && rpName) {
           try {
-            // PRF support is typically available on iOS 18+ and Android 14+
-            // For now, we'll assume if passkeys are supported, PRF might be available
-            // A more robust check would require actually testing PRF extension
-            setIsPRFSupported(true) // Optimistic - actual check would require test credential
+            const prfSupported = await checkPRFSupport({ rpId, rpName })
+            setIsPRFSupported(prfSupported)
           } catch {
             setIsPRFSupported(false)
           }
@@ -93,7 +103,7 @@ export function usePasskeySupport() {
     }
 
     checkSupport()
-  }, [])
+  }, [rpId, rpName])
 
   return {
     isSupported,
