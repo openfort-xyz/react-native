@@ -168,21 +168,18 @@ export class NativePasskeyHandler implements IPasskeyHandler {
   }
 
   /**
-   * Derives a CryptoKey from PRF result. Passes Uint8Array to importKey so React Native
-   * crypto polyfills accept the key data (BufferSource).
+   * Derives a CryptoKey from PRF result. Uses a fresh Uint8Array copy so React Native
+   * polyfills that require a proper BufferSource (and reject shared/offset views) accept it.
    */
   private async deriveFromPRFResult(prfResult: ArrayBuffer | Uint8Array): Promise<CryptoKey> {
     const bytes = prfResult instanceof Uint8Array ? prfResult : new Uint8Array(prfResult)
     const keyBytes = this.getRawKeyBytes(bytes)
-    // Copy to plain ArrayBuffer-backed view so polyfills and BufferSource typing are satisfied
-    const keyData = new Uint8Array(keyBytes)
-    const keyBuffer =
-      keyData.byteOffset === 0 && keyData.byteLength === keyData.buffer.byteLength
-        ? keyData.buffer
-        : keyData.buffer.slice(keyData.byteOffset, keyData.byteOffset + keyData.byteLength)
+    // Copy into a new buffer so the view is standalone (no shared buffer/offset); some RN polyfills reject otherwise
+    const keyData = new Uint8Array(this.derivedKeyLengthBytes)
+    keyData.set(keyBytes.subarray(0, this.derivedKeyLengthBytes))
     return crypto.subtle.importKey(
       'raw',
-      keyBuffer,
+      keyData,
       { name: 'AES-CBC', length: this.derivedKeyLengthBytes * 8 },
       this.extractableKey,
       ['encrypt', 'decrypt']
