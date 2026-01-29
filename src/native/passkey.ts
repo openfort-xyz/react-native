@@ -168,23 +168,40 @@ export class NativePasskeyHandler implements IPasskeyHandler {
   }
 
   /**
-   * Derives a CryptoKey from PRF result. Uses a fresh ArrayBuffer + Uint8Array so React Native
-   * and strict polyfills (e.g. Edge Runtime) accept the key: pass new Uint8Array(keyBuffer).
+   * Derives a CryptoKey from PRF result. Tries Uint8Array first, then Node Buffer if available,
+   * since some React Native / expo-crypto polyfills only accept Buffer as BufferSource.
    */
   private async deriveFromPRFResult(prfResult: ArrayBuffer | Uint8Array): Promise<CryptoKey> {
     const bytes = prfResult instanceof Uint8Array ? prfResult : new Uint8Array(prfResult)
     const keyBytes = this.getRawKeyBytes(bytes)
-    // Fresh ArrayBuffer, fill via view; then pass Uint8Array(buffer) so importKey gets a valid BufferSource
-    const keyBuffer = new ArrayBuffer(this.derivedKeyLengthBytes)
-    const keyView = new Uint8Array(keyBuffer)
+    const keyView = new Uint8Array(this.derivedKeyLengthBytes)
     keyView.set(keyBytes.subarray(0, this.derivedKeyLengthBytes))
-    return crypto.subtle.importKey(
-      'raw',
-      new Uint8Array(keyBuffer),
-      { name: 'AES-CBC', length: this.derivedKeyLengthBytes * 8 },
-      this.extractableKey,
-      ['encrypt', 'decrypt']
-    )
+
+    const algo = { name: 'AES-CBC', length: this.derivedKeyLengthBytes * 8 }
+    const usages: KeyUsage[] = ['encrypt', 'decrypt']
+
+    try {
+      return await crypto.subtle.importKey('raw', keyView, algo, this.extractableKey, usages)
+    } catch (e) {
+      const isBufferSourceError = e instanceof TypeError && e.message?.includes('BufferSource')
+      type BufferCtor = { from(arr: Uint8Array): ArrayBufferView }
+      const globalBuf = (globalThis as { Buffer?: BufferCtor }).Buffer
+      const BufferImpl: BufferCtor | null =
+        typeof globalBuf !== 'undefined'
+          ? globalBuf
+          : (() => {
+              try {
+                return (require('buffer') as { Buffer: BufferCtor }).Buffer
+              } catch {
+                return null
+              }
+            })()
+      if (isBufferSourceError && BufferImpl) {
+        const keyData = BufferImpl.from(keyView) as unknown as BufferSource
+        return await crypto.subtle.importKey('raw', keyData, algo, this.extractableKey, usages)
+      }
+      throw e
+    }
   }
 
   async createPasskey(config: {
