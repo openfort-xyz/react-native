@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3
+
+### Patch Changes
+
+- [#56](https://github.com/openfort-xyz/react-native/pull/56) [`cb089a2`](https://github.com/openfort-xyz/react-native/commit/cb089a2a7e72f26c1d9f7bc9bc71a99639611aee) Thanks [@jamalavedra](https://github.com/jamalavedra)! - update sdk'
+
 ## 1.0.2
 
 ### Patch Changes
