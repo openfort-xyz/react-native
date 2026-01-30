@@ -20,6 +20,8 @@ export type {
 } from './passkey'
 // Passkey handler and support checks
 export { isPasskeySupported, NativePasskeyHandler } from './passkey'
+export type { PasskeyMessage, PasskeyResponse } from './passkeyMessages'
+export { handlePasskeyMessage, isPasskeyMessage } from './passkeyMessages'
 export type {
   SecureStorageMessage,
   SecureStorageResponse,

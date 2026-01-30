@@ -252,9 +252,9 @@ export const OpenfortProvider = ({
     logger.setVerbose(verbose)
   }, [verbose])
 
-  // Create or use provided client
+  // Create or use provided client; passkeyHandler lives on the client for WebView/Shield
   const client = useMemo(() => {
-    const newClient = createOpenfortClient({
+    const c = createOpenfortClient({
       baseConfiguration: {
         publishableKey: publishableKey,
       },
@@ -269,9 +269,8 @@ export const OpenfortProvider = ({
       overrides,
       thirdPartyAuth,
     })
-
-    setDefaultClient(newClient)
-    return newClient
+    setDefaultClient(c)
+    return c
   }, [publishableKey, walletConfig, overrides])
 
   // Embedded state
@@ -470,6 +469,7 @@ export const OpenfortProvider = ({
         <EmbeddedWalletWebView
           client={client}
           isClientReady={isReady}
+          passkeyHandler={client.passkeyHandler}
           onProxyStatusChange={(status: 'loading' | 'loaded' | 'reloading') => {
             // Handle WebView status changes for debugging
             if (verbose) {

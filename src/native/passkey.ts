@@ -570,13 +570,12 @@ export class NativePasskeyHandler implements NativePasskeyHandlerInterface {
 		if (!this.extractableKey) {
 			throw new Error('Derived keys cannot be exported if extractableKey is not set to true')
 		}
-		// If we just created this passkey, return the cached key to avoid a second passkey prompt (SDK expects key from createPasskey; when we don't return it, SDK calls getPasskeyKey which would trigger get() again and UserCancelled).
-		const cached = this.keyStore.get(config.id)
-		if (cached) {
-			if (__DEV__) {
-				console.log('[NativePasskeyHandler] deriveAndExportKey returning cached key for', config.id, '(avoids second passkey prompt)')
-			}
-			return new Uint8Array(cached)
+		// Key stays local: do not export the key for a passkey we just created (it's in keyStore for encrypt() only).
+		// If the SDK calls getPasskeyKey(id) after createPasskey, it must be updated to use handler.encrypt(plaintext, passkeyId) instead.
+		if (this.keyStore.has(config.id)) {
+			throw new Error(
+				'Passkey key is not exported (local encryption). The SDK must call handler.encrypt(plaintext, passkeyId) instead of getPasskeyKey so the key never leaves the device. Update openfort-js to use the extended passkey handler encrypt path.',
+			)
 		}
 		if (this.hasSubtle()) {
       try {
