@@ -387,16 +387,21 @@ export class NativePasskeyHandler implements IPasskeyHandler {
       }
     }
 
+    const bufferKey = key ? new Uint8Array(key) : null
     if (__DEV__) {
       console.log('[NativePasskeyHandler] createPasskey returning:', {
         id: credential.id,
         hasKey: key != null,
+        keyLength: key?.length,
+        bufferKeyLength: bufferKey?.length,
+        bufferKeyType: bufferKey?.constructor?.name,
+        bufferKey: bufferKey?.toString(),
       })
     }
     return {
       id: credential.id,
       displayName: config.displayName,
-      ...(key != null && { key }),
+      ...(bufferKey != null && { key: bufferKey }),
     }
   }
 
