@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.4
+
+### Patch Changes
+
+- [#58](https://github.com/openfort-xyz/react-native/pull/58) [`d9f749a`](https://github.com/openfort-xyz/react-native/commit/d9f749a0e529a6072ea0e9ce9fdb0462d91e624e) Thanks [@jamalavedra](https://github.com/jamalavedra)! - add missing export for tp auth
+
 ## 1.0.3
 
 ### Patch Changes
