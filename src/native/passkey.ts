@@ -68,7 +68,18 @@ interface PublicKeyCredentialRequestOptions {
 }
 
 /**
- * NativePasskeyHandler implements IPasskeyHandler using react-native-passkeys
+ * Thrown when crypto.subtle.importKey rejects the key data (e.g. React Native polyfill
+ * BufferSource strictness). Callers can use prfResultBytes with getRawKeyBytes() instead.
+ */
+export class PasskeyBufferSourceFallbackError extends Error {
+  constructor(public readonly prfResultBytes: Uint8Array) {
+    super('importKey rejected key data; use raw PRF bytes fallback')
+    this.name = 'PasskeyBufferSourceFallbackError'
+  }
+}
+
+/**
+ * NativePasskeyHandler implements IPasskeyHandler using react-native-passkeys.
  */
 export class NativePasskeyHandler implements IPasskeyHandler {
   private readonly iValidByteLengths: number[] = [16, 24, 32]
@@ -138,11 +149,10 @@ export class NativePasskeyHandler implements IPasskeyHandler {
   }
 
   /**
-   * Converts ArrayBuffer to regular base64 (for PRF seed - must be base64, not base64url)
+   * Converts standard base64 to base64url (for credential id from openfort when passed to react-native-passkeys)
    */
-  private arrayBufferToBase64(buffer: ArrayBuffer | ArrayBufferLike): string {
-    const bytes = new Uint8Array(buffer)
-    return btoa(String.fromCharCode(...bytes))
+  private base64ToBase64URL(base64: string): string {
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
   }
 
   /**
@@ -168,20 +178,23 @@ export class NativePasskeyHandler implements IPasskeyHandler {
   }
 
   /**
-   * Derives a CryptoKey from PRF result. Tries Uint8Array first, then Node Buffer if available,
-   * since some React Native / expo-crypto polyfills only accept Buffer as BufferSource.
+   * Derives a CryptoKey from PRF result. Uses a dedicated ArrayBuffer + Uint8Array for
+   * importKey (Google-inspired); on BufferSource error tries Node Buffer fallback; if still
    */
   private async deriveFromPRFResult(prfResult: ArrayBuffer | Uint8Array): Promise<CryptoKey> {
     const bytes = prfResult instanceof Uint8Array ? prfResult : new Uint8Array(prfResult)
     const keyBytes = this.getRawKeyBytes(bytes)
-    const keyView = new Uint8Array(this.derivedKeyLengthBytes)
+
+    // Dedicated ArrayBuffer + fresh Uint8Array so polyfills get a valid BufferSource (no shared/offset view)
+    const keyBuffer = new ArrayBuffer(this.derivedKeyLengthBytes)
+    const keyView = new Uint8Array(keyBuffer)
     keyView.set(keyBytes.subarray(0, this.derivedKeyLengthBytes))
 
     const algo = { name: 'AES-CBC', length: this.derivedKeyLengthBytes * 8 }
     const usages: KeyUsage[] = ['encrypt', 'decrypt']
 
     try {
-      return await crypto.subtle.importKey('raw', keyView, algo, this.extractableKey, usages)
+      return await crypto.subtle.importKey('raw', new Uint8Array(keyBuffer), algo, this.extractableKey, usages)
     } catch (e) {
       const isBufferSourceError = e instanceof TypeError && e.message?.includes('BufferSource')
       type BufferCtor = { from(arr: Uint8Array): ArrayBufferView }
@@ -197,8 +210,15 @@ export class NativePasskeyHandler implements IPasskeyHandler {
               }
             })()
       if (isBufferSourceError && BufferImpl) {
-        const keyData = BufferImpl.from(keyView) as unknown as BufferSource
-        return await crypto.subtle.importKey('raw', keyData, algo, this.extractableKey, usages)
+        try {
+          const keyData = BufferImpl.from(keyView) as unknown as BufferSource
+          return await crypto.subtle.importKey('raw', keyData, algo, this.extractableKey, usages)
+        } catch {
+          // Buffer fallback also failed; throw so callers use raw bytes
+        }
+      }
+      if (isBufferSourceError) {
+        throw new PasskeyBufferSourceFallbackError(bytes)
       }
       throw e
     }
@@ -232,20 +252,16 @@ export class NativePasskeyHandler implements IPasskeyHandler {
         { type: 'public-key', alg: -7 },
         { type: 'public-key', alg: -257 },
       ],
-      // Iteration 17: Use MINIMAL authenticatorSelection like Safe.global tutorial
-      // Safe.global uses ONLY requireResidentKey: true (no other fields)
-      // This matches their working implementation from https://github.com/5afe/react-native-passkeys-tutorial
       authenticatorSelection: {
-        requireResidentKey: true, // Only field used by Safe.global tutorial
+        residentKey: 'required',
+        userVerification: 'required',
       },
-      // Iteration 14: Add excludeCredentials explicitly - Android might require this parameter even if empty
       excludeCredentials: [], // Empty array for new passkey creation
-      // PRF extension required for key derivation (encryption key for wallet shares)
+      // PRF extension: react-native-passkeys expects all inputs as base64url (challenge, user.id, prf.eval.first)
       extensions: {
         prf: {
           eval: {
-            // PRF seed must be base64 (not base64url) as per Android Credentials API requirements
-            first: this.arrayBufferToBase64(new TextEncoder().encode(config.seed).buffer),
+            first: this.arrayBufferToBase64URL(new TextEncoder().encode(config.seed).buffer),
           },
         },
       },
@@ -276,9 +292,17 @@ export class NativePasskeyHandler implements IPasskeyHandler {
 
     let key: Uint8Array | undefined
     if (this.hasSubtle()) {
-      const derivedKey = await this.deriveFromPRFResult(prfResultBytes)
-      if (this.extractableKey) {
-        key = new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))
+      try {
+        const derivedKey = await this.deriveFromPRFResult(prfResultBytes)
+        if (this.extractableKey) {
+          key = new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))
+        }
+      } catch (e) {
+        if (e instanceof PasskeyBufferSourceFallbackError) {
+          key = this.getRawKeyBytes(e.prfResultBytes)
+        } else {
+          throw e
+        }
       }
     } else {
       if (this.extractableKey) {
@@ -299,26 +323,20 @@ export class NativePasskeyHandler implements IPasskeyHandler {
     }
 
     const challenge = this.getChallengeBytes()
-    // Android Credentials API requires base64url for challenge
     const challengeBase64URL = this.arrayBufferToBase64URL(challenge.buffer)
-    const credentialIdBuffer = this.base64ToArrayBuffer(config.id)
+    // openfort may store credential id as standard base64; react-native-passkeys expects base64url
+    const credentialId =
+      config.id.includes('+') || config.id.includes('/') ? this.base64ToBase64URL(config.id) : config.id
 
     const publicKey: PublicKeyCredentialRequestOptions = {
-      challenge: challengeBase64URL, // base64url for Android
+      challenge: challengeBase64URL,
       rpId: this.rpId,
-      allowCredentials: [
-        {
-          // credentialId is received from native module as base64, keep as base64
-          id: this.arrayBufferToBase64(credentialIdBuffer),
-          type: 'public-key',
-        },
-      ],
+      allowCredentials: [{ id: credentialId, type: 'public-key' }],
       userVerification: 'required',
       extensions: {
         prf: {
           eval: {
-            // PRF seed must be base64 (not base64url) as per Android Credentials API requirements
-            first: this.arrayBufferToBase64(new TextEncoder().encode(config.seed).buffer),
+            first: this.arrayBufferToBase64URL(new TextEncoder().encode(config.seed).buffer),
           },
         },
       },
@@ -328,8 +346,6 @@ export class NativePasskeyHandler implements IPasskeyHandler {
     if (!passkeysModule) {
       throw new Error('react-native-passkeys is not available. Please ensure it is installed and the app is rebuilt.')
     }
-    // Extract Passkeys object or use direct exports
-    // The library exports either { Passkeys: { create, get, isSupported } } or { create, get, isSupported } directly
     const PasskeysAPI = passkeysModule.Passkeys || passkeysModule
     if (!PasskeysAPI.get) {
       throw new Error('Passkeys API does not have get method')
@@ -356,8 +372,15 @@ export class NativePasskeyHandler implements IPasskeyHandler {
       throw new Error('Derived keys cannot be exported if extractableKey is not set to true')
     }
     if (this.hasSubtle()) {
-      const derivedKey = await this.deriveKey(config)
-      return new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))
+      try {
+        const derivedKey = await this.deriveKey(config)
+        return new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))
+      } catch (e) {
+        if (e instanceof PasskeyBufferSourceFallbackError) {
+          return this.getRawKeyBytes(e.prfResultBytes)
+        }
+        throw e
+      }
     }
     // React Native path: get assertion and use raw PRF bytes (same flow as deriveKey up to buffer)
     if (!this.rpId) {
@@ -365,21 +388,17 @@ export class NativePasskeyHandler implements IPasskeyHandler {
     }
     const challenge = this.getChallengeBytes()
     const challengeBase64URL = this.arrayBufferToBase64URL(challenge.buffer)
-    const credentialIdBuffer = this.base64ToArrayBuffer(config.id)
+    const credentialId =
+      config.id.includes('+') || config.id.includes('/') ? this.base64ToBase64URL(config.id) : config.id
     const publicKey: PublicKeyCredentialRequestOptions = {
       challenge: challengeBase64URL,
       rpId: this.rpId,
-      allowCredentials: [
-        {
-          id: this.arrayBufferToBase64(credentialIdBuffer),
-          type: 'public-key',
-        },
-      ],
+      allowCredentials: [{ id: credentialId, type: 'public-key' }],
       userVerification: 'required',
       extensions: {
         prf: {
           eval: {
-            first: this.arrayBufferToBase64(new TextEncoder().encode(config.seed).buffer),
+            first: this.arrayBufferToBase64URL(new TextEncoder().encode(config.seed).buffer),
           },
         },
       },
@@ -405,15 +424,10 @@ export class NativePasskeyHandler implements IPasskeyHandler {
   }
 }
 
-function arrayBufferToBase64URL(buffer: ArrayBuffer): string {
+function arrayBufferToBase64URL(buffer: ArrayBuffer | ArrayBufferLike): string {
   const bytes = new Uint8Array(buffer)
   const base64 = btoa(String.fromCharCode(...bytes))
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-}
-
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer)
-  return btoa(String.fromCharCode(...bytes))
 }
 
 /**
@@ -455,7 +469,7 @@ export async function checkPRFSupport(options: { rpId: string; rpName: string })
     const testUserId = `prf-check-${Date.now()}`
     const userIdBase64URL = arrayBufferToBase64URL(new TextEncoder().encode(testUserId).buffer)
     const testSeed = 'prf-check-seed'
-    const seedBase64 = arrayBufferToBase64(new TextEncoder().encode(testSeed).buffer)
+    const seedBase64URL = arrayBufferToBase64URL(new TextEncoder().encode(testSeed).buffer)
     const publicKey = {
       challenge: challengeBase64URL,
       rp: { id: rpId, name: rpName },
@@ -468,9 +482,12 @@ export async function checkPRFSupport(options: { rpId: string; rpName: string })
         { type: 'public-key', alg: -7 },
         { type: 'public-key', alg: -257 },
       ],
-      authenticatorSelection: { requireResidentKey: true },
+      authenticatorSelection: {
+        residentKey: 'required',
+        userVerification: 'required',
+      },
       excludeCredentials: [],
-      extensions: { prf: { eval: { first: seedBase64 } } },
+      extensions: { prf: { eval: { first: seedBase64URL } } },
       timeout: 60_000,
       attestation: 'none',
     }
