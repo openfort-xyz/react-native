@@ -149,28 +149,36 @@ export class NativePasskeyHandler implements IPasskeyHandler {
         isArray,
         isArrayBuffer,
         isView,
-        length: typeof (first as { length?: number })?.length === 'number' ? (first as { length: number }).length : undefined,
+        length:
+          typeof (first as { length?: number })?.length === 'number' ? (first as { length: number }).length : undefined,
       })
     }
     if (typeof first === 'string') {
       const buffer = this.base64ToArrayBuffer(first)
       const out = new Uint8Array(buffer)
-      if (__DEV__) console.log('[NativePasskeyHandler] normalizePRFResultFirst -> string path, output length:', out.length)
+      if (__DEV__)
+        console.log('[NativePasskeyHandler] normalizePRFResultFirst -> string path, output length:', out.length)
       return out
     }
     if (first instanceof ArrayBuffer) {
       const out = new Uint8Array(first)
-      if (__DEV__) console.log('[NativePasskeyHandler] normalizePRFResultFirst -> ArrayBuffer path, output length:', out.length)
+      if (__DEV__)
+        console.log('[NativePasskeyHandler] normalizePRFResultFirst -> ArrayBuffer path, output length:', out.length)
       return out
     }
     if (ArrayBuffer.isView(first)) {
       const out = new Uint8Array(first.buffer, first.byteOffset, first.byteLength)
-      if (__DEV__) console.log('[NativePasskeyHandler] normalizePRFResultFirst -> view path, output length:', out.length)
+      if (__DEV__)
+        console.log('[NativePasskeyHandler] normalizePRFResultFirst -> view path, output length:', out.length)
       return out
     }
     if (Array.isArray(first) || (typeof first === 'object' && first !== null && 'length' in first)) {
       const out = new Uint8Array(first as ArrayLike<number>)
-      if (__DEV__) console.log('[NativePasskeyHandler] normalizePRFResultFirst -> array/array-like path, output length:', out.length)
+      if (__DEV__)
+        console.log(
+          '[NativePasskeyHandler] normalizePRFResultFirst -> array/array-like path, output length:',
+          out.length
+        )
       return out
     }
     throw new Error('PRF result first: expected base64 string, ArrayBuffer, TypedArray, or array of numbers')
@@ -350,7 +358,10 @@ export class NativePasskeyHandler implements IPasskeyHandler {
 
     const prfResultBytes = this.normalizePRFResultFirst(prfResults.results.first)
     if (__DEV__) {
-      console.log('[NativePasskeyHandler] createPasskey prfResultBytes:', { length: prfResultBytes?.length, hasSubtle: this.hasSubtle() })
+      console.log('[NativePasskeyHandler] createPasskey prfResultBytes:', {
+        length: prfResultBytes?.length,
+        hasSubtle: this.hasSubtle(),
+      })
     }
 
     let key: Uint8Array | undefined
@@ -374,18 +385,22 @@ export class NativePasskeyHandler implements IPasskeyHandler {
       }
     }
 
+    // Plain array so it survives JSON when openfort-js sends it to the Shield iframe (RN→WebView).
+    // Iframe must convert to Uint8Array before importKey: new Uint8Array(key).
+    const returnKey = key != null ? ([...key] as unknown as Uint8Array) : undefined
     if (__DEV__) {
       console.log('[NativePasskeyHandler] createPasskey returning:', {
         id: credential.id,
-        keyDefined: key != null,
-        keyLength: key?.length,
-        keyType: key?.constructor?.name,
+        keyDefined: returnKey != null,
+        keyLength: returnKey?.length,
+        keyType: returnKey?.constructor?.name,
+        isArray: Array.isArray(returnKey),
       })
     }
     return {
       id: credential.id,
       displayName: config.displayName,
-      key,
+      key: returnKey,
     }
   }
 
@@ -449,11 +464,13 @@ export class NativePasskeyHandler implements IPasskeyHandler {
             keyType: key?.constructor?.name,
           })
         }
-        return key
+        // Return as plain array so it survives JSON when sent to the Shield iframe (RN→WebView).
+        return Array.from(key) as unknown as Uint8Array
       } catch (e) {
         if (e instanceof PasskeyBufferSourceFallbackError) {
           if (__DEV__) console.log('[NativePasskeyHandler] deriveAndExportKey using raw PRF bytes fallback')
-          return this.getRawKeyBytes(e.prfResultBytes)
+          const key = this.getRawKeyBytes(e.prfResultBytes)
+          return Array.from(key) as unknown as Uint8Array
         }
         throw e
       }
@@ -499,6 +516,7 @@ export class NativePasskeyHandler implements IPasskeyHandler {
         keyType: key?.constructor?.name,
       })
     }
-    return key
+    // Return as plain array so it survives JSON when sent to the Shield iframe (RN→WebView).
+    return Array.from(key) as unknown as Uint8Array
   }
 }
