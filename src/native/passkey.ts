@@ -391,16 +391,17 @@ export class NativePasskeyHandler implements IPasskeyHandler {
       console.log('[NativePasskeyHandler] createPasskey returning:', {
         id: credential.id,
         hasKey: key != null,
-        key: key?.toString(), // TODO: remove this after testing
+        keyLength: key?.length,
+        key: key,
+        keyuintarray: key ? new Uint8Array(key) : undefined,
       })
     }
-    // RN→WebView uses JSON.stringify (ReactNativeMessenger). Uint8Array would become {"0":n,"1":n,...};
-    // Shield then gets a plain object and importKey('raw', key) fails. Return a plain array so
-    // JSON keeps it as [n,n,...]; Shield must do new Uint8Array(key) before importKey.
+    // RN→WebView uses JSON.stringify. Return plain array cast to Uint8Array for interface; JSON sends [n,n,...].
+    // Shield (iframe) must convert received key to Uint8Array before crypto.subtle.importKey (e.g. new Uint8Array(key)).
     return {
       id: credential.id,
       displayName: config.displayName,
-      key: typeof key === 'object' ? new Uint8Array(key) : typeof key === 'number' ? new Uint8Array([key]) : key,
+      key: key != null ? new Uint8Array(key) : undefined,
     }
   }
 
