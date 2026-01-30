@@ -399,7 +399,7 @@ export class NativePasskeyHandler implements NativePasskeyHandlerInterface {
       }
     }
 
-    // Store key locally for subsequent encrypt(); do not return key (local encryption flow).
+    // Store key locally for subsequent encrypt(); also return key so SDK/iframe can use it for initial wallet creation.
     if (key != null) {
       this.keyStore.set(credential.id, key)
     }
@@ -412,6 +412,7 @@ export class NativePasskeyHandler implements NativePasskeyHandlerInterface {
     return {
       id: credential.id,
       displayName: config.displayName,
+      ...(key != null && { key }),
     }
   }
 
