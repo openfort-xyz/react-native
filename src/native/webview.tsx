@@ -7,8 +7,6 @@ import { AppState, Platform, View } from 'react-native'
 import type { WebViewMessageEvent } from 'react-native-webview'
 import WebView from 'react-native-webview'
 import { logger } from '../lib/logger'
-import type { NativePasskeyHandlerInterface } from './passkey'
-import { handlePasskeyMessage, isPasskeyMessage } from './passkeyMessages'
 import { handleSecureStorageMessage, isSecureStorageMessage } from './storage'
 
 /**
@@ -19,8 +17,6 @@ interface EmbeddedWalletWebViewProps {
   client: OpenfortClient
   /** Whether the client is ready and initialized */
   isClientReady: boolean
-  /** Passkey handler for local encrypt/decrypt (Shield messages); when set, passkey messages are handled in-app */
-  passkeyHandler?: NativePasskeyHandlerInterface | null
   /** Callback when WebView proxy status changes */
   onProxyStatusChange?: (status: 'loading' | 'loaded' | 'reloading') => void
 }
@@ -35,7 +31,6 @@ interface EmbeddedWalletWebViewProps {
 export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
   client,
   isClientReady,
-  passkeyHandler,
   onProxyStatusChange,
 }) => {
   const webViewRef = useRef<WebView>(null)
@@ -96,12 +91,6 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
           webViewRef.current?.postMessage(JSON.stringify(response))
           return
         }
-        // Handle passkey messages (local encryption)
-        if (isPasskeyMessage(messageData) && passkeyHandler) {
-          const response = await handlePasskeyMessage(messageData, passkeyHandler)
-          webViewRef.current?.postMessage(JSON.stringify(response))
-          return
-        }
         // Forward all messages to the embedded wallet
         client.embeddedWallet.onMessage(messageData)
       } catch (error) {
@@ -109,7 +98,7 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
         // Don't crash the app on message handling errors
       }
     },
-    [client, passkeyHandler]
+    [client]
   )
 
   // Ref callback to set up message poster immediately

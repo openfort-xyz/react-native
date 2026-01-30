@@ -484,7 +484,6 @@ export const OpenfortProvider = ({
         <EmbeddedWalletWebView
           client={client}
           isClientReady={isReady}
-          passkeyHandler={passkeyHandler ?? null}
           onProxyStatusChange={(status: 'loading' | 'loaded' | 'reloading') => {
             // Handle WebView status changes for debugging
             if (verbose) {
