@@ -2,25 +2,18 @@ import { Openfort as OpenfortClient, type OpenfortSDKConfiguration } from '@open
 import { applicationId } from 'expo-application'
 import { digest } from 'expo-crypto'
 import { logger } from '../lib/logger'
-import { NativePasskeyHandler } from '../native/passkey'
 import { createNormalizedStorage, SecureStorageAdapter } from './storage'
-
-/** {@link OpenfortClient} with optional {@link NativePasskeyHandler} for WebView/Shield integration. */
-export type OpenfortClientWithPasskey = OpenfortClient & {
-  passkeyHandler?: NativePasskeyHandler
-}
 
 /**
  * Creates an {@link OpenfortClient} configured for Expo and React Native environments.
  *
  * The helper ensures Expo-specific utilities like secure storage and the crypto digest
- * implementation are wired into the underlying Openfort SDK. When passkey recovery is
- * configured, the same {@link NativePasskeyHandler} is attached as {@link OpenfortClientWithPasskey.passkeyHandler}
- * so the WebView can handle encrypt/decrypt messages from the Shield iframe.
+ * implementation are wired into the underlying Openfort SDK. Passkey handling should be
+ * provided by the caller via overrides (e.g. passkeyHandler) when needed.
  *
  * @param options - {@link OpenfortSDKConfiguration} containing the base configuration,
  * overrides, and optional Shield configuration.
- * @returns The configured {@link OpenfortClient} with optional {@link NativePasskeyHandler} on {@link OpenfortClientWithPasskey.passkeyHandler}.
+ * @returns The configured {@link OpenfortClient}.
  *
  * @example
  * ```ts
@@ -30,7 +23,6 @@ export type OpenfortClientWithPasskey = OpenfortClient & {
  *   shieldConfiguration: new ShieldConfiguration({ shieldPublishableKey })
  * });
  * const accessToken = await client.getAccessToken();
- * // client.passkeyHandler is set when passkey recovery is configured
  * ```
  */
 export function createOpenfortClient({
@@ -38,20 +30,11 @@ export function createOpenfortClient({
   overrides,
   shieldConfiguration,
   thirdPartyAuth,
-}: OpenfortSDKConfiguration): OpenfortClientWithPasskey {
+}: OpenfortSDKConfiguration): OpenfortClient {
   const nativeAppId = getNativeApplicationId()
   logger.info('Creating Openfort client with native app ID', nativeAppId)
 
-  let passkeyHandler: NativePasskeyHandler | undefined
-  if (shieldConfiguration?.passkeyRpId && !overrides?.passkeyHandler) {
-    passkeyHandler = new NativePasskeyHandler({
-      rpId: shieldConfiguration.passkeyRpId,
-      rpName: shieldConfiguration.passkeyRpName,
-      extractableKey: true,
-    })
-  }
-
-  const client = new OpenfortClient({
+  return new OpenfortClient({
     baseConfiguration: {
       nativeAppIdentifier: nativeAppId,
       ...baseConfiguration,
@@ -63,16 +46,10 @@ export function createOpenfortClient({
         digest: digest as any,
       },
       storage: createNormalizedStorage(baseConfiguration.publishableKey, SecureStorageAdapter),
-      ...(passkeyHandler && { passkeyHandler }),
     },
     shieldConfiguration,
     thirdPartyAuth,
-  }) as OpenfortClientWithPasskey
-
-  if (passkeyHandler) {
-    client.passkeyHandler = passkeyHandler
-  }
-  return client
+  })
 }
 
 /**

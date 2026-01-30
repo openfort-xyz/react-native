@@ -566,18 +566,18 @@ export class NativePasskeyHandler implements NativePasskeyHandlerInterface {
     throw new Error('deriveKey (CryptoKey) is not supported in React Native; passkey recovery uses deriveAndExportKey.')
   }
 
-	async deriveAndExportKey(config: { id: string; seed: string }): Promise<Uint8Array> {
-		if (!this.extractableKey) {
-			throw new Error('Derived keys cannot be exported if extractableKey is not set to true')
-		}
-		// Key stays local: do not export the key for a passkey we just created (it's in keyStore for encrypt() only).
-		// If the SDK calls getPasskeyKey(id) after createPasskey, it must be updated to use handler.encrypt(plaintext, passkeyId) instead.
-		if (this.keyStore.has(config.id)) {
-			throw new Error(
-				'Passkey key is not exported (local encryption). The SDK must call handler.encrypt(plaintext, passkeyId) instead of getPasskeyKey so the key never leaves the device. Update openfort-js to use the extended passkey handler encrypt path.',
-			)
-		}
-		if (this.hasSubtle()) {
+  async deriveAndExportKey(config: { id: string; seed: string }): Promise<Uint8Array> {
+    if (!this.extractableKey) {
+      throw new Error('Derived keys cannot be exported if extractableKey is not set to true')
+    }
+    // Key stays local: do not export the key for a passkey we just created (it's in keyStore for encrypt() only).
+    // If the SDK calls getPasskeyKey(id) after createPasskey, it must be updated to use handler.encrypt(plaintext, passkeyId) instead.
+    if (this.keyStore.has(config.id)) {
+      throw new Error(
+        'Passkey key is not exported (local encryption). The SDK must call handler.encrypt(plaintext, passkeyId) instead of getPasskeyKey so the key never leaves the device. Update openfort-js to use the extended passkey handler encrypt path.'
+      )
+    }
+    if (this.hasSubtle()) {
       try {
         const derivedKey = await this.deriveKey(config)
         const key = new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))

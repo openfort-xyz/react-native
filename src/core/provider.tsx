@@ -10,7 +10,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { validateEnvironment } from '../lib/environmentValidation'
 import { getEmbeddedStateName, logger } from '../lib/logger'
-import { EmbeddedWalletWebView, WebViewUtils } from '../native'
+import { EmbeddedWalletWebView, NativePasskeyHandler, WebViewUtils } from '../native'
 import type { OAuthFlowState, PasswordFlowState, RecoveryFlowState, SiweFlowState } from '../types'
 import { createOpenfortClient, setDefaultClient } from './client'
 import { OpenfortContext, type OpenfortContextValue } from './context'
@@ -252,7 +252,19 @@ export const OpenfortProvider = ({
     logger.setVerbose(verbose)
   }, [verbose])
 
-  // Create or use provided client; passkeyHandler lives on the client for WebView/Shield
+  // Create passkey handler if passkey recovery is configured (single instance for SDK and WebView)
+  const passkeyHandler = useMemo(() => {
+    if (walletConfig?.passkeyRpId) {
+      return new NativePasskeyHandler({
+        rpId: walletConfig.passkeyRpId,
+        rpName: walletConfig.passkeyRpName,
+        extractableKey: true,
+      })
+    }
+    return undefined
+  }, [walletConfig?.passkeyRpId, walletConfig?.passkeyRpName])
+
+  // Create client with passkeyHandler in overrides when configured
   const client = useMemo(() => {
     const c = createOpenfortClient({
       baseConfiguration: {
@@ -266,12 +278,15 @@ export const OpenfortProvider = ({
             passkeyRpName: walletConfig.passkeyRpName,
           })
         : undefined,
-      overrides,
+      overrides: {
+        ...overrides,
+        ...(passkeyHandler && { passkeyHandler }),
+      },
       thirdPartyAuth,
     })
     setDefaultClient(c)
     return c
-  }, [publishableKey, walletConfig, overrides])
+  }, [publishableKey, walletConfig, overrides, thirdPartyAuth, passkeyHandler])
 
   // Embedded state
   const [embeddedState, setEmbeddedState] = useState<EmbeddedState>(EmbeddedState.NONE)
@@ -469,7 +484,7 @@ export const OpenfortProvider = ({
         <EmbeddedWalletWebView
           client={client}
           isClientReady={isReady}
-          passkeyHandler={client.passkeyHandler}
+          passkeyHandler={passkeyHandler ?? null}
           onProxyStatusChange={(status: 'loading' | 'loaded' | 'reloading') => {
             // Handle WebView status changes for debugging
             if (verbose) {

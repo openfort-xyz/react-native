@@ -84,8 +84,7 @@ export async function handlePasskeyMessage(
     if (message.event === 'app:passkey:decrypt') {
       const { passkeyId, seed, ciphertext: ciphertextArr, iv: ivArr } = message.data
       if (!passkeyId || !seed || !Array.isArray(ciphertextArr) || !Array.isArray(ivArr)) {
-        baseResponse.data.error =
-          'decrypt requires passkeyId, seed, ciphertext (number[]), and iv (number[])'
+        baseResponse.data.error = 'decrypt requires passkeyId, seed, ciphertext (number[]), and iv (number[])'
         return baseResponse
       }
       const ciphertext = new Uint8Array(ciphertextArr)
