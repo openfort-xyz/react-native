@@ -139,18 +139,39 @@ export class NativePasskeyHandler implements IPasskeyHandler {
    * requires a BufferSource (e.g. Uint8Array) and some React Native polyfills reject plain ArrayBuffer.
    */
   private normalizePRFResultFirst(first: unknown): Uint8Array {
+    const type = first === null ? 'null' : typeof first
+    const isArray = Array.isArray(first)
+    const isArrayBuffer = first instanceof ArrayBuffer
+    const isView = typeof first === 'object' && first !== null && ArrayBuffer.isView(first)
+    if (__DEV__) {
+      console.log('[NativePasskeyHandler] normalizePRFResultFirst input:', {
+        type,
+        isArray,
+        isArrayBuffer,
+        isView,
+        length: typeof (first as { length?: number })?.length === 'number' ? (first as { length: number }).length : undefined,
+      })
+    }
     if (typeof first === 'string') {
       const buffer = this.base64ToArrayBuffer(first)
-      return new Uint8Array(buffer)
+      const out = new Uint8Array(buffer)
+      if (__DEV__) console.log('[NativePasskeyHandler] normalizePRFResultFirst -> string path, output length:', out.length)
+      return out
     }
     if (first instanceof ArrayBuffer) {
-      return new Uint8Array(first)
+      const out = new Uint8Array(first)
+      if (__DEV__) console.log('[NativePasskeyHandler] normalizePRFResultFirst -> ArrayBuffer path, output length:', out.length)
+      return out
     }
     if (ArrayBuffer.isView(first)) {
-      return new Uint8Array(first.buffer, first.byteOffset, first.byteLength)
+      const out = new Uint8Array(first.buffer, first.byteOffset, first.byteLength)
+      if (__DEV__) console.log('[NativePasskeyHandler] normalizePRFResultFirst -> view path, output length:', out.length)
+      return out
     }
     if (Array.isArray(first) || (typeof first === 'object' && first !== null && 'length' in first)) {
-      return new Uint8Array(first as ArrayLike<number>)
+      const out = new Uint8Array(first as ArrayLike<number>)
+      if (__DEV__) console.log('[NativePasskeyHandler] normalizePRFResultFirst -> array/array-like path, output length:', out.length)
+      return out
     }
     throw new Error('PRF result first: expected base64 string, ArrayBuffer, TypedArray, or array of numbers')
   }
@@ -195,25 +216,51 @@ export class NativePasskeyHandler implements IPasskeyHandler {
   }
 
   /**
-   * Derives a CryptoKey from PRF result. Uses a dedicated ArrayBuffer + Uint8Array for
-   * importKey (Google-inspired); on BufferSource error tries Node Buffer fallback; if still
+   * Derives a CryptoKey from PRF result. Normalizes key data to a standalone Uint8Array
+   * before importKey so polyfills and strict environments accept it as BufferSource.
    */
   private async deriveFromPRFResult(prfResult: ArrayBuffer | Uint8Array): Promise<CryptoKey> {
     const bytes = prfResult instanceof Uint8Array ? prfResult : new Uint8Array(prfResult)
     const keyBytes = this.getRawKeyBytes(bytes)
 
-    // Dedicated ArrayBuffer + fresh Uint8Array so polyfills get a valid BufferSource (no shared/offset view)
-    const keyBuffer = new ArrayBuffer(this.derivedKeyLengthBytes)
-    const keyView = new Uint8Array(keyBuffer)
-    keyView.set(keyBytes.subarray(0, this.derivedKeyLengthBytes))
+    if (__DEV__) {
+      console.log('[NativePasskeyHandler] deriveFromPRFResult:', {
+        prfResultType: prfResult?.constructor?.name,
+        keyBytesLength: keyBytes.length,
+        derivedKeyLengthBytes: this.derivedKeyLengthBytes,
+      })
+    }
+
+    // Normalize to a standalone Uint8Array copy (BufferSource). Avoid passing views or
+    // ArrayBuffer that some environments reject; a fresh Uint8Array is universally accepted.
+    const keyData = new Uint8Array(this.derivedKeyLengthBytes)
+    keyData.set(keyBytes.subarray(0, this.derivedKeyLengthBytes))
 
     const algo = { name: 'AES-CBC', length: this.derivedKeyLengthBytes * 8 }
     const usages: KeyUsage[] = ['encrypt', 'decrypt']
 
+    if (__DEV__) {
+      console.log('[NativePasskeyHandler] deriveFromPRFResult before importKey:', {
+        keyDataType: keyData?.constructor?.name,
+        keyDataLength: keyData?.length,
+        isUint8Array: keyData instanceof Uint8Array,
+        isArrayBufferView: ArrayBuffer.isView(keyData),
+      })
+    }
+
     try {
-      return await crypto.subtle.importKey('raw', new Uint8Array(keyBuffer), algo, this.extractableKey, usages)
+      const key = await crypto.subtle.importKey('raw', keyData, algo, this.extractableKey, usages)
+      if (__DEV__) console.log('[NativePasskeyHandler] deriveFromPRFResult importKey succeeded')
+      return key
     } catch (e) {
       const isBufferSourceError = e instanceof TypeError && e.message?.includes('BufferSource')
+      if (__DEV__) {
+        console.warn('[NativePasskeyHandler] deriveFromPRFResult importKey failed:', {
+          error: e instanceof Error ? e.message : String(e),
+          isBufferSourceError,
+          keyDataLength: keyData?.length,
+        })
+      }
       type BufferCtor = { from(arr: Uint8Array): ArrayBufferView }
       const globalBuf = (globalThis as { Buffer?: BufferCtor }).Buffer
       const BufferImpl: BufferCtor | null =
@@ -228,9 +275,10 @@ export class NativePasskeyHandler implements IPasskeyHandler {
             })()
       if (isBufferSourceError && BufferImpl) {
         try {
-          const keyData = BufferImpl.from(keyView) as unknown as BufferSource
-          return await crypto.subtle.importKey('raw', keyData, algo, this.extractableKey, usages)
-        } catch {
+          const keyDataBuffer = BufferImpl.from(keyData) as unknown as BufferSource
+          return await crypto.subtle.importKey('raw', keyDataBuffer, algo, this.extractableKey, usages)
+        } catch (fallbackErr) {
+          if (__DEV__) console.warn('[NativePasskeyHandler] deriveFromPRFResult Buffer fallback failed:', fallbackErr)
           // Buffer fallback also failed; throw so callers use raw bytes
         }
       }
@@ -301,6 +349,9 @@ export class NativePasskeyHandler implements IPasskeyHandler {
     }
 
     const prfResultBytes = this.normalizePRFResultFirst(prfResults.results.first)
+    if (__DEV__) {
+      console.log('[NativePasskeyHandler] createPasskey prfResultBytes:', { length: prfResultBytes?.length, hasSubtle: this.hasSubtle() })
+    }
 
     let key: Uint8Array | undefined
     if (this.hasSubtle()) {
@@ -311,6 +362,7 @@ export class NativePasskeyHandler implements IPasskeyHandler {
         }
       } catch (e) {
         if (e instanceof PasskeyBufferSourceFallbackError) {
+          if (__DEV__) console.log('[NativePasskeyHandler] createPasskey using raw PRF bytes fallback')
           key = this.getRawKeyBytes(e.prfResultBytes)
         } else {
           throw e
@@ -322,6 +374,14 @@ export class NativePasskeyHandler implements IPasskeyHandler {
       }
     }
 
+    if (__DEV__) {
+      console.log('[NativePasskeyHandler] createPasskey returning:', {
+        id: credential.id,
+        keyDefined: key != null,
+        keyLength: key?.length,
+        keyType: key?.constructor?.name,
+      })
+    }
     return {
       id: credential.id,
       displayName: config.displayName,
@@ -382,9 +442,17 @@ export class NativePasskeyHandler implements IPasskeyHandler {
     if (this.hasSubtle()) {
       try {
         const derivedKey = await this.deriveKey(config)
-        return new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))
+        const key = new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))
+        if (__DEV__) {
+          console.log('[NativePasskeyHandler] deriveAndExportKey (subtle path) returning:', {
+            keyLength: key?.length,
+            keyType: key?.constructor?.name,
+          })
+        }
+        return key
       } catch (e) {
         if (e instanceof PasskeyBufferSourceFallbackError) {
+          if (__DEV__) console.log('[NativePasskeyHandler] deriveAndExportKey using raw PRF bytes fallback')
           return this.getRawKeyBytes(e.prfResultBytes)
         }
         throw e
@@ -424,6 +492,13 @@ export class NativePasskeyHandler implements IPasskeyHandler {
       throw new Error('PRF extension not supported or missing results')
     }
     const prfResultBytes = this.normalizePRFResultFirst(prfResults.results.first)
-    return this.getRawKeyBytes(prfResultBytes)
+    const key = this.getRawKeyBytes(prfResultBytes)
+    if (__DEV__) {
+      console.log('[NativePasskeyHandler] deriveAndExportKey (RN path) returning:', {
+        keyLength: key?.length,
+        keyType: key?.constructor?.name,
+      })
+    }
+    return key
   }
 }
