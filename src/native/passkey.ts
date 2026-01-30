@@ -513,9 +513,10 @@ export class NativePasskeyHandler implements IPasskeyHandler {
       console.log('[NativePasskeyHandler] deriveAndExportKey (RN path) returning:', {
         keyLength: key?.length,
         keyType: key?.constructor?.name,
+        key: key?.toString(), // TODO: remove this after testing
       })
     }
     // Return as plain array so it survives JSON when sent to the Shield iframe (RN→WebView).
-    return Array.from(key) as unknown as Uint8Array
+    return typeof key === 'object' ? new Uint8Array(key) : typeof key === 'number' ? new Uint8Array([key]) : key
   }
 }
