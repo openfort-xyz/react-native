@@ -391,6 +391,7 @@ export class NativePasskeyHandler implements IPasskeyHandler {
       console.log('[NativePasskeyHandler] createPasskey returning:', {
         id: credential.id,
         hasKey: key != null,
+        key: key?.toString(), // TODO: remove this after testing
       })
     }
     // RN→WebView uses JSON.stringify (ReactNativeMessenger). Uint8Array would become {"0":n,"1":n,...};
@@ -399,7 +400,7 @@ export class NativePasskeyHandler implements IPasskeyHandler {
     return {
       id: credential.id,
       displayName: config.displayName,
-      ...(key != null && { key: Array.from(key) as unknown as Uint8Array }),
+      key: typeof key === 'object' ? new Uint8Array(key) : typeof key === 'number' ? new Uint8Array([key]) : key,
     }
   }
 
@@ -513,10 +514,9 @@ export class NativePasskeyHandler implements IPasskeyHandler {
       console.log('[NativePasskeyHandler] deriveAndExportKey (RN path) returning:', {
         keyLength: key?.length,
         keyType: key?.constructor?.name,
-        key: key?.toString(), // TODO: remove this after testing
       })
     }
     // Return as plain array so it survives JSON when sent to the Shield iframe (RN→WebView).
-    return typeof key === 'object' ? new Uint8Array(key) : typeof key === 'number' ? new Uint8Array([key]) : key
+    return new Uint8Array(key)
   }
 }
