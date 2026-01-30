@@ -566,11 +566,19 @@ export class NativePasskeyHandler implements NativePasskeyHandlerInterface {
     throw new Error('deriveKey (CryptoKey) is not supported in React Native; passkey recovery uses deriveAndExportKey.')
   }
 
-  async deriveAndExportKey(config: { id: string; seed: string }): Promise<Uint8Array> {
-    if (!this.extractableKey) {
-      throw new Error('Derived keys cannot be exported if extractableKey is not set to true')
-    }
-    if (this.hasSubtle()) {
+	async deriveAndExportKey(config: { id: string; seed: string }): Promise<Uint8Array> {
+		if (!this.extractableKey) {
+			throw new Error('Derived keys cannot be exported if extractableKey is not set to true')
+		}
+		// If we just created this passkey, return the cached key to avoid a second passkey prompt (SDK expects key from createPasskey; when we don't return it, SDK calls getPasskeyKey which would trigger get() again and UserCancelled).
+		const cached = this.keyStore.get(config.id)
+		if (cached) {
+			if (__DEV__) {
+				console.log('[NativePasskeyHandler] deriveAndExportKey returning cached key for', config.id, '(avoids second passkey prompt)')
+			}
+			return new Uint8Array(cached)
+		}
+		if (this.hasSubtle()) {
       try {
         const derivedKey = await this.deriveKey(config)
         const key = new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))
