@@ -1,36 +1,53 @@
 import type { IPasskeyHandler } from '@openfort/openfort-js'
 
-type PasskeysModule = {
-  create: (options: any) => Promise<any>
-  get: (options: any) => Promise<any>
-  isSupported: () => Promise<boolean>
-  Passkeys?: {
-    create: (options: any) => Promise<any>
-    get: (options: any) => Promise<any>
-    isSupported: () => Promise<boolean>
-  }
+/** Resolved API from react-native-passkeys (module.Passkeys ?? module). Library may export sync or async isSupported. */
+export type PasskeysAPI = {
+  create?: (options: any) => Promise<any>
+  get?: (options: any) => Promise<any>
+  /** Sync on native (iOS/Android), sync on web; may be function or boolean. */
+  isSupported?: (() => boolean) | (() => Promise<boolean>) | boolean
 }
 
-let Passkeys: PasskeysModule | null = null
+let passkeysModule: (PasskeysAPI & { Passkeys?: PasskeysAPI }) | null = null
 let passkeysLoadAttempted = false
 let passkeysLoadError: Error | null = null
 
-function getPasskeys(): PasskeysModule | null {
-  if (!Passkeys && !passkeysLoadAttempted) {
-    passkeysLoadAttempted = true
-    try {
-      Passkeys = require('react-native-passkeys')
-    } catch (error) {
-      passkeysLoadError = error instanceof Error ? error : new Error(String(error))
-      return null
-    }
+/**
+ * Returns the passkeys API (create, get, isSupported). Resolves module.Passkeys ?? module once.
+ * Returns null if the module failed to load.
+ */
+function getPasskeysAPI(): PasskeysAPI | null {
+  if (passkeysLoadAttempted) {
+    return passkeysLoadError ? null : passkeysModule ? (passkeysModule.Passkeys ?? passkeysModule) : null
   }
-
-  if (passkeysLoadError) {
+  passkeysLoadAttempted = true
+  try {
+    passkeysModule = require('react-native-passkeys')
+    return passkeysModule ? (passkeysModule.Passkeys ?? passkeysModule) : null
+  } catch (error) {
+    passkeysLoadError = error instanceof Error ? error : new Error(String(error))
     return null
   }
+}
 
-  return Passkeys
+/**
+ * Checks if the device supports passkeys (WebAuthn). Uses the library's isSupported() only — no credential creation.
+ * Normalizes sync/async and function/boolean from react-native-passkeys.
+ */
+export async function isPasskeySupported(): Promise<boolean> {
+  const api = getPasskeysAPI()
+  if (!api || api.isSupported == null) {
+    return false
+  }
+  const supported = api.isSupported
+  if (typeof supported === 'boolean') {
+    return supported
+  }
+  if (typeof supported === 'function') {
+    const result = supported()
+    return result instanceof Promise ? result : Promise.resolve(result)
+  }
+  return false
 }
 
 export interface NativePasskeyHandlerConfig {
@@ -269,16 +286,11 @@ export class NativePasskeyHandler implements IPasskeyHandler {
       attestation: 'none', // Iteration 13: Using "none" per Android docs examples
     }
 
-    const passkeysModule = getPasskeys()
-    if (!passkeysModule) {
-      throw new Error('react-native-passkeys module not available')
+    const api = getPasskeysAPI()
+    if (!api?.create || typeof api.create !== 'function') {
+      throw new Error('react-native-passkeys module not available or create not available')
     }
-
-    const PasskeysAPI = passkeysModule.Passkeys || passkeysModule
-    if (!PasskeysAPI.create || typeof PasskeysAPI.create !== 'function') {
-      throw new Error('Passkeys API create method not available')
-    }
-    const credential = await PasskeysAPI.create(publicKey as any)
+    const credential = await api.create(publicKey as any)
     if (!credential) {
       throw new Error('could not create passkey')
     }
@@ -342,15 +354,11 @@ export class NativePasskeyHandler implements IPasskeyHandler {
       },
     }
 
-    const passkeysModule = getPasskeys()
-    if (!passkeysModule) {
+    const api = getPasskeysAPI()
+    if (!api?.get || typeof api.get !== 'function') {
       throw new Error('react-native-passkeys is not available. Please ensure it is installed and the app is rebuilt.')
     }
-    const PasskeysAPI = passkeysModule.Passkeys || passkeysModule
-    if (!PasskeysAPI.get) {
-      throw new Error('Passkeys API does not have get method')
-    }
-    const assertion = await PasskeysAPI.get(publicKey as any)
+    const assertion = await api.get(publicKey as any)
     if (!assertion) {
       throw new Error('could not get passkey assertion')
     }
@@ -403,15 +411,11 @@ export class NativePasskeyHandler implements IPasskeyHandler {
         },
       },
     }
-    const passkeysModule = getPasskeys()
-    if (!passkeysModule) {
+    const api = getPasskeysAPI()
+    if (!api?.get || typeof api.get !== 'function') {
       throw new Error('react-native-passkeys is not available. Please ensure it is installed and the app is rebuilt.')
     }
-    const PasskeysAPI = passkeysModule.Passkeys || passkeysModule
-    if (!PasskeysAPI.get) {
-      throw new Error('Passkeys API does not have get method')
-    }
-    const assertion = await PasskeysAPI.get(publicKey as any)
+    const assertion = await api.get(publicKey as any)
     if (!assertion) {
       throw new Error('could not get passkey assertion')
     }
@@ -421,82 +425,5 @@ export class NativePasskeyHandler implements IPasskeyHandler {
     }
     const prfResultBytes = this.normalizePRFResultFirst(prfResults.results.first)
     return this.getRawKeyBytes(prfResultBytes)
-  }
-}
-
-function arrayBufferToBase64URL(buffer: ArrayBuffer | ArrayBufferLike): string {
-  const bytes = new Uint8Array(buffer)
-  const base64 = btoa(String.fromCharCode(...bytes))
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-}
-
-/**
- * Performs a real PRF support check by creating a minimal test credential with the PRF extension.
- * Use this to gate "Create with passkey" on actual PRF availability (e.g. after assetlinks.json is configured on Android).
- *
- * @param options - Must include rpId and rpName (same values as your passkey handler config).
- * @returns true if PRF is supported and a test credential was created with prf.results.first; false otherwise. Does not throw.
- *
- * @example
- * ```ts
- * const supported = await checkPRFSupport({ rpId: 'your.domain.com', rpName: 'Openfort - Embedded Wallet' });
- * if (supported) {
- *   // Show "Create Wallet with Passkey" button
- * }
- * ```
- */
-export async function checkPRFSupport(options: { rpId: string; rpName: string }): Promise<boolean> {
-  const { rpId, rpName } = options
-  try {
-    const passkeysModule = getPasskeys()
-    if (!passkeysModule) {
-      return false
-    }
-    const PasskeysAPI = passkeysModule.Passkeys || passkeysModule
-    if (typeof PasskeysAPI.create !== 'function') {
-      return false
-    }
-    const isSupported =
-      typeof PasskeysAPI.isSupported === 'function' ? await PasskeysAPI.isSupported() : PasskeysAPI.isSupported
-    if (!isSupported) {
-      return false
-    }
-    if (!rpId || !rpName) {
-      return false
-    }
-    const challenge = crypto.getRandomValues(new Uint8Array(32))
-    const challengeBase64URL = arrayBufferToBase64URL(challenge.buffer)
-    const testUserId = `prf-check-${Date.now()}`
-    const userIdBase64URL = arrayBufferToBase64URL(new TextEncoder().encode(testUserId).buffer)
-    const testSeed = 'prf-check-seed'
-    const seedBase64URL = arrayBufferToBase64URL(new TextEncoder().encode(testSeed).buffer)
-    const publicKey = {
-      challenge: challengeBase64URL,
-      rp: { id: rpId, name: rpName },
-      user: {
-        id: userIdBase64URL,
-        name: testUserId,
-        displayName: rpName,
-      },
-      pubKeyCredParams: [
-        { type: 'public-key', alg: -7 },
-        { type: 'public-key', alg: -257 },
-      ],
-      authenticatorSelection: {
-        residentKey: 'required',
-        userVerification: 'required',
-      },
-      excludeCredentials: [],
-      extensions: { prf: { eval: { first: seedBase64URL } } },
-      timeout: 60_000,
-      attestation: 'none',
-    }
-    const credential = await PasskeysAPI.create(publicKey as PublicKeyCredentialCreationOptions)
-    if (!credential?.clientExtensionResults?.prf?.results?.first) {
-      return false
-    }
-    return true
-  } catch {
-    return false
   }
 }

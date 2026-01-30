@@ -13,9 +13,9 @@ export {
   openOAuthSession,
   parseOAuthUrl,
 } from './oauth'
-export type { NativePasskeyHandlerConfig } from './passkey'
-// Passkey handler and PRF support check
-export { checkPRFSupport, NativePasskeyHandler } from './passkey'
+export type { NativePasskeyHandlerConfig, PasskeysAPI } from './passkey'
+// Passkey handler and support checks
+export { isPasskeySupported, NativePasskeyHandler } from './passkey'
 export type {
   SecureStorageMessage,
   SecureStorageResponse,
