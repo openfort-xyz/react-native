@@ -387,21 +387,19 @@ export class NativePasskeyHandler implements IPasskeyHandler {
       }
     }
 
-    const bufferKey = key ? new Uint8Array(key) : null
     if (__DEV__) {
       console.log('[NativePasskeyHandler] createPasskey returning:', {
         id: credential.id,
         hasKey: key != null,
-        keyLength: key?.length,
-        bufferKeyLength: bufferKey?.length,
-        bufferKeyType: bufferKey?.constructor?.name,
-        bufferKey: bufferKey?.toString(),
       })
     }
+    // RN→WebView uses JSON.stringify (ReactNativeMessenger). Uint8Array would become {"0":n,"1":n,...};
+    // Shield then gets a plain object and importKey('raw', key) fails. Return a plain array so
+    // JSON keeps it as [n,n,...]; Shield must do new Uint8Array(key) before importKey.
     return {
       id: credential.id,
       displayName: config.displayName,
-      ...(bufferKey != null && { key: bufferKey }),
+      ...(key != null && { key: Array.from(key) as unknown as Uint8Array }),
     }
   }
 
