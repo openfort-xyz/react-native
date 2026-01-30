@@ -32,6 +32,7 @@ export {
   RecoveryParams,
   ShieldConfiguration,
   SignedMessagePayload,
+  ThirdPartyOAuthProvider,
 } from '@openfort/openfort-js'
 // Re-export all components and UI elements
 export * from './components'
