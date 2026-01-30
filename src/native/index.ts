@@ -13,7 +13,11 @@ export {
   openOAuthSession,
   parseOAuthUrl,
 } from './oauth'
-export type { NativePasskeyHandlerConfig, PasskeysAPI } from './passkey'
+export type {
+  NativePasskeyHandlerConfig,
+  NativePasskeyHandlerInterface,
+  PasskeysAPI,
+} from './passkey'
 // Passkey handler and support checks
 export { isPasskeySupported, NativePasskeyHandler } from './passkey'
 export type {

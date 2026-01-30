@@ -96,15 +96,29 @@ export class PasskeyBufferSourceFallbackError extends Error {
 }
 
 /**
- * NativePasskeyHandler implements IPasskeyHandler using react-native-passkeys.
+ * Extended passkey handler with local encrypt/decrypt; key never leaves the device.
+ * The SDK calls encrypt/decrypt when present instead of sending the key to the Shield.
  */
-export class NativePasskeyHandler implements IPasskeyHandler {
+export interface NativePasskeyHandlerInterface extends IPasskeyHandler {
+  encrypt(plaintext: Uint8Array, passkeyId: string): Promise<{ ciphertext: Uint8Array; iv: Uint8Array }>
+
+  decrypt(ciphertext: Uint8Array, iv: Uint8Array, passkeyId: string, seed: string): Promise<Uint8Array>
+}
+
+/**
+ * NativePasskeyHandler implements NativePasskeyHandlerInterface (and IPasskeyHandler) using react-native-passkeys.
+ * When using encrypt/decrypt, the derived key never leaves the device.
+ */
+export class NativePasskeyHandler implements NativePasskeyHandlerInterface {
   private readonly iValidByteLengths: number[] = [16, 24, 32]
   private readonly rpId?: string
   private readonly rpName?: string
   private readonly timeoutMillis: number
   private readonly derivedKeyLengthBytes: number
   private readonly extractableKey: boolean
+
+  /** In-memory key store for encrypt() after createPasskey; key is removed after first use. */
+  private readonly keyStore = new Map<string, Uint8Array>()
 
   constructor(config: NativePasskeyHandlerConfig) {
     this.rpId = config.rpId
@@ -385,23 +399,125 @@ export class NativePasskeyHandler implements IPasskeyHandler {
       }
     }
 
-    // Plain array so it survives JSON when openfort-js sends it to the Shield iframe (RN→WebView).
-    // Iframe must convert to Uint8Array before importKey: new Uint8Array(key).
-    const returnKey = key != null ? ([...key] as unknown as Uint8Array) : undefined
+    // Store key locally for subsequent encrypt(); do not return key (local encryption flow).
+    if (key != null) {
+      this.keyStore.set(credential.id, key)
+    }
     if (__DEV__) {
       console.log('[NativePasskeyHandler] createPasskey returning:', {
         id: credential.id,
-        keyDefined: returnKey != null,
-        keyLength: returnKey?.length,
-        keyType: returnKey?.constructor?.name,
-        isArray: Array.isArray(returnKey),
+        keyStored: key != null,
       })
     }
     return {
       id: credential.id,
       displayName: config.displayName,
-      key: returnKey,
     }
+  }
+
+  /**
+   * Encrypt plaintext locally with the key stored from createPasskey.
+   * Uses AES-GCM (12-byte IV). Key is removed from keyStore after use.
+   * Requires crypto.subtle (e.g. browser or RN polyfill).
+   */
+  async encrypt(plaintext: Uint8Array, passkeyId: string): Promise<{ ciphertext: Uint8Array; iv: Uint8Array }> {
+    if (!this.hasSubtle()) {
+      throw new Error('encrypt() requires crypto.subtle (e.g. polyfill in React Native)')
+    }
+    const key = this.keyStore.get(passkeyId)
+    if (!key) {
+      throw new Error(
+        `No key found for passkey ${passkeyId}; createPasskey must be called first and encrypt used before key is cleared`
+      )
+    }
+    try {
+      const iv = crypto.getRandomValues(new Uint8Array(12)) as Uint8Array
+      const keyCopy = new Uint8Array(key)
+      const cryptoKey = await crypto.subtle.importKey(
+        'raw',
+        keyCopy as BufferSource,
+        { name: 'AES-GCM', length: this.derivedKeyLengthBytes * 8 },
+        false,
+        ['encrypt']
+      )
+      const ciphertext = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv: iv as BufferSource },
+        cryptoKey,
+        plaintext as BufferSource
+      )
+      return {
+        ciphertext: new Uint8Array(ciphertext),
+        iv,
+      }
+    } finally {
+      this.keyStore.delete(passkeyId)
+    }
+  }
+
+  /**
+   * Decrypt ciphertext locally using passkey assertion (user authenticates).
+   * Derives key from PRF via get(), then AES-GCM decrypt. Key never leaves the device.
+   */
+  async decrypt(ciphertext: Uint8Array, iv: Uint8Array, passkeyId: string, seed: string): Promise<Uint8Array> {
+    if (!this.hasSubtle()) {
+      throw new Error('decrypt() requires crypto.subtle (e.g. polyfill in React Native)')
+    }
+    const rpId = this.rpId
+    if (!rpId) {
+      throw new Error('rpId must be configured')
+    }
+    const keyBytes = await this.deriveKeyBytesForPasskey(passkeyId, seed, rpId)
+    const keyBytesCopy = new Uint8Array(keyBytes)
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyBytesCopy as BufferSource,
+      { name: 'AES-GCM', length: this.derivedKeyLengthBytes * 8 },
+      false,
+      ['decrypt']
+    )
+    const plaintext = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: new Uint8Array(iv) as BufferSource },
+      cryptoKey,
+      new Uint8Array(ciphertext) as BufferSource
+    )
+    return new Uint8Array(plaintext)
+  }
+
+  /**
+   * Derives raw key bytes for passkeyId + seed via get() assertion (for local decrypt only).
+   */
+  private async deriveKeyBytesForPasskey(passkeyId: string, seed: string, rpId: string): Promise<Uint8Array> {
+    const challenge = this.getChallengeBytes()
+    const challengeBase64URL = this.arrayBufferToBase64URL(challenge.buffer)
+    const credentialId =
+      passkeyId.includes('+') || passkeyId.includes('/') ? this.base64ToBase64URL(passkeyId) : passkeyId
+    const publicKey: PublicKeyCredentialRequestOptions = {
+      challenge: challengeBase64URL,
+      rpId,
+      allowCredentials: [{ id: credentialId, type: 'public-key' }],
+      userVerification: 'required',
+      extensions: {
+        prf: {
+          eval: {
+            first: this.arrayBufferToBase64URL(new TextEncoder().encode(seed).buffer),
+          },
+        },
+      },
+    }
+    const api = getPasskeysAPI()
+    if (!api?.get || typeof api.get !== 'function') {
+      throw new Error('react-native-passkeys is not available. Please ensure it is installed and the app is rebuilt.')
+    }
+    const assertion = await api.get(publicKey as any)
+    if (!assertion) {
+      throw new Error('could not get passkey assertion')
+    }
+    const prfResults = assertion.clientExtensionResults?.prf
+    if (!prfResults || !prfResults.results?.first) {
+      throw new Error('PRF extension not supported or missing results')
+    }
+    const prfResultBytes = this.normalizePRFResultFirst(prfResults.results.first)
+    return this.getRawKeyBytes(prfResultBytes)
   }
 
   async deriveKey(config: { id: string; seed: string }): Promise<CryptoKey> {
