@@ -40,7 +40,7 @@
     }
   },
   "dependencies": {
-    "@openfort/openfort-js": "https://pkg.pr.new/@openfort/openfort-js@e329c3a",
+    "@openfort/openfort-js": "https://pkg.pr.new/@openfort/openfort-js@e3c6bbf",
     "react-native-passkeys": "0.4.0"
   },
   "peerDependencies": {
