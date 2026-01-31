@@ -23,6 +23,47 @@ function numberArrayToBase64(arr: number[]): string {
 }
 
 /**
+ * Checks if a value is an object with numeric values (serialized Uint8Array).
+ * In some React Native environments, Uint8Array serializes as {0: n, 1: n, ...}
+ * instead of [n, n, ...].
+ *
+ * @param obj - Value to check
+ * @returns True if obj is a plain object with numeric values
+ */
+function isObjectWithNumericValues(obj: unknown): obj is Record<string, number> {
+  if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) {
+    return false
+  }
+  const keys = Object.keys(obj)
+  if (keys.length === 0) {
+    return false
+  }
+  // Check if all values are numbers
+  return Object.values(obj).every((v) => typeof v === 'number')
+}
+
+/**
+ * Converts a key (either number[] or {0: n, 1: n, ...}) to a number array.
+ *
+ * @param key - The key to convert
+ * @returns Number array or null if conversion not possible
+ */
+function keyToNumberArray(key: unknown): number[] | null {
+  if (Array.isArray(key) && key.length > 0 && typeof key[0] === 'number') {
+    return key
+  }
+  if (isObjectWithNumericValues(key)) {
+    // Convert object {0: n, 1: n, ...} to array [n, n, ...]
+    // Sort by numeric key to ensure correct order
+    const numericKeys = Object.keys(key)
+      .map(Number)
+      .sort((a, b) => a - b)
+    return numericKeys.map((k) => (key as Record<string, number>)[String(k)])
+  }
+  return null
+}
+
+/**
  * Transforms passkey key data in penpal messages from number[] to base64 string.
  * This is necessary because:
  * 1. NativePasskeyHandler returns key as Uint8Array
@@ -73,28 +114,36 @@ function transformPasskeyKeyToBase64(messageJson: string): string {
     // Handle create and recover methods: passkey.key
     if ((methodName === 'create' || methodName === 'recover') && args[0]?.passkey?.key) {
       const key = args[0].passkey.key
-      console.log('[WebView Transform] Found passkey.key for', methodName, 'isArray:', Array.isArray(key), 'length:', key?.length)
-      if (Array.isArray(key) && key.length > 0 && typeof key[0] === 'number') {
-        const base64Key = numberArrayToBase64(key)
+      const isArray = Array.isArray(key)
+      const isObject = isObjectWithNumericValues(key)
+      console.log('[WebView Transform] Found passkey.key for', methodName, 'isArray:', isArray, 'isObjectWithNumericValues:', isObject, 'length:', key?.length || Object.keys(key || {}).length)
+      
+      const numberArray = keyToNumberArray(key)
+      if (numberArray) {
+        const base64Key = numberArrayToBase64(numberArray)
         args[0].passkey.key = base64Key
         modified = true
-        console.log('[WebView Transform] ✅ TRANSFORMED passkey.key to base64 for', methodName, 'base64 length:', base64Key.length)
+        console.log('[WebView Transform] ✅ TRANSFORMED passkey.key to base64 for', methodName, 'from', isArray ? 'array' : 'object', 'bytes:', numberArray.length, 'base64 length:', base64Key.length)
       } else {
-        console.log('[WebView Transform] ⚠️ passkey.key is not a number array, skipping transformation')
+        console.log('[WebView Transform] ⚠️ passkey.key is not a number array or object, skipping transformation')
       }
     }
 
     // Handle setRecoveryMethod: passkeyKey
     if (methodName === 'setRecoveryMethod' && args[0]?.passkeyKey) {
       const key = args[0].passkeyKey
-      console.log('[WebView Transform] Found passkeyKey for setRecoveryMethod, isArray:', Array.isArray(key), 'length:', key?.length)
-      if (Array.isArray(key) && key.length > 0 && typeof key[0] === 'number') {
-        const base64Key = numberArrayToBase64(key)
+      const isArray = Array.isArray(key)
+      const isObject = isObjectWithNumericValues(key)
+      console.log('[WebView Transform] Found passkeyKey for setRecoveryMethod, isArray:', isArray, 'isObjectWithNumericValues:', isObject, 'length:', key?.length || Object.keys(key || {}).length)
+      
+      const numberArray = keyToNumberArray(key)
+      if (numberArray) {
+        const base64Key = numberArrayToBase64(numberArray)
         args[0].passkeyKey = base64Key
         modified = true
-        console.log('[WebView Transform] ✅ TRANSFORMED passkeyKey to base64 for setRecoveryMethod, base64 length:', base64Key.length)
+        console.log('[WebView Transform] ✅ TRANSFORMED passkeyKey to base64 for setRecoveryMethod, from', isArray ? 'array' : 'object', 'bytes:', numberArray.length, 'base64 length:', base64Key.length)
       } else {
-        console.log('[WebView Transform] ⚠️ passkeyKey is not a number array, skipping transformation')
+        console.log('[WebView Transform] ⚠️ passkeyKey is not a number array or object, skipping transformation')
       }
     }
 
