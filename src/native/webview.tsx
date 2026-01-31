@@ -37,6 +37,11 @@ function transformPasskeyKeyToBase64(messageJson: string): string {
   try {
     const message = JSON.parse(messageJson)
 
+    // Log all penpal messages to see what's coming through
+    if (message?.penpal) {
+      console.log('[WebView Transform] penpal message:', message.penpal, 'methodName:', message.methodName)
+    }
+
     // Only transform penpal 'call' messages
     if (message?.penpal !== 'call') {
       return messageJson
@@ -45,43 +50,64 @@ function transformPasskeyKeyToBase64(messageJson: string): string {
     const methodName = message.methodName
     const args = message.args
 
+    console.log('[WebView Transform] call message:', methodName, 'has args:', !!args, 'args length:', args?.length)
+
     if (!args || !Array.isArray(args) || args.length === 0) {
+      console.log('[WebView Transform] No args or empty args, skipping')
       return messageJson
     }
+
+    // Log what we're looking for
+    console.log('[WebView Transform] args[0].passkey:', !!args[0]?.passkey)
+    if (args[0]?.passkey) {
+      console.log('[WebView Transform] args[0].passkey.key exists:', !!args[0].passkey.key)
+      console.log('[WebView Transform] args[0].passkey.key type:', typeof args[0].passkey.key, 'isArray:', Array.isArray(args[0].passkey.key))
+      if (Array.isArray(args[0].passkey.key)) {
+        console.log('[WebView Transform] args[0].passkey.key length:', args[0].passkey.key.length, 'first element type:', typeof args[0].passkey.key[0])
+      }
+    }
+    console.log('[WebView Transform] args[0].passkeyKey exists:', !!args[0]?.passkeyKey)
 
     let modified = false
 
     // Handle create and recover methods: passkey.key
     if ((methodName === 'create' || methodName === 'recover') && args[0]?.passkey?.key) {
       const key = args[0].passkey.key
+      console.log('[WebView Transform] Found passkey.key for', methodName, 'isArray:', Array.isArray(key), 'length:', key?.length)
       if (Array.isArray(key) && key.length > 0 && typeof key[0] === 'number') {
-        args[0].passkey.key = numberArrayToBase64(key)
+        const base64Key = numberArrayToBase64(key)
+        args[0].passkey.key = base64Key
         modified = true
-        if (__DEV__) {
-          logger.debug(`[WebView] Transformed passkey.key to base64 for ${methodName}`)
-        }
+        console.log('[WebView Transform] ✅ TRANSFORMED passkey.key to base64 for', methodName, 'base64 length:', base64Key.length)
+      } else {
+        console.log('[WebView Transform] ⚠️ passkey.key is not a number array, skipping transformation')
       }
     }
 
     // Handle setRecoveryMethod: passkeyKey
     if (methodName === 'setRecoveryMethod' && args[0]?.passkeyKey) {
       const key = args[0].passkeyKey
+      console.log('[WebView Transform] Found passkeyKey for setRecoveryMethod, isArray:', Array.isArray(key), 'length:', key?.length)
       if (Array.isArray(key) && key.length > 0 && typeof key[0] === 'number') {
-        args[0].passkeyKey = numberArrayToBase64(key)
+        const base64Key = numberArrayToBase64(key)
+        args[0].passkeyKey = base64Key
         modified = true
-        if (__DEV__) {
-          logger.debug('[WebView] Transformed passkeyKey to base64 for setRecoveryMethod')
-        }
+        console.log('[WebView Transform] ✅ TRANSFORMED passkeyKey to base64 for setRecoveryMethod, base64 length:', base64Key.length)
+      } else {
+        console.log('[WebView Transform] ⚠️ passkeyKey is not a number array, skipping transformation')
       }
     }
 
     if (modified) {
+      console.log('[WebView Transform] Message modified, returning transformed JSON')
       return JSON.stringify(message)
     }
 
+    console.log('[WebView Transform] No modifications needed, returning original message')
     return messageJson
-  } catch {
+  } catch (error) {
     // If parsing fails, return original message
+    console.log('[WebView Transform] ❌ Error parsing/transforming message:', error)
     return messageJson
   }
 }
@@ -149,11 +175,13 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
       // Converts number[] keys to base64 strings before sending to Shield iframe
       const messagePoster = {
         postMessage: (message: string) => {
+          console.log('[WebView] postMessage called via useEffect')
           const transformed = transformPasskeyKeyToBase64(message)
           webViewRef.current?.postMessage(transformed)
         },
       }
       client.embeddedWallet.setMessagePoster(messagePoster)
+      console.log('[WebView] Message poster set via useEffect')
     }
   }, [client, isClientReady])
 
@@ -191,11 +219,13 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
         // Converts number[] keys to base64 strings before sending to Shield iframe
         const messagePoster = {
           postMessage: (message: string) => {
+            console.log('[WebView] postMessage called via handleWebViewRef')
             const transformed = transformPasskeyKeyToBase64(message)
             ref.postMessage(transformed)
           },
         }
         client.embeddedWallet.setMessagePoster(messagePoster)
+        console.log('[WebView] Message poster set via handleWebViewRef')
       }
     },
     [client]
