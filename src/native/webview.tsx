@@ -10,19 +10,6 @@ import { logger } from '../lib/logger'
 import { handleSecureStorageMessage, isSecureStorageMessage } from './storage'
 
 /**
- * Converts a number array to a base64 string.
- * Used to transform passkey keys that have been serialized via JSON.stringify
- * (which converts Uint8Array to number[]) into a format that the Shield iframe's
- * ensurePasskeyKeyBuffer() can handle.
- *
- * @param arr - Array of numbers representing bytes
- * @returns Base64-encoded string
- */
-function numberArrayToBase64(arr: number[]): string {
-  return btoa(String.fromCharCode(...arr))
-}
-
-/**
  * Checks if a value is an object with numeric values (serialized Uint8Array).
  * In some React Native environments, Uint8Array serializes as {0: n, 1: n, ...}
  * instead of [n, n, ...].
@@ -64,17 +51,16 @@ function keyToNumberArray(key: unknown): number[] | null {
 }
 
 /**
- * Transforms passkey key data in penpal messages from number[] to base64 string.
+ * Ensures passkey key data in penpal messages is a proper number[] array.
  * This is necessary because:
  * 1. NativePasskeyHandler returns key as Uint8Array
- * 2. JSON.stringify converts Uint8Array to number[]
- * 3. Shield iframe's crypto.subtle.importKey requires BufferSource, not number[]
- * 4. Shield's ensurePasskeyKeyBuffer() handles base64 strings correctly
+ * 2. JSON.stringify may convert Uint8Array to {0:n, 1:n, ...} (object) instead of [n,n,...] (array)
+ * 3. Shield iframe does new Uint8Array(key) which works with number[] but not with object format
  *
  * @param messageJson - JSON string of the penpal message
- * @returns Transformed JSON string with passkey keys as base64
+ * @returns Transformed JSON string with passkey keys as number[]
  */
-function transformPasskeyKeyToBase64(messageJson: string): string {
+function ensurePasskeyKeyIsArray(messageJson: string): string {
   try {
     const message = JSON.parse(messageJson)
 
@@ -118,12 +104,17 @@ function transformPasskeyKeyToBase64(messageJson: string): string {
       const isObject = isObjectWithNumericValues(key)
       console.log('[WebView Transform] Found passkey.key for', methodName, 'isArray:', isArray, 'isObjectWithNumericValues:', isObject, 'length:', key?.length || Object.keys(key || {}).length)
       
-      const numberArray = keyToNumberArray(key)
-      if (numberArray) {
-        const base64Key = numberArrayToBase64(numberArray)
-        args[0].passkey.key = base64Key
-        modified = true
-        console.log('[WebView Transform] ✅ TRANSFORMED passkey.key to base64 for', methodName, 'from', isArray ? 'array' : 'object', 'bytes:', numberArray.length, 'base64 length:', base64Key.length)
+      // If already a proper array, no transformation needed
+      if (isArray) {
+        console.log('[WebView Transform] ✅ passkey.key is already a number[], no transformation needed')
+      } else if (isObject) {
+        // Convert object {0: n, 1: n, ...} to array [n, n, ...]
+        const numberArray = keyToNumberArray(key)
+        if (numberArray) {
+          args[0].passkey.key = numberArray
+          modified = true
+          console.log('[WebView Transform] ✅ TRANSFORMED passkey.key from object to number[] for', methodName, 'length:', numberArray.length)
+        }
       } else {
         console.log('[WebView Transform] ⚠️ passkey.key is not a number array or object, skipping transformation')
       }
@@ -136,12 +127,17 @@ function transformPasskeyKeyToBase64(messageJson: string): string {
       const isObject = isObjectWithNumericValues(key)
       console.log('[WebView Transform] Found passkeyKey for setRecoveryMethod, isArray:', isArray, 'isObjectWithNumericValues:', isObject, 'length:', key?.length || Object.keys(key || {}).length)
       
-      const numberArray = keyToNumberArray(key)
-      if (numberArray) {
-        const base64Key = numberArrayToBase64(numberArray)
-        args[0].passkeyKey = base64Key
-        modified = true
-        console.log('[WebView Transform] ✅ TRANSFORMED passkeyKey to base64 for setRecoveryMethod, from', isArray ? 'array' : 'object', 'bytes:', numberArray.length, 'base64 length:', base64Key.length)
+      // If already a proper array, no transformation needed
+      if (isArray) {
+        console.log('[WebView Transform] ✅ passkeyKey is already a number[], no transformation needed')
+      } else if (isObject) {
+        // Convert object {0: n, 1: n, ...} to array [n, n, ...]
+        const numberArray = keyToNumberArray(key)
+        if (numberArray) {
+          args[0].passkeyKey = numberArray
+          modified = true
+          console.log('[WebView Transform] ✅ TRANSFORMED passkeyKey from object to number[] for setRecoveryMethod, length:', numberArray.length)
+        }
       } else {
         console.log('[WebView Transform] ⚠️ passkeyKey is not a number array or object, skipping transformation')
       }
@@ -221,11 +217,29 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
   useEffect(() => {
     if (webViewRef.current) {
       // Message poster with passkey key transformation for React Native
-      // Converts number[] keys to base64 strings before sending to Shield iframe
+      // Ensures passkey keys are proper number[] arrays before sending to Shield iframe
       const messagePoster = {
         postMessage: (message: string) => {
           console.log('[WebView] postMessage called via useEffect')
-          const transformed = transformPasskeyKeyToBase64(message)
+          const transformed = ensurePasskeyKeyIsArray(message)
+          // Debug: Log full outgoing message for passkey-related calls
+          try {
+            const parsed = JSON.parse(transformed)
+            if (parsed?.methodName === 'create' || parsed?.methodName === 'recover' || parsed?.methodName === 'setRecoveryMethod') {
+              console.log('[WebView DEBUG] 📤 OUTGOING REQUEST:', parsed.methodName)
+              console.log('[WebView DEBUG] Full message:', JSON.stringify(parsed, null, 2))
+              if (parsed.args?.[0]?.passkey) {
+                const pk = parsed.args[0].passkey
+                console.log('[WebView DEBUG] passkey.id:', pk.id)
+                console.log('[WebView DEBUG] passkey.key type:', typeof pk.key, 'isArray:', Array.isArray(pk.key), 'length:', pk.key?.length)
+                if (Array.isArray(pk.key)) {
+                  console.log('[WebView DEBUG] passkey.key first 5 bytes:', pk.key.slice(0, 5))
+                }
+              }
+            }
+          } catch (e) {
+            // Ignore parse errors for debug logging
+          }
           webViewRef.current?.postMessage(transformed)
         },
       }
@@ -241,6 +255,29 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
         const messageData = JSON.parse(event?.nativeEvent?.data)
         if (!messageData) return
 
+        // Debug: Log incoming messages from iframe
+        if (messageData?.penpal) {
+          console.log('[WebView DEBUG] 📥 INCOMING:', messageData.penpal, 'id:', messageData.id)
+          
+          // Check for error responses
+          if (messageData.penpal === 'reply') {
+            if (messageData.returnValue !== undefined) {
+              console.log('[WebView DEBUG] Reply returnValue type:', typeof messageData.returnValue)
+              if (typeof messageData.returnValue === 'object' && messageData.returnValue !== null) {
+                // Check for error in response
+                if (messageData.returnValue.error || messageData.returnValue.message?.includes('error') || messageData.returnValue.message?.includes('Error')) {
+                  console.log('[WebView DEBUG] ❌ ERROR RESPONSE:', JSON.stringify(messageData.returnValue, null, 2))
+                } else {
+                  console.log('[WebView DEBUG] ✅ Success response keys:', Object.keys(messageData.returnValue))
+                }
+              }
+            }
+            if (messageData.returnValueIsError) {
+              console.log('[WebView DEBUG] ❌ PENPAL ERROR:', JSON.stringify(messageData, null, 2))
+            }
+          }
+        }
+
         // Handle secure storage messages
         if (isSecureStorageMessage(messageData)) {
           const response = await handleSecureStorageMessage(messageData)
@@ -250,6 +287,7 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
         // Forward all messages to the embedded wallet
         client.embeddedWallet.onMessage(messageData)
       } catch (error) {
+        console.log('[WebView DEBUG] ❌ Failed to handle message:', error)
         logger.error('Failed to handle WebView message', error)
         // Don't crash the app on message handling errors
       }
@@ -265,11 +303,29 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
       }
       if (ref) {
         // Message poster with passkey key transformation for React Native
-        // Converts number[] keys to base64 strings before sending to Shield iframe
+        // Ensures passkey keys are proper number[] arrays before sending to Shield iframe
         const messagePoster = {
           postMessage: (message: string) => {
             console.log('[WebView] postMessage called via handleWebViewRef')
-            const transformed = transformPasskeyKeyToBase64(message)
+            const transformed = ensurePasskeyKeyIsArray(message)
+            // Debug: Log full outgoing message for passkey-related calls
+            try {
+              const parsed = JSON.parse(transformed)
+              if (parsed?.methodName === 'create' || parsed?.methodName === 'recover' || parsed?.methodName === 'setRecoveryMethod') {
+                console.log('[WebView DEBUG] 📤 OUTGOING REQUEST:', parsed.methodName)
+                console.log('[WebView DEBUG] Full message:', JSON.stringify(parsed, null, 2))
+                if (parsed.args?.[0]?.passkey) {
+                  const pk = parsed.args[0].passkey
+                  console.log('[WebView DEBUG] passkey.id:', pk.id)
+                  console.log('[WebView DEBUG] passkey.key type:', typeof pk.key, 'isArray:', Array.isArray(pk.key), 'length:', pk.key?.length)
+                  if (Array.isArray(pk.key)) {
+                    console.log('[WebView DEBUG] passkey.key first 5 bytes:', pk.key.slice(0, 5))
+                  }
+                }
+              }
+            } catch (e) {
+              // Ignore parse errors for debug logging
+            }
             ref.postMessage(transformed)
           },
         }
