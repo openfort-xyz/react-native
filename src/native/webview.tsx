@@ -10,6 +10,83 @@ import { logger } from '../lib/logger'
 import { handleSecureStorageMessage, isSecureStorageMessage } from './storage'
 
 /**
+ * Converts a number array to a base64 string.
+ * Used to transform passkey keys that have been serialized via JSON.stringify
+ * (which converts Uint8Array to number[]) into a format that the Shield iframe's
+ * ensurePasskeyKeyBuffer() can handle.
+ *
+ * @param arr - Array of numbers representing bytes
+ * @returns Base64-encoded string
+ */
+function numberArrayToBase64(arr: number[]): string {
+  return btoa(String.fromCharCode(...arr))
+}
+
+/**
+ * Transforms passkey key data in penpal messages from number[] to base64 string.
+ * This is necessary because:
+ * 1. NativePasskeyHandler returns key as Uint8Array
+ * 2. JSON.stringify converts Uint8Array to number[]
+ * 3. Shield iframe's crypto.subtle.importKey requires BufferSource, not number[]
+ * 4. Shield's ensurePasskeyKeyBuffer() handles base64 strings correctly
+ *
+ * @param messageJson - JSON string of the penpal message
+ * @returns Transformed JSON string with passkey keys as base64
+ */
+function transformPasskeyKeyToBase64(messageJson: string): string {
+  try {
+    const message = JSON.parse(messageJson)
+
+    // Only transform penpal 'call' messages
+    if (message?.penpal !== 'call') {
+      return messageJson
+    }
+
+    const methodName = message.methodName
+    const args = message.args
+
+    if (!args || !Array.isArray(args) || args.length === 0) {
+      return messageJson
+    }
+
+    let modified = false
+
+    // Handle create and recover methods: passkey.key
+    if ((methodName === 'create' || methodName === 'recover') && args[0]?.passkey?.key) {
+      const key = args[0].passkey.key
+      if (Array.isArray(key) && key.length > 0 && typeof key[0] === 'number') {
+        args[0].passkey.key = numberArrayToBase64(key)
+        modified = true
+        if (__DEV__) {
+          logger.debug(`[WebView] Transformed passkey.key to base64 for ${methodName}`)
+        }
+      }
+    }
+
+    // Handle setRecoveryMethod: passkeyKey
+    if (methodName === 'setRecoveryMethod' && args[0]?.passkeyKey) {
+      const key = args[0].passkeyKey
+      if (Array.isArray(key) && key.length > 0 && typeof key[0] === 'number') {
+        args[0].passkeyKey = numberArrayToBase64(key)
+        modified = true
+        if (__DEV__) {
+          logger.debug('[WebView] Transformed passkeyKey to base64 for setRecoveryMethod')
+        }
+      }
+    }
+
+    if (modified) {
+      return JSON.stringify(message)
+    }
+
+    return messageJson
+  } catch {
+    // If parsing fails, return original message
+    return messageJson
+  }
+}
+
+/**
  * Props for the EmbeddedWalletWebView component
  */
 interface EmbeddedWalletWebViewProps {
@@ -68,10 +145,12 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
   // Set up WebView reference with client immediately when both are available
   useEffect(() => {
     if (webViewRef.current) {
-      // Message poster with Uint8Array preprocessing for React Native
+      // Message poster with passkey key transformation for React Native
+      // Converts number[] keys to base64 strings before sending to Shield iframe
       const messagePoster = {
         postMessage: (message: string) => {
-          webViewRef.current?.postMessage(message)
+          const transformed = transformPasskeyKeyToBase64(message)
+          webViewRef.current?.postMessage(transformed)
         },
       }
       client.embeddedWallet.setMessagePoster(messagePoster)
@@ -108,9 +187,12 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
         ;(webViewRef as React.MutableRefObject<WebView | null>).current = ref
       }
       if (ref) {
+        // Message poster with passkey key transformation for React Native
+        // Converts number[] keys to base64 strings before sending to Shield iframe
         const messagePoster = {
           postMessage: (message: string) => {
-            ref.postMessage(message)
+            const transformed = transformPasskeyKeyToBase64(message)
+            ref.postMessage(transformed)
           },
         }
         client.embeddedWallet.setMessagePoster(messagePoster)
