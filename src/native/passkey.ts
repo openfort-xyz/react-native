@@ -371,9 +371,11 @@ export class NativePasskeyHandler implements IPasskeyHandler {
       try {
         const derivedKey = await this.deriveFromPRFResult(prfResultBytes)
         if (this.extractableKey) {
+          console.log('derivedKey', derivedKey)
           key = new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))
         }
       } catch (e) {
+        console.log('e', e)
         if (e instanceof PasskeyBufferSourceFallbackError) {
           if (__DEV__) console.log('[NativePasskeyHandler] createPasskey using raw PRF bytes fallback')
           key = this.getRawKeyBytes(e.prfResultBytes)
