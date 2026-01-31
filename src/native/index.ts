@@ -1,5 +1,4 @@
 // WebView integration
-
 export type {
   AppleAuthResult,
   OAuthResult,
@@ -14,6 +13,9 @@ export {
   openOAuthSession,
   parseOAuthUrl,
 } from './oauth'
+export type { NativePasskeyHandlerConfig, PasskeysAPI } from './passkey'
+// Passkey handler and support checks
+export { isPasskeySupported, NativePasskeyHandler } from './passkey'
 export type {
   SecureStorageMessage,
   SecureStorageResponse,

@@ -8,11 +8,12 @@ import { createNormalizedStorage, SecureStorageAdapter } from './storage'
  * Creates an {@link OpenfortClient} configured for Expo and React Native environments.
  *
  * The helper ensures Expo-specific utilities like secure storage and the crypto digest
- * implementation are wired into the underlying Openfort SDK.
+ * implementation are wired into the underlying Openfort SDK. Passkey handling should be
+ * provided by the caller via overrides (e.g. passkeyHandler) when needed.
  *
  * @param options - {@link OpenfortSDKConfiguration} containing the base configuration,
  * overrides, and optional Shield configuration.
- * @returns A fully configured {@link OpenfortClient} instance ready for React Native apps.
+ * @returns The configured {@link OpenfortClient}.
  *
  * @example
  * ```ts
@@ -21,7 +22,6 @@ import { createNormalizedStorage, SecureStorageAdapter } from './storage'
  *   overrides: { logLevel: 'debug' },
  *   shieldConfiguration: new ShieldConfiguration({ shieldPublishableKey })
  * });
- *
  * const accessToken = await client.getAccessToken();
  * ```
  */
@@ -33,17 +33,7 @@ export function createOpenfortClient({
 }: OpenfortSDKConfiguration): OpenfortClient {
   const nativeAppId = getNativeApplicationId()
   logger.info('Creating Openfort client with native app ID', nativeAppId)
-  // appId,
-  // clientId,
-  // supportedChains,
-  // storage: createNormalizedStorage(storage),
-  // sdkVersion: `expo:${SDK_INFO.version}`,
-  // nativeAppIdentifier: nativeAppId,
-  // crypto: {
-  //   digest,
-  // },
-  // baseUrl,
-  // logLevel,
+
   return new OpenfortClient({
     baseConfiguration: {
       nativeAppIdentifier: nativeAppId,
