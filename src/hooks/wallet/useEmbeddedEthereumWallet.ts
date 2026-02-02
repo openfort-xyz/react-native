@@ -1,4 +1,10 @@
-import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, EmbeddedState } from '@openfort/openfort-js'
+import {
+  AccountTypeEnum,
+  ChainTypeEnum,
+  type EmbeddedAccount,
+  EmbeddedState,
+  RecoveryMethod,
+} from '@openfort/openfort-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
@@ -215,7 +221,10 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
       return policy
     }
 
-    return await client.embeddedWallet.getEthereumProvider({ announceProvider: false, policy: resolvePolicy() })
+    return await client.embeddedWallet.getEthereumProvider({
+      announceProvider: false,
+      policy: resolvePolicy(),
+    })
   }, [client.embeddedWallet, walletConfig, options.chainId])
 
   // Initialize provider when recovering an active wallet on mount
@@ -346,7 +355,10 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
         })
 
         if (createOptions?.onSuccess) {
-          createOptions.onSuccess({ account: embeddedAccount, provider: ethProvider })
+          createOptions.onSuccess({
+            account: embeddedAccount,
+            provider: ethProvider,
+          })
         }
         if (options.onCreateSuccess) {
           options.onCreateSuccess(embeddedAccount, ethProvider)
@@ -449,8 +461,31 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
             throw new OpenfortError(errorMsg, OpenfortErrorType.WALLET_ERROR)
           }
 
+          // Auto-detect recovery method from account if not explicitly provided
+          let effectiveRecoveryMethod = setActiveOptions.recoveryMethod
+          let effectivePasskeyId = setActiveOptions.passkeyId
+
+          if (!effectiveRecoveryMethod && embeddedAccountToRecover.recoveryMethod) {
+            if (embeddedAccountToRecover.recoveryMethod === RecoveryMethod.PASSKEY) {
+              effectiveRecoveryMethod = 'passkey'
+              if (!effectivePasskeyId) {
+                effectivePasskeyId = embeddedAccountToRecover.recoveryMethodDetails?.passkeyId
+              }
+            } else if (embeddedAccountToRecover.recoveryMethod === RecoveryMethod.PASSWORD) {
+              effectiveRecoveryMethod = 'password'
+            }
+          }
+
           // Build recovery params
-          const recoveryParams = await buildRecoveryParams({ ...setActiveOptions, userId: user?.id }, walletConfig)
+          const recoveryParams = await buildRecoveryParams(
+            {
+              ...setActiveOptions,
+              userId: user?.id,
+              recoveryMethod: effectiveRecoveryMethod,
+              passkeyId: effectivePasskeyId,
+            },
+            walletConfig
+          )
 
           // Recover the embedded wallet
           const embeddedAccount = await client.embeddedWallet.recover({
@@ -610,11 +645,20 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
     }
 
     if (status.status === 'connecting' || status.status === 'reconnecting' || status.status === 'loading') {
-      return { ...baseActions, status: 'connecting', activeWallet: activeWallet! }
+      return {
+        ...baseActions,
+        status: 'connecting',
+        activeWallet: activeWallet!,
+      }
     }
 
     if (status.status === 'error') {
-      return { ...baseActions, status: 'error', activeWallet, error: status.error?.message || 'Unknown error' }
+      return {
+        ...baseActions,
+        status: 'error',
+        activeWallet,
+        error: status.error?.message || 'Unknown error',
+      }
     }
 
     // Priority 2: Check authentication state from context
@@ -631,7 +675,11 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
 
     if (activeAccount && !provider) {
       // Have wallet but provider not initialized yet (mount recovery in progress)
-      return { ...baseActions, status: 'connecting', activeWallet: activeWallet! }
+      return {
+        ...baseActions,
+        status: 'connecting',
+        activeWallet: activeWallet!,
+      }
     }
 
     // Default: disconnected (authenticated but no wallet selected)

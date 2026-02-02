@@ -1,4 +1,10 @@
-import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, EmbeddedState } from '@openfort/openfort-js'
+import {
+  AccountTypeEnum,
+  ChainTypeEnum,
+  type EmbeddedAccount,
+  EmbeddedState,
+  RecoveryMethod,
+} from '@openfort/openfort-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
@@ -261,7 +267,9 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
         },
         signMessage: async (message: string): Promise<string> => {
           // Sign message using openfort-js (with hashMessage: false for Solana)
-          const result = await client.embeddedWallet.signMessage(message, { hashMessage: false })
+          const result = await client.embeddedWallet.signMessage(message, {
+            hashMessage: false,
+          })
           return result
         },
       })
@@ -331,7 +339,11 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
         // Build recovery params (only use recoveryPassword, otpCode, and userId, ignore createAdditional)
         const recoveryParams = await buildRecoveryParams(
           createOptions?.recoveryPassword || createOptions?.otpCode || user?.id
-            ? { recoveryPassword: createOptions?.recoveryPassword, otpCode: createOptions?.otpCode, userId: user?.id }
+            ? {
+                recoveryPassword: createOptions?.recoveryPassword,
+                otpCode: createOptions?.otpCode,
+                userId: user?.id,
+              }
             : undefined,
           walletConfig
         )
@@ -364,7 +376,10 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
         })
 
         if (createOptions?.onSuccess) {
-          createOptions.onSuccess({ account: embeddedAccount, provider: solProvider })
+          createOptions.onSuccess({
+            account: embeddedAccount,
+            provider: solProvider,
+          })
         }
         if (options.onCreateSuccess) {
           options.onCreateSuccess(embeddedAccount, solProvider)
@@ -439,8 +454,31 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
             )
           }
 
+          // Auto-detect recovery method from account if not explicitly provided
+          let effectiveRecoveryMethod = setActiveOptions.recoveryMethod
+          let effectivePasskeyId = setActiveOptions.passkeyId
+
+          if (!effectiveRecoveryMethod && embeddedAccountToRecover.recoveryMethod) {
+            if (embeddedAccountToRecover.recoveryMethod === RecoveryMethod.PASSKEY) {
+              effectiveRecoveryMethod = 'passkey'
+              if (!effectivePasskeyId) {
+                effectivePasskeyId = embeddedAccountToRecover.recoveryMethodDetails?.passkeyId
+              }
+            } else if (embeddedAccountToRecover.recoveryMethod === RecoveryMethod.PASSWORD) {
+              effectiveRecoveryMethod = 'password'
+            }
+          }
+
           // Build recovery params
-          const recoveryParams = await buildRecoveryParams({ ...setActiveOptions, userId: user?.id }, walletConfig)
+          const recoveryParams = await buildRecoveryParams(
+            {
+              ...setActiveOptions,
+              userId: user?.id,
+              recoveryMethod: effectiveRecoveryMethod,
+              passkeyId: effectivePasskeyId,
+            },
+            walletConfig
+          )
 
           // Recover the embedded wallet
           const embeddedAccount = await client.embeddedWallet.recover({
@@ -551,7 +589,12 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
     }
 
     if (status.status === 'error') {
-      return { ...baseActions, status: 'error', activeWallet, error: status.error?.message || 'Unknown error' }
+      return {
+        ...baseActions,
+        status: 'error',
+        activeWallet,
+        error: status.error?.message || 'Unknown error',
+      }
     }
 
     // Priority 2: Check authentication state from context
