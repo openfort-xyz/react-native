@@ -10,33 +10,6 @@ import { logger } from '../lib/logger'
 import { handleSecureStorageMessage, isSecureStorageMessage } from './storage'
 
 /**
- * Normalizes passkey key from serialized Uint8Array format {0:n, 1:n, ...} to number[]
- * This handles JSON.stringify behavior in React Native where Uint8Array becomes an object
- */
-function normalizePasskeyKey(key: unknown): number[] | unknown {
-  if (key && typeof key === 'object' && !Array.isArray(key)) {
-    return Object.values(key as Record<string, number>)
-  }
-  return key
-}
-
-/**
- * Transforms outgoing message to normalize passkey.key format for iframe compatibility
- */
-function transformMessage(message: string): string {
-  try {
-    const parsed = JSON.parse(message)
-    if (parsed?.args?.[0]?.passkey?.key) {
-      parsed.args[0].passkey.key = normalizePasskeyKey(parsed.args[0].passkey.key)
-      return JSON.stringify(parsed)
-    }
-  } catch {
-    /* keep original message */
-  }
-  return message
-}
-
-/**
  * Props for the EmbeddedWalletWebView component
  */
 interface EmbeddedWalletWebViewProps {
@@ -55,11 +28,7 @@ interface EmbeddedWalletWebViewProps {
  *
  * @param props - Component props, see {@link EmbeddedWalletWebViewProps}
  */
-export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
-  client,
-  isClientReady,
-  onProxyStatusChange,
-}) => {
+export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({ client, onProxyStatusChange }) => {
   const webViewRef = useRef<WebView>(null)
 
   // Handle app state changes to monitor WebView health
@@ -95,15 +64,14 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
   // Set up WebView reference with client immediately when both are available
   useEffect(() => {
     if (webViewRef.current) {
-      // Message poster with passkey key normalization for React Native
       const messagePoster = {
         postMessage: (message: string) => {
-          webViewRef.current?.postMessage(transformMessage(message))
+          webViewRef.current?.postMessage(message)
         },
       }
       client.embeddedWallet.setMessagePoster(messagePoster)
     }
-  }, [client, isClientReady])
+  }, [client])
 
   // Clean message handler using the new penpal bridge
   const handleMessage = useCallback(
@@ -137,7 +105,7 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
       if (ref) {
         const messagePoster = {
           postMessage: (message: string) => {
-            ref.postMessage(transformMessage(message))
+            ref.postMessage(message)
           },
         }
         client.embeddedWallet.setMessagePoster(messagePoster)
