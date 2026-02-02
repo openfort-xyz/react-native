@@ -81,9 +81,35 @@ async function resolveEncryptionSession(
  * @internal
  */
 export async function buildRecoveryParams(
-  options: { recoveryPassword?: string; otpCode?: string; userId?: string } | undefined,
+  options:
+    | {
+        recoveryPassword?: string
+        otpCode?: string
+        userId?: string
+        recoveryMethod?: 'automatic' | 'password' | 'passkey'
+        passkeyId?: string
+      }
+    | undefined,
   walletConfig?: EmbeddedWalletConfiguration
 ): Promise<RecoveryParams> {
+  // If passkey recovery method is explicitly requested
+  if (options?.recoveryMethod === 'passkey') {
+    // If passkeyId is provided, use it for recovery
+    if (options.passkeyId) {
+      return {
+        recoveryMethod: RecoveryMethod.PASSKEY,
+        passkeyInfo: {
+          passkeyId: options.passkeyId,
+        },
+      }
+    }
+    // If no passkeyId, this is a creation request - SDK will create the passkey
+    return {
+      recoveryMethod: RecoveryMethod.PASSKEY,
+    }
+  }
+
+  // If password is provided, use password recovery
   if (options?.recoveryPassword) {
     return {
       recoveryMethod: RecoveryMethod.PASSWORD,
@@ -91,6 +117,7 @@ export async function buildRecoveryParams(
     }
   }
 
+  // Default to automatic recovery
   return {
     recoveryMethod: RecoveryMethod.AUTOMATIC,
     encryptionSession: await resolveEncryptionSession(walletConfig, options?.otpCode, options?.userId),

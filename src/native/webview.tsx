@@ -10,6 +10,33 @@ import { logger } from '../lib/logger'
 import { handleSecureStorageMessage, isSecureStorageMessage } from './storage'
 
 /**
+ * Normalizes passkey key from serialized Uint8Array format {0:n, 1:n, ...} to number[]
+ * This handles JSON.stringify behavior in React Native where Uint8Array becomes an object
+ */
+function normalizePasskeyKey(key: unknown): number[] | unknown {
+  if (key && typeof key === 'object' && !Array.isArray(key)) {
+    return Object.values(key as Record<string, number>)
+  }
+  return key
+}
+
+/**
+ * Transforms outgoing message to normalize passkey.key format for iframe compatibility
+ */
+function transformMessage(message: string): string {
+  try {
+    const parsed = JSON.parse(message)
+    if (parsed?.args?.[0]?.passkey?.key) {
+      parsed.args[0].passkey.key = normalizePasskeyKey(parsed.args[0].passkey.key)
+      return JSON.stringify(parsed)
+    }
+  } catch {
+    /* keep original message */
+  }
+  return message
+}
+
+/**
  * Props for the EmbeddedWalletWebView component
  */
 interface EmbeddedWalletWebViewProps {
@@ -68,10 +95,10 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
   // Set up WebView reference with client immediately when both are available
   useEffect(() => {
     if (webViewRef.current) {
-      // Message poster with Uint8Array preprocessing for React Native
+      // Message poster with passkey key normalization for React Native
       const messagePoster = {
         postMessage: (message: string) => {
-          webViewRef.current?.postMessage(message)
+          webViewRef.current?.postMessage(transformMessage(message))
         },
       }
       client.embeddedWallet.setMessagePoster(messagePoster)
@@ -110,7 +137,7 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
       if (ref) {
         const messagePoster = {
           postMessage: (message: string) => {
-            ref.postMessage(message)
+            ref.postMessage(transformMessage(message))
           },
         }
         client.embeddedWallet.setMessagePoster(messagePoster)
@@ -196,7 +223,11 @@ export const WebViewUtils = {
    * @param message - JSON string message to validate
    * @returns Validation result with parsed data or error information
    */
-  validateMessage(message: string): { isValid: boolean; data?: any; error?: string } {
+  validateMessage(message: string): {
+    isValid: boolean
+    data?: any
+    error?: string
+  } {
     try {
       const parsed = JSON.parse(message)
 

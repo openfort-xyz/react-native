@@ -10,7 +10,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { validateEnvironment } from '../lib/environmentValidation'
 import { getEmbeddedStateName, logger } from '../lib/logger'
-import { EmbeddedWalletWebView, WebViewUtils } from '../native'
+import { EmbeddedWalletWebView, NativePasskeyHandler, WebViewUtils } from '../native'
 import type { OAuthFlowState, PasswordFlowState, RecoveryFlowState, SiweFlowState } from '../types'
 import { createOpenfortClient, setDefaultClient } from './client'
 import { OpenfortContext, type OpenfortContextValue } from './context'
@@ -24,8 +24,12 @@ export type CommonEmbeddedWalletConfiguration = {
   ethereumProviderPolicyId?: PolicyConfig
   accountType?: AccountTypeEnum
   debug?: boolean
-  /** Recovery method for the embedded wallet: 'automatic' or 'password' */
-  recoveryMethod?: 'automatic' | 'password'
+  /** Recovery method for the embedded wallet: 'automatic', 'password', or 'passkey' */
+  recoveryMethod?: 'automatic' | 'password' | 'passkey'
+  /** Passkey Relying Party ID (domain) for passkey-based recovery */
+  passkeyRpId?: string
+  /** Passkey Relying Party Name for passkey-based recovery */
+  passkeyRpName?: string
 }
 
 /**
@@ -248,7 +252,19 @@ export const OpenfortProvider = ({
     logger.setVerbose(verbose)
   }, [verbose])
 
-  // Create or use provided client
+  // Create passkey handler if passkey recovery is configured (single instance for SDK and WebView)
+  const passkeyHandler = useMemo(() => {
+    if (walletConfig?.passkeyRpId) {
+      return new NativePasskeyHandler({
+        rpId: walletConfig.passkeyRpId,
+        rpName: walletConfig.passkeyRpName,
+        extractableKey: true,
+      })
+    }
+    return undefined
+  }, [walletConfig?.passkeyRpId, walletConfig?.passkeyRpName])
+
+  // Create client with passkeyHandler in overrides when configured
   const client = useMemo(() => {
     const newClient = createOpenfortClient({
       baseConfiguration: {
@@ -258,15 +274,19 @@ export const OpenfortProvider = ({
         ? new ShieldConfiguration({
             shieldPublishableKey: walletConfig.shieldPublishableKey,
             shieldDebug: walletConfig.debug,
+            passkeyRpId: walletConfig.passkeyRpId,
+            passkeyRpName: walletConfig.passkeyRpName,
           })
         : undefined,
-      overrides,
+      overrides: {
+        ...overrides,
+        ...(passkeyHandler && { passkeyHandler }),
+      },
       thirdPartyAuth,
     })
-
     setDefaultClient(newClient)
     return newClient
-  }, [publishableKey, walletConfig, overrides])
+  }, [publishableKey, walletConfig, overrides, thirdPartyAuth, passkeyHandler])
 
   // Embedded state
   const [embeddedState, setEmbeddedState] = useState<EmbeddedState>(EmbeddedState.NONE)
