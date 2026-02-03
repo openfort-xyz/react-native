@@ -32,9 +32,9 @@ type UseEmbeddedEthereumWalletOptions = {
 type WalletFlowStatus =
   | BaseFlowState
   | {
-    status: 'creating' | 'connecting' | 'reconnecting' | 'disconnected' | 'needs-recovery' | 'fetching-wallets'
-    error?: never
-  }
+      status: 'creating' | 'connecting' | 'reconnecting' | 'disconnected' | 'needs-recovery' | 'fetching-wallets'
+      error?: never
+    }
 
 /**
  * Hook for managing embedded Ethereum wallets.
@@ -177,7 +177,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
 
   // Sync active wallet ID and account with client
   useEffect(() => {
-    ; (async () => {
+    ;(async () => {
       try {
         const embeddedAccount = await client.embeddedWallet.get()
         if (embeddedAccount.chainType === ChainTypeEnum.EVM) {
@@ -254,7 +254,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
       return
     }
 
-    ; (async () => {
+    ;(async () => {
       try {
         logger.info('Initializing provider for recovered Ethereum wallet session')
         setStatus({ status: 'connecting' })
@@ -267,10 +267,10 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
           e instanceof OpenfortError
             ? e
             : new OpenfortError(
-              'Failed to initialize provider for active Ethereum wallet',
-              OpenfortErrorType.WALLET_ERROR,
-              { error: e }
-            )
+                'Failed to initialize provider for active Ethereum wallet',
+                OpenfortErrorType.WALLET_ERROR,
+                { error: e }
+              )
         logger.error('Ethereum provider initialization failed', error)
         setStatus({ status: 'error', error })
       }
