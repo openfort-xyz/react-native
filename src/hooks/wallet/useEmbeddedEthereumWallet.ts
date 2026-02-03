@@ -32,9 +32,9 @@ type UseEmbeddedEthereumWalletOptions = {
 type WalletFlowStatus =
   | BaseFlowState
   | {
-      status: 'creating' | 'connecting' | 'reconnecting' | 'disconnected' | 'needs-recovery' | 'fetching-wallets'
-      error?: never
-    }
+    status: 'creating' | 'connecting' | 'reconnecting' | 'disconnected' | 'needs-recovery' | 'fetching-wallets'
+    error?: never
+  }
 
 /**
  * Hook for managing embedded Ethereum wallets.
@@ -177,7 +177,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
 
   // Sync active wallet ID and account with client
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       try {
         const embeddedAccount = await client.embeddedWallet.get()
         if (embeddedAccount.chainType === ChainTypeEnum.EVM) {
@@ -215,8 +215,27 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
       return policy
     }
 
-    return await client.embeddedWallet.getEthereumProvider({ announceProvider: false, policy: resolvePolicy() })
-  }, [client.embeddedWallet, walletConfig, options.chainId])
+    // Build chains map from supportedChains (chainId -> rpcUrl)
+    const resolveChains = (): Record<number, string> | undefined => {
+      if (!supportedChains || supportedChains.length === 0) return undefined
+
+      const chainsMap: Record<number, string> = {}
+      for (const chain of supportedChains) {
+        const rpcUrl = chain.rpcUrls?.default?.http?.[0]
+        if (rpcUrl) {
+          chainsMap[chain.id] = rpcUrl
+        }
+      }
+
+      return Object.keys(chainsMap).length > 0 ? chainsMap : undefined
+    }
+
+    return await client.embeddedWallet.getEthereumProvider({
+      announceProvider: false,
+      policy: resolvePolicy(),
+      chains: resolveChains(),
+    })
+  }, [client.embeddedWallet, walletConfig, options.chainId, supportedChains])
 
   // Initialize provider when recovering an active wallet on mount
   useEffect(() => {
@@ -235,7 +254,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
       return
     }
 
-    ;(async () => {
+    ; (async () => {
       try {
         logger.info('Initializing provider for recovered Ethereum wallet session')
         setStatus({ status: 'connecting' })
@@ -248,10 +267,10 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
           e instanceof OpenfortError
             ? e
             : new OpenfortError(
-                'Failed to initialize provider for active Ethereum wallet',
-                OpenfortErrorType.WALLET_ERROR,
-                { error: e }
-              )
+              'Failed to initialize provider for active Ethereum wallet',
+              OpenfortErrorType.WALLET_ERROR,
+              { error: e }
+            )
         logger.error('Ethereum provider initialization failed', error)
         setStatus({ status: 'error', error })
       }
