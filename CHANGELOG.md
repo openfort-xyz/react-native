@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.5
+
+### Patch Changes
+
+- [#60](https://github.com/openfort-xyz/react-native/pull/60) [`ae94227`](https://github.com/openfort-xyz/react-native/commit/ae942276ea560e1b42f82b6f9dcafb14f9586e17) Thanks [@jamalavedra](https://github.com/jamalavedra)! - update sdk and override for urls'
+
 ## 1.0.4
 
 ### Patch Changes
