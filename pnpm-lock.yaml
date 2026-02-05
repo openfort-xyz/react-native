@@ -13,8 +13,8 @@ importers:
   .:
     dependencies:
       '@openfort/openfort-js':
-        specifier: https://pkg.pr.new/@openfort/openfort-js@cc06c35
-        version: https://pkg.pr.new/@openfort/openfort-js@cc06c35
+        specifier: ^1.1.5
+        version: 1.1.5
       react-native-passkeys:
         specifier: 0.4.0
         version: 0.4.0(react-native@0.77.1(@babel/core@7.29.0)(@types/react@18.3.27)(react@18.3.1))(react@18.3.1)
@@ -1012,9 +1012,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@openfort/openfort-js@https://pkg.pr.new/@openfort/openfort-js@cc06c35':
-    resolution: {tarball: https://pkg.pr.new/@openfort/openfort-js@cc06c35}
-    version: 1.1.4
+  '@openfort/openfort-js@1.1.5':
+    resolution: {integrity: sha512-Cx1f/H+/QSL12+deiv9piScSsjM8qVShMr33AdipdoEieKhW3ADpXiZrvKWKFfL5O2PWBN5Tcz7oWwpHEwSCbg==}
 
   '@openfort/shield-js@0.1.34':
     resolution: {integrity: sha512-bJxQc0zk0VPxk7CWSE5NZp5Bv8nYnStwG5GKXrS2A6hxEt0vf4BMu9db4IUiHxmgGaFWrdAnbSCSZ5AU1gwyew==}
@@ -4317,7 +4316,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.1
 
-  '@openfort/openfort-js@https://pkg.pr.new/@openfort/openfort-js@cc06c35':
+  '@openfort/openfort-js@1.1.5':
     dependencies:
       '@ethersproject/abi': 5.8.0
       '@ethersproject/bytes': 5.8.0
