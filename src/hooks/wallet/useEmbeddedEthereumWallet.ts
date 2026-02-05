@@ -221,11 +221,27 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
       return policy
     }
 
+    // Build chains map from supportedChains (chainId -> rpcUrl)
+    const resolveChains = (): Record<number, string> | undefined => {
+      if (!supportedChains || supportedChains.length === 0) return undefined
+
+      const chainsMap: Record<number, string> = {}
+      for (const chain of supportedChains) {
+        const rpcUrl = chain.rpcUrls?.default?.http?.[0]
+        if (rpcUrl) {
+          chainsMap[chain.id] = rpcUrl
+        }
+      }
+
+      return Object.keys(chainsMap).length > 0 ? chainsMap : undefined
+    }
+
     return await client.embeddedWallet.getEthereumProvider({
       announceProvider: false,
       policy: resolvePolicy(),
+      chains: resolveChains(),
     })
-  }, [client.embeddedWallet, walletConfig, options.chainId])
+  }, [client.embeddedWallet, walletConfig, options.chainId, supportedChains])
 
   // Initialize provider when recovering an active wallet on mount
   useEffect(() => {
