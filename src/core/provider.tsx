@@ -258,7 +258,6 @@ export const OpenfortProvider = ({
       return new NativePasskeyHandler({
         rpId: walletConfig.passkeyRpId,
         rpName: walletConfig.passkeyRpName,
-        extractableKey: true,
       })
     }
     return undefined

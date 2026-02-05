@@ -53,9 +53,8 @@ export async function isPasskeySupported(): Promise<boolean> {
 export interface NativePasskeyHandlerConfig {
   rpId?: string
   rpName?: string
-  timeoutMillis?: number
+  timeout?: number
   derivedKeyLengthBytes?: number
-  extractableKey?: boolean
 }
 
 // Type definitions for react-native-passkeys
@@ -70,7 +69,7 @@ interface PublicKeyCredentialCreationOptions {
     requireResidentKey?: boolean
     userVerification?: string
   }
-  excludeCredentials?: Array<{ id: string; type: string }> // Iteration 14: Android might require this explicitly
+  excludeCredentials?: Array<{ id: string; type: string }>
   extensions?: { prf?: { eval?: { first: string } } }
   timeout?: number
   attestation?: string
@@ -92,26 +91,23 @@ interface PublicKeyCredentialRequestOptions {
 export class NativePasskeyHandler implements IPasskeyHandler {
   private readonly rpId?: string
   private readonly rpName?: string
-  private readonly timeoutMillis: number
+  private readonly timeout: number
   private readonly derivedKeyLengthBytes: number
-  private readonly extractableKey: boolean
 
   constructor(config: NativePasskeyHandlerConfig) {
     this.rpId = config.rpId
     this.rpName = config.rpName
-    this.timeoutMillis = config.timeoutMillis ?? 60_000
+    this.timeout = config.timeout ?? 60_000
     this.derivedKeyLengthBytes = config.derivedKeyLengthBytes ?? 32
-    this.extractableKey = config.extractableKey ?? true
 
     PasskeyUtils.validateKeyByteLength(this.derivedKeyLengthBytes)
   }
 
   /**
    * Normalizes prf.results.first from the native module to Uint8Array.
-   * On Android, the bridge may return base64 string or array of numbers; crypto.subtle.importKey
-   * requires a BufferSource (e.g. Uint8Array) and some React Native polyfills reject plain ArrayBuffer.
+   * On Android, the bridge may return base64 string or array of numbers.
    */
-  private normalizePRFResultFirst(first: unknown): Uint8Array {
+  private normalizePRFResult(first: unknown): Uint8Array {
     if (typeof first === 'string') {
       return PasskeyUtils.base64URLToUint8Array(first)
     }
@@ -124,43 +120,21 @@ export class NativePasskeyHandler implements IPasskeyHandler {
     if (Array.isArray(first) || (typeof first === 'object' && first !== null && 'length' in first)) {
       return new Uint8Array(first as ArrayLike<number>)
     }
-    throw new Error('PRF result first: expected base64 string, ArrayBuffer, TypedArray, or array of numbers')
+    throw new Error('PRF result: expected base64 string, ArrayBuffer, TypedArray, or array of numbers')
   }
 
   /**
-   * Returns true when Web Crypto subtle API is available (e.g. browser).
-   * In React Native, crypto.subtle is typically undefined.
+   * Extracts key bytes from PRF result and returns as base64url string.
    */
-  private hasSubtle(): boolean {
-    return typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.subtle !== 'undefined'
+  private extractKeyBytes(prfResultBytes: Uint8Array): string {
+    const keyBytes = PasskeyUtils.extractRawKeyBytes(prfResultBytes, this.derivedKeyLengthBytes)
+    return PasskeyUtils.arrayBufferToBase64URL(keyBytes)
   }
 
   /**
-   * Produces raw key bytes from PRF result when crypto.subtle is unavailable (React Native).
-   * Truncates to derivedKeyLengthBytes or pads with zeros if shorter.
+   * Creates a passkey and derives a key using the PRF extension.
    */
-  private getRawKeyBytes(prfResult: ArrayBuffer | Uint8Array): Uint8Array {
-    return PasskeyUtils.extractRawKeyBytes(prfResult, this.derivedKeyLengthBytes)
-  }
-
-  /**
-   * Derives a CryptoKey from PRF result (from normalizePRFResultFirst). Key data is a standalone Uint8Array
-   * accepted by crypto.subtle.importKey.
-   */
-  private async deriveFromPRFResult(prfResult: Uint8Array): Promise<CryptoKey> {
-    const keyBytes = this.getRawKeyBytes(prfResult)
-    const keyData = new Uint8Array(this.derivedKeyLengthBytes)
-    keyData.set(keyBytes.subarray(0, this.derivedKeyLengthBytes))
-    const algo = { name: 'AES-CBC', length: this.derivedKeyLengthBytes * 8 }
-    const usages: KeyUsage[] = ['encrypt', 'decrypt']
-    return crypto.subtle.importKey('raw', keyData, algo, this.extractableKey, usages)
-  }
-
-  /**
-   * Creates a passkey and returns the key as base64url string (JSON-friendly for React Native WebView).
-   * This is the preferred method for React Native.
-   */
-  async createNativePasskey(config: {
+  async createPasskey(config: {
     id: string
     displayName: string
     seed: string
@@ -177,10 +151,10 @@ export class NativePasskeyHandler implements IPasskeyHandler {
     const userIdBase64URL = PasskeyUtils.arrayBufferToBase64URL(userIdBytes)
 
     const publicKey: PublicKeyCredentialCreationOptions = {
-      challenge: challengeBase64URL, // base64url for Android
+      challenge: challengeBase64URL,
       rp: { id: this.rpId, name: this.rpName },
       user: {
-        id: userIdBase64URL, // base64url for Android
+        id: userIdBase64URL,
         name: config.id,
         displayName: config.displayName,
       },
@@ -192,8 +166,8 @@ export class NativePasskeyHandler implements IPasskeyHandler {
         residentKey: 'required',
         userVerification: 'required',
       },
-      excludeCredentials: [], // Empty array for new passkey creation
-      // PRF extension: react-native-passkeys expects all inputs as base64url (challenge, user.id, prf.eval.first)
+      excludeCredentials: [],
+      // PRF extension: react-native-passkeys expects all inputs as base64url
       extensions: {
         prf: {
           eval: {
@@ -201,72 +175,46 @@ export class NativePasskeyHandler implements IPasskeyHandler {
           },
         },
       },
-      timeout: this.timeoutMillis,
-      attestation: 'none', // Iteration 13: Using "none" per Android docs examples
+      timeout: this.timeout,
+      attestation: 'none',
     }
 
     const api = getPasskeysAPI()
     if (!api?.create || typeof api.create !== 'function') {
-      throw new Error('react-native-passkeys module not available or create not available')
+      throw new Error('react-native-passkeys module not available')
     }
+
     const credential = await api.create(publicKey as any)
     if (!credential) {
-      throw new Error('could not create passkey')
+      throw new Error('Could not create passkey')
     }
 
     const prfResults = credential.clientExtensionResults?.prf
-    if (!prfResults || !prfResults.results?.first) {
+    if (!prfResults?.results?.first) {
       throw new Error('PRF extension not supported or missing results')
     }
 
-    const prfResultBytes = this.normalizePRFResultFirst(prfResults.results.first)
-
-    let keyBase64URL: string | undefined
-    if (this.hasSubtle()) {
-      const derivedKey = await this.deriveFromPRFResult(prfResultBytes)
-      if (this.extractableKey) {
-        const keyBytes = new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))
-        keyBase64URL = PasskeyUtils.arrayBufferToBase64URL(keyBytes)
-      }
-    } else {
-      if (this.extractableKey) {
-        const keyBytes = this.getRawKeyBytes(prfResultBytes)
-        keyBase64URL = PasskeyUtils.arrayBufferToBase64URL(keyBytes)
-      }
-    }
+    const prfResultBytes = this.normalizePRFResult(prfResults.results.first)
+    const key = this.extractKeyBytes(prfResultBytes)
 
     return {
       id: credential.id,
       displayName: config.displayName,
-      key: keyBase64URL,
+      key,
     }
   }
 
   /**
-   * Creates a passkey and returns the key as Uint8Array (for interface compliance).
-   * Note: The SDK prefers createNativePasskey() which returns base64url for better JSON serialization.
+   * Derives and exports key material from an existing passkey as base64url string.
    */
-  async createPasskey(config: {
-    id: string
-    displayName: string
-    seed: string
-  }): Promise<{ id: string; displayName?: string; key?: Uint8Array }> {
-    const result = await this.createNativePasskey(config)
-    return {
-      id: result.id,
-      displayName: result.displayName,
-      key: result.key ? PasskeyUtils.base64URLToUint8Array(result.key) : undefined,
-    }
-  }
-
-  async deriveKey(config: { id: string; seed: string }): Promise<CryptoKey> {
+  async deriveAndExportKey(config: { id: string; seed: string }): Promise<string> {
     if (!this.rpId) {
       throw new Error('rpId must be configured')
     }
 
     const challenge = PasskeyUtils.generateChallenge()
     const challengeBase64URL = PasskeyUtils.arrayBufferToBase64URL(challenge)
-    // openfort may store credential id as standard base64; react-native-passkeys expects base64url
+    // Openfort may store credential id as standard base64; react-native-passkeys expects base64url
     const credentialId =
       config.id.includes('+') || config.id.includes('/') ? PasskeyUtils.base64ToBase64URL(config.id) : config.id
 
@@ -286,89 +234,20 @@ export class NativePasskeyHandler implements IPasskeyHandler {
 
     const api = getPasskeysAPI()
     if (!api?.get || typeof api.get !== 'function') {
-      throw new Error('react-native-passkeys is not available. Please ensure it is installed and the app is rebuilt.')
+      throw new Error('react-native-passkeys module not available')
     }
+
     const assertion = await api.get(publicKey as any)
     if (!assertion) {
-      throw new Error('could not get passkey assertion')
+      throw new Error('Could not get passkey assertion')
     }
 
     const prfResults = assertion.clientExtensionResults?.prf
-    if (!prfResults || !prfResults.results?.first) {
+    if (!prfResults?.results?.first) {
       throw new Error('PRF extension not supported or missing results')
     }
 
-    const prfResultBytes = this.normalizePRFResultFirst(prfResults.results.first)
-    if (this.hasSubtle()) {
-      return this.deriveFromPRFResult(prfResultBytes)
-    }
-    throw new Error('deriveKey (CryptoKey) is not supported in React Native; passkey recovery uses deriveAndExportKey.')
-  }
-
-  /**
-   * Derives and exports a key as base64url string (JSON-friendly for React Native WebView).
-   * This is the preferred method for React Native.
-   */
-  async deriveAndExportNativeKey(config: { id: string; seed: string }): Promise<string> {
-    if (!this.extractableKey) {
-      throw new Error('Derived keys cannot be exported if extractableKey is not set to true')
-    }
-    if (!this.rpId) {
-      throw new Error('rpId must be configured')
-    }
-
-    const challenge = PasskeyUtils.generateChallenge()
-    const challengeBase64URL = PasskeyUtils.arrayBufferToBase64URL(challenge)
-    const credentialId =
-      config.id.includes('+') || config.id.includes('/') ? PasskeyUtils.base64ToBase64URL(config.id) : config.id
-
-    const publicKey: PublicKeyCredentialRequestOptions = {
-      challenge: challengeBase64URL,
-      rpId: this.rpId,
-      allowCredentials: [{ id: credentialId, type: 'public-key' }],
-      userVerification: 'required',
-      extensions: {
-        prf: {
-          eval: {
-            first: PasskeyUtils.arrayBufferToBase64URL(new TextEncoder().encode(config.seed)),
-          },
-        },
-      },
-    }
-
-    const api = getPasskeysAPI()
-    if (!api?.get || typeof api.get !== 'function') {
-      throw new Error('react-native-passkeys is not available. Please ensure it is installed and the app is rebuilt.')
-    }
-    const assertion = await api.get(publicKey as any)
-    if (!assertion) {
-      throw new Error('could not get passkey assertion')
-    }
-
-    const prfResults = assertion.clientExtensionResults?.prf
-    if (!prfResults || !prfResults.results?.first) {
-      throw new Error('PRF extension not supported or missing results')
-    }
-
-    const prfResultBytes = this.normalizePRFResultFirst(prfResults.results.first)
-
-    let keyBytes: Uint8Array
-    if (this.hasSubtle()) {
-      const derivedKey = await this.deriveFromPRFResult(prfResultBytes)
-      keyBytes = new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey))
-    } else {
-      keyBytes = this.getRawKeyBytes(prfResultBytes)
-    }
-
-    return PasskeyUtils.arrayBufferToBase64URL(keyBytes)
-  }
-
-  /**
-   * Derives and exports a key as Uint8Array (for interface compliance).
-   * Note: The SDK prefers deriveAndExportNativeKey() which returns base64url for better JSON serialization.
-   */
-  async deriveAndExportKey(config: { id: string; seed: string }): Promise<Uint8Array> {
-    const keyBase64URL = await this.deriveAndExportNativeKey(config)
-    return PasskeyUtils.base64URLToUint8Array(keyBase64URL)
+    const prfResultBytes = this.normalizePRFResult(prfResults.results.first)
+    return this.extractKeyBytes(prfResultBytes)
   }
 }
