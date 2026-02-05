@@ -109,8 +109,14 @@ export async function buildRecoveryParams(
     }
   }
 
-  // If password is provided, use password recovery
-  if (options?.recoveryPassword) {
+  // If password recovery method is explicitly requested or password is provided
+  if (options?.recoveryMethod === 'password' || options?.recoveryPassword) {
+    if (!options?.recoveryPassword) {
+      throw new OpenfortError(
+        'Recovery password is required when using password recovery method',
+        OpenfortErrorType.WALLET_ERROR
+      )
+    }
     return {
       recoveryMethod: RecoveryMethod.PASSWORD,
       password: options.recoveryPassword,
