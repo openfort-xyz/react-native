@@ -1,4 +1,10 @@
-import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, EmbeddedState } from '@openfort/openfort-js'
+import {
+  AccountTypeEnum,
+  ChainTypeEnum,
+  type EmbeddedAccount,
+  EmbeddedState,
+  RecoveryMethod,
+} from '@openfort/openfort-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
@@ -299,10 +305,19 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
     }, [] as EmbeddedAccount[])
 
     return deduplicatedAccounts.map((account, index) => ({
+      id: account.id,
       address: account.address,
-      ownerAddress: account.ownerAddress,
-      implementationType: account.implementationType,
       chainType: ChainTypeEnum.EVM,
+      chainId: account.chainId,
+      ownerAddress: account.ownerAddress,
+      factoryAddress: account.factoryAddress,
+      salt: account.salt,
+      accountType: account.accountType,
+      implementationAddress: account.implementationAddress,
+      createdAt: account.createdAt,
+      implementationType: account.implementationType,
+      recoveryMethod: account.recoveryMethod,
+      recoveryMethodDetails: account.recoveryMethodDetails,
       walletIndex: index,
       getProvider: async () => await getEthereumProvider(),
     }))
@@ -365,7 +380,10 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
         })
 
         if (createOptions?.onSuccess) {
-          createOptions.onSuccess({ account: embeddedAccount, provider: ethProvider })
+          createOptions.onSuccess({
+            account: embeddedAccount,
+            provider: ethProvider,
+          })
         }
         if (options.onCreateSuccess) {
           options.onCreateSuccess(embeddedAccount, ethProvider)
@@ -468,8 +486,34 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
             throw new OpenfortError(errorMsg, OpenfortErrorType.WALLET_ERROR)
           }
 
+          // Auto-detect recovery method from account if not explicitly provided
+          let effectiveRecoveryMethod = setActiveOptions.recoveryMethod
+          let effectivePasskeyId = setActiveOptions.passkeyId
+
+          if (!effectiveRecoveryMethod && embeddedAccountToRecover.recoveryMethod) {
+            if (embeddedAccountToRecover.recoveryMethod === RecoveryMethod.PASSKEY) {
+              effectiveRecoveryMethod = 'passkey'
+              if (!effectivePasskeyId) {
+                const details = embeddedAccountToRecover.recoveryMethodDetails
+                if (details && 'passkeyId' in details && typeof details.passkeyId === 'string') {
+                  effectivePasskeyId = details.passkeyId
+                }
+              }
+            } else if (embeddedAccountToRecover.recoveryMethod === RecoveryMethod.PASSWORD) {
+              effectiveRecoveryMethod = 'password'
+            }
+          }
+
           // Build recovery params
-          const recoveryParams = await buildRecoveryParams({ ...setActiveOptions, userId: user?.id }, walletConfig)
+          const recoveryParams = await buildRecoveryParams(
+            {
+              ...setActiveOptions,
+              userId: user?.id,
+              recoveryMethod: effectiveRecoveryMethod,
+              passkeyId: effectivePasskeyId,
+            },
+            walletConfig
+          )
 
           // Recover the embedded wallet
           const embeddedAccount = await client.embeddedWallet.recover({
@@ -489,10 +533,19 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
           )
 
           const wallet: ConnectedEmbeddedEthereumWallet = {
+            id: embeddedAccount.id,
             address: embeddedAccount.address,
-            ownerAddress: embeddedAccount.ownerAddress,
-            implementationType: embeddedAccount.implementationType,
             chainType: ChainTypeEnum.EVM,
+            chainId: embeddedAccount.chainId,
+            ownerAddress: embeddedAccount.ownerAddress,
+            factoryAddress: embeddedAccount.factoryAddress,
+            salt: embeddedAccount.salt,
+            accountType: embeddedAccount.accountType,
+            implementationAddress: embeddedAccount.implementationAddress,
+            createdAt: embeddedAccount.createdAt,
+            implementationType: embeddedAccount.implementationType,
+            recoveryMethod: embeddedAccount.recoveryMethod,
+            recoveryMethodDetails: embeddedAccount.recoveryMethodDetails,
             walletIndex: walletIndex >= 0 ? walletIndex : 0,
             getProvider: async () => ethProvider,
           }
@@ -600,10 +653,19 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
     const accountIndex = embeddedAccounts.findIndex((acc) => acc.id === activeWalletId)
 
     return {
+      id: activeAccount.id,
       address: activeAccount.address,
-      ownerAddress: activeAccount.ownerAddress,
-      implementationType: activeAccount.implementationType,
       chainType: ChainTypeEnum.EVM,
+      chainId: activeAccount.chainId,
+      ownerAddress: activeAccount.ownerAddress,
+      factoryAddress: activeAccount.factoryAddress,
+      salt: activeAccount.salt,
+      accountType: activeAccount.accountType,
+      implementationAddress: activeAccount.implementationAddress,
+      createdAt: activeAccount.createdAt,
+      implementationType: activeAccount.implementationType,
+      recoveryMethod: activeAccount.recoveryMethod,
+      recoveryMethodDetails: activeAccount.recoveryMethodDetails,
       walletIndex: accountIndex >= 0 ? accountIndex : 0,
       getProvider: async () => await getEthereumProvider(),
     }
@@ -629,11 +691,20 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
     }
 
     if (status.status === 'connecting' || status.status === 'reconnecting' || status.status === 'loading') {
-      return { ...baseActions, status: 'connecting', activeWallet: activeWallet! }
+      return {
+        ...baseActions,
+        status: 'connecting',
+        activeWallet: activeWallet!,
+      }
     }
 
     if (status.status === 'error') {
-      return { ...baseActions, status: 'error', activeWallet, error: status.error?.message || 'Unknown error' }
+      return {
+        ...baseActions,
+        status: 'error',
+        activeWallet,
+        error: status.error?.message || 'Unknown error',
+      }
     }
 
     // Priority 2: Check authentication state from context
@@ -650,7 +721,11 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
 
     if (activeAccount && !provider) {
       // Have wallet but provider not initialized yet (mount recovery in progress)
-      return { ...baseActions, status: 'connecting', activeWallet: activeWallet! }
+      return {
+        ...baseActions,
+        status: 'connecting',
+        activeWallet: activeWallet!,
+      }
     }
 
     // Default: disconnected (authenticated but no wallet selected)

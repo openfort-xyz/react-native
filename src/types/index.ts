@@ -7,6 +7,16 @@ export interface UseOpenfort {
   error: Error | null
 }
 
+// Passkey error types (re-exported from @openfort/openfort-js)
+export {
+  PASSKEY_ERROR_CODES,
+  PasskeyAssertionFailedError,
+  PasskeyCreationFailedError,
+  type PasskeyErrorCode,
+  PasskeyPRFNotSupportedError,
+  PasskeySeedInvalidError,
+  PasskeyUserCancelledError,
+} from '@openfort/openfort-js'
 // Authentication types
 export type {
   AuthSuccessCallback,

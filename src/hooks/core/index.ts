@@ -9,4 +9,6 @@ export { useOpenfort } from './useOpenfort'
 
 export { useOpenfortClient } from './useOpenfortClient'
 
+export { usePasskeySupport } from './usePasskeySupport'
+
 export { useUser } from './useUser'

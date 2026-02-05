@@ -42,8 +42,9 @@ export * from './constants'
 export * from './core'
 // Re-export all hooks
 export * from './hooks'
-
 // Re-export native functionality
 export * from './native'
 // Re-export all types from the main types module
 export * from './types'
+// Re-export RecoveryMethodDetails extracted from EmbeddedAccount (not directly exported from @openfort/openfort-js)
+export type { RecoveryMethodDetails } from './types/wallet'

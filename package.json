@@ -40,7 +40,8 @@
     }
   },
   "dependencies": {
-    "@openfort/openfort-js": "^1.1.4"
+    "@openfort/openfort-js": "^1.1.5",
+    "react-native-passkeys": "0.4.0"
   },
   "peerDependencies": {
     "expo-apple-authentication": "*",
@@ -94,7 +95,10 @@
   "size-limit": [
     {
       "path": "dist/index.js",
-      "limit": "250 KB"
+      "limit": "250 KB",
+      "ignore": [
+        "expo-modules-core"
+      ]
     }
   ],
   "pnpm": {

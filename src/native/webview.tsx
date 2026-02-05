@@ -19,6 +19,8 @@ interface EmbeddedWalletWebViewProps {
   isClientReady: boolean
   /** Callback when WebView proxy status changes */
   onProxyStatusChange?: (status: 'loading' | 'loaded' | 'reloading') => void
+  /** Enable WebView debugging (allows inspection via Safari/Chrome dev tools) */
+  debug?: boolean
 }
 
 /**
@@ -28,11 +30,7 @@ interface EmbeddedWalletWebViewProps {
  *
  * @param props - Component props, see {@link EmbeddedWalletWebViewProps}
  */
-export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
-  client,
-  isClientReady,
-  onProxyStatusChange,
-}) => {
+export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({ client, onProxyStatusChange, debug }) => {
   const webViewRef = useRef<WebView>(null)
 
   // Handle app state changes to monitor WebView health
@@ -68,7 +66,6 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
   // Set up WebView reference with client immediately when both are available
   useEffect(() => {
     if (webViewRef.current) {
-      // Message poster with Uint8Array preprocessing for React Native
       const messagePoster = {
         postMessage: (message: string) => {
           webViewRef.current?.postMessage(message)
@@ -76,7 +73,7 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
       }
       client.embeddedWallet.setMessagePoster(messagePoster)
     }
-  }, [client, isClientReady])
+  }, [client])
 
   // Clean message handler using the new penpal bridge
   const handleMessage = useCallback(
@@ -126,7 +123,8 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({
         source={{
           uri: client.embeddedWallet.getURL(),
         }}
-        webviewDebuggingEnabled={true}
+        // Enable debugging when explicitly enabled via walletConfig.debug
+        webviewDebuggingEnabled={debug}
         cacheEnabled={false}
         injectedJavaScriptObject={{ shouldUseAppBackedStorage: true }}
         cacheMode="LOAD_NO_CACHE"
@@ -196,7 +194,11 @@ export const WebViewUtils = {
    * @param message - JSON string message to validate
    * @returns Validation result with parsed data or error information
    */
-  validateMessage(message: string): { isValid: boolean; data?: any; error?: string } {
+  validateMessage(message: string): {
+    isValid: boolean
+    data?: any
+    error?: string
+  } {
     try {
       const parsed = JSON.parse(message)
 

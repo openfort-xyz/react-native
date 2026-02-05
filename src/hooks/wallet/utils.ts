@@ -81,16 +81,49 @@ async function resolveEncryptionSession(
  * @internal
  */
 export async function buildRecoveryParams(
-  options: { recoveryPassword?: string; otpCode?: string; userId?: string } | undefined,
+  options:
+    | {
+        recoveryPassword?: string
+        otpCode?: string
+        userId?: string
+        recoveryMethod?: 'automatic' | 'password' | 'passkey'
+        passkeyId?: string
+      }
+    | undefined,
   walletConfig?: EmbeddedWalletConfiguration
 ): Promise<RecoveryParams> {
-  if (options?.recoveryPassword) {
+  // If passkey recovery method is explicitly requested
+  if (options?.recoveryMethod === 'passkey') {
+    // If passkeyId is provided, use it for recovery
+    if (options.passkeyId) {
+      return {
+        recoveryMethod: RecoveryMethod.PASSKEY,
+        passkeyInfo: {
+          passkeyId: options.passkeyId,
+        },
+      }
+    }
+    // If no passkeyId, this is a creation request - SDK will create the passkey
+    return {
+      recoveryMethod: RecoveryMethod.PASSKEY,
+    }
+  }
+
+  // If password recovery method is explicitly requested or password is provided
+  if (options?.recoveryMethod === 'password' || options?.recoveryPassword) {
+    if (!options?.recoveryPassword) {
+      throw new OpenfortError(
+        'Recovery password is required when using password recovery method',
+        OpenfortErrorType.WALLET_ERROR
+      )
+    }
     return {
       recoveryMethod: RecoveryMethod.PASSWORD,
       password: options.recoveryPassword,
     }
   }
 
+  // Default to automatic recovery
   return {
     recoveryMethod: RecoveryMethod.AUTOMATIC,
     encryptionSession: await resolveEncryptionSession(walletConfig, options?.otpCode, options?.userId),
