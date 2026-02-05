@@ -322,8 +322,12 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
   // Build wallets list (simple deduplication by address)
   const wallets: ConnectedEmbeddedSolanaWallet[] = useMemo(() => {
     return embeddedAccounts.map((account, index) => ({
+      id: account.id,
       address: account.address,
       chainType: ChainTypeEnum.SVM,
+      createdAt: account.createdAt,
+      recoveryMethod: account.recoveryMethod,
+      recoveryMethodDetails: account.recoveryMethodDetails,
       walletIndex: index,
       getProvider: async () => await getSolanaProvider(account),
     }))
@@ -499,8 +503,12 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
           )
 
           const wallet: ConnectedEmbeddedSolanaWallet = {
+            id: embeddedAccount.id,
             address: embeddedAccount.address,
             chainType: ChainTypeEnum.SVM,
+            createdAt: embeddedAccount.createdAt,
+            recoveryMethod: embeddedAccount.recoveryMethod,
+            recoveryMethodDetails: embeddedAccount.recoveryMethodDetails,
             walletIndex: walletIndex >= 0 ? walletIndex : 0,
             getProvider: async () => solProvider,
           }
@@ -563,8 +571,12 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
     const accountIndex = embeddedAccounts.findIndex((acc) => acc.id === activeWalletId)
 
     return {
+      id: activeAccount.id,
       address: activeAccount.address,
       chainType: ChainTypeEnum.SVM,
+      createdAt: activeAccount.createdAt,
+      recoveryMethod: activeAccount.recoveryMethod,
+      recoveryMethodDetails: activeAccount.recoveryMethodDetails,
       walletIndex: accountIndex >= 0 ? accountIndex : 0,
       getProvider: async () => await getSolanaProvider(activeAccount),
     }

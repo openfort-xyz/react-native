@@ -305,10 +305,19 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
     }, [] as EmbeddedAccount[])
 
     return deduplicatedAccounts.map((account, index) => ({
+      id: account.id,
       address: account.address,
-      ownerAddress: account.ownerAddress,
-      implementationType: account.implementationType,
       chainType: ChainTypeEnum.EVM,
+      chainId: account.chainId,
+      ownerAddress: account.ownerAddress,
+      factoryAddress: account.factoryAddress,
+      salt: account.salt,
+      accountType: account.accountType,
+      implementationAddress: account.implementationAddress,
+      createdAt: account.createdAt,
+      implementationType: account.implementationType,
+      recoveryMethod: account.recoveryMethod,
+      recoveryMethodDetails: account.recoveryMethodDetails,
       walletIndex: index,
       getProvider: async () => await getEthereumProvider(),
     }))
@@ -524,10 +533,19 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
           )
 
           const wallet: ConnectedEmbeddedEthereumWallet = {
+            id: embeddedAccount.id,
             address: embeddedAccount.address,
-            ownerAddress: embeddedAccount.ownerAddress,
-            implementationType: embeddedAccount.implementationType,
             chainType: ChainTypeEnum.EVM,
+            chainId: embeddedAccount.chainId,
+            ownerAddress: embeddedAccount.ownerAddress,
+            factoryAddress: embeddedAccount.factoryAddress,
+            salt: embeddedAccount.salt,
+            accountType: embeddedAccount.accountType,
+            implementationAddress: embeddedAccount.implementationAddress,
+            createdAt: embeddedAccount.createdAt,
+            implementationType: embeddedAccount.implementationType,
+            recoveryMethod: embeddedAccount.recoveryMethod,
+            recoveryMethodDetails: embeddedAccount.recoveryMethodDetails,
             walletIndex: walletIndex >= 0 ? walletIndex : 0,
             getProvider: async () => ethProvider,
           }
@@ -635,10 +653,19 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
     const accountIndex = embeddedAccounts.findIndex((acc) => acc.id === activeWalletId)
 
     return {
+      id: activeAccount.id,
       address: activeAccount.address,
-      ownerAddress: activeAccount.ownerAddress,
-      implementationType: activeAccount.implementationType,
       chainType: ChainTypeEnum.EVM,
+      chainId: activeAccount.chainId,
+      ownerAddress: activeAccount.ownerAddress,
+      factoryAddress: activeAccount.factoryAddress,
+      salt: activeAccount.salt,
+      accountType: activeAccount.accountType,
+      implementationAddress: activeAccount.implementationAddress,
+      createdAt: activeAccount.createdAt,
+      implementationType: activeAccount.implementationType,
+      recoveryMethod: activeAccount.recoveryMethod,
+      recoveryMethodDetails: activeAccount.recoveryMethodDetails,
       walletIndex: accountIndex >= 0 ? accountIndex : 0,
       getProvider: async () => await getEthereumProvider(),
     }

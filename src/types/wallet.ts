@@ -1,4 +1,16 @@
-import type { AccountTypeEnum, ChainTypeEnum, EmbeddedAccount, RecoveryParams } from '@openfort/openfort-js'
+import type {
+  AccountTypeEnum,
+  ChainTypeEnum,
+  EmbeddedAccount,
+  RecoveryMethod,
+  RecoveryParams,
+} from '@openfort/openfort-js'
+
+/**
+ * Recovery method details extracted from EmbeddedAccount
+ */
+export type RecoveryMethodDetails = EmbeddedAccount['recoveryMethodDetails']
+
 import type { Hex } from './hex'
 import type { OpenfortHookOptions } from './hookOption'
 import type { OpenfortError } from './openfortError'
@@ -122,11 +134,35 @@ export interface OpenfortEmbeddedSolanaWalletProvider {
  * Connected Ethereum wallet
  */
 export type ConnectedEmbeddedEthereumWallet = {
+  /** Account ID */
+  id: string
+  /** Account address */
   address: string
-  ownerAddress?: string
-  implementationType?: string
+  /** Chain type (always EVM) */
   chainType: ChainTypeEnum.EVM
+  /** Chain ID */
+  chainId?: number
+  /** Owner address (for smart accounts) */
+  ownerAddress?: string
+  /** Factory address (for smart accounts) */
+  factoryAddress?: string
+  /** Salt (for smart accounts) */
+  salt?: string
+  /** Account type (EOA, Smart Account, Delegated) */
+  accountType: AccountTypeEnum
+  /** Implementation address (for smart accounts) */
+  implementationAddress?: string
+  /** Creation timestamp */
+  createdAt?: number
+  /** Implementation type */
+  implementationType?: string
+  /** Recovery method used for this wallet */
+  recoveryMethod?: RecoveryMethod
+  /** Recovery method details (e.g., passkey info) */
+  recoveryMethodDetails?: RecoveryMethodDetails
+  /** Index in the wallets array */
   walletIndex: number
+  /** Get the EIP-1193 provider for this wallet */
   getProvider: () => Promise<OpenfortEmbeddedEthereumWalletProvider>
 }
 
@@ -134,9 +170,21 @@ export type ConnectedEmbeddedEthereumWallet = {
  * Connected Solana wallet
  */
 export type ConnectedEmbeddedSolanaWallet = {
+  /** Account ID */
+  id: string
+  /** Account address (public key) */
   address: string
+  /** Chain type (always SVM) */
   chainType: ChainTypeEnum.SVM
+  /** Creation timestamp */
+  createdAt?: number
+  /** Recovery method used for this wallet */
+  recoveryMethod?: RecoveryMethod
+  /** Recovery method details (e.g., passkey info) */
+  recoveryMethodDetails?: RecoveryMethodDetails
+  /** Index in the wallets array */
   walletIndex: number
+  /** Get the Solana provider for this wallet */
   getProvider: () => Promise<OpenfortEmbeddedSolanaWalletProvider>
 }
 
