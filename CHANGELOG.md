@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.6
+
+### Patch Changes
+
+- [#55](https://github.com/openfort-xyz/react-native/pull/55) [`7fec94e`](https://github.com/openfort-xyz/react-native/commit/7fec94eea4343ab65a3e40235899c12e27082803) Thanks [@isardmart](https://github.com/isardmart)! - add passkey support
+
 ## 1.0.5
 
 ### Patch Changes
