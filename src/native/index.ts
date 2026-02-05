@@ -15,7 +15,7 @@ export {
 } from './oauth'
 export type { NativePasskeyHandlerConfig, PasskeysAPI } from './passkey'
 // Passkey handler and support checks
-export { isPasskeySupported, NativePasskeyHandler } from './passkey'
+export { getPasskeyDiagnostics, isPasskeySupported, NativePasskeyHandler } from './passkey'
 export type {
   SecureStorageMessage,
   SecureStorageResponse,

@@ -19,6 +19,8 @@ interface EmbeddedWalletWebViewProps {
   isClientReady: boolean
   /** Callback when WebView proxy status changes */
   onProxyStatusChange?: (status: 'loading' | 'loaded' | 'reloading') => void
+  /** Enable WebView debugging (allows inspection via Safari/Chrome dev tools) */
+  debug?: boolean
 }
 
 /**
@@ -28,7 +30,7 @@ interface EmbeddedWalletWebViewProps {
  *
  * @param props - Component props, see {@link EmbeddedWalletWebViewProps}
  */
-export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({ client, onProxyStatusChange }) => {
+export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({ client, onProxyStatusChange, debug }) => {
   const webViewRef = useRef<WebView>(null)
 
   // Handle app state changes to monitor WebView health
@@ -121,7 +123,8 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({ cl
         source={{
           uri: client.embeddedWallet.getURL(),
         }}
-        webviewDebuggingEnabled={true}
+        // Enable debugging when explicitly enabled via walletConfig.debug
+        webviewDebuggingEnabled={debug}
         cacheEnabled={false}
         injectedJavaScriptObject={{ shouldUseAppBackedStorage: true }}
         cacheMode="LOAD_NO_CACHE"

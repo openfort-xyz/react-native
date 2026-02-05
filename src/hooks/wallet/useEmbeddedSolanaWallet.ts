@@ -462,7 +462,10 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
             if (embeddedAccountToRecover.recoveryMethod === RecoveryMethod.PASSKEY) {
               effectiveRecoveryMethod = 'passkey'
               if (!effectivePasskeyId) {
-                effectivePasskeyId = embeddedAccountToRecover.recoveryMethodDetails?.passkeyId
+                const details = embeddedAccountToRecover.recoveryMethodDetails
+                if (details && 'passkeyId' in details && typeof details.passkeyId === 'string') {
+                  effectivePasskeyId = details.passkeyId
+                }
               }
             } else if (embeddedAccountToRecover.recoveryMethod === RecoveryMethod.PASSWORD) {
               effectiveRecoveryMethod = 'password'
@@ -585,7 +588,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
     }
 
     if (status.status === 'connecting' || status.status === 'reconnecting' || status.status === 'loading') {
-      return { ...baseActions, status: 'connecting' }
+      return { ...baseActions, status: 'connecting', activeWallet }
     }
 
     if (status.status === 'error') {
@@ -611,7 +614,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
 
     if (activeAccount && !provider) {
       // Have wallet but provider not initialized yet (mount recovery in progress)
-      return { ...baseActions, status: 'connecting' }
+      return { ...baseActions, status: 'connecting', activeWallet }
     }
 
     // Default: disconnected (authenticated but no wallet selected)

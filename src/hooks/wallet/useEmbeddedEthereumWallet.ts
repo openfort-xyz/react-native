@@ -485,7 +485,10 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
             if (embeddedAccountToRecover.recoveryMethod === RecoveryMethod.PASSKEY) {
               effectiveRecoveryMethod = 'passkey'
               if (!effectivePasskeyId) {
-                effectivePasskeyId = embeddedAccountToRecover.recoveryMethodDetails?.passkeyId
+                const details = embeddedAccountToRecover.recoveryMethodDetails
+                if (details && 'passkeyId' in details && typeof details.passkeyId === 'string') {
+                  effectivePasskeyId = details.passkeyId
+                }
               }
             } else if (embeddedAccountToRecover.recoveryMethod === RecoveryMethod.PASSWORD) {
               effectiveRecoveryMethod = 'password'

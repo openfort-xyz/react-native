@@ -255,9 +255,12 @@ export const OpenfortProvider = ({
   // Create passkey handler if passkey recovery is configured (single instance for SDK and WebView)
   const passkeyHandler = useMemo(() => {
     if (walletConfig?.passkeyRpId) {
+      if (!walletConfig.passkeyRpName) {
+        logger.warn('passkeyRpName is required when passkeyRpId is provided for passkey recovery')
+      }
       return new NativePasskeyHandler({
         rpId: walletConfig.passkeyRpId,
-        rpName: walletConfig.passkeyRpName,
+        rpName: walletConfig.passkeyRpName ?? walletConfig.passkeyRpId,
       })
     }
     return undefined
@@ -483,6 +486,7 @@ export const OpenfortProvider = ({
         <EmbeddedWalletWebView
           client={client}
           isClientReady={isReady}
+          debug={walletConfig?.debug}
           onProxyStatusChange={(status: 'loading' | 'loaded' | 'reloading') => {
             // Handle WebView status changes for debugging
             if (verbose) {
