@@ -1,21 +1,17 @@
 import { useEffect, useState } from 'react'
 import { isPasskeySupported } from '../../native/passkey'
 
-export type UsePasskeySupportOptions = {
-  /** Reserved for future use (e.g. RP config). Passkey support uses the library's isSupported() only. */
-  rpId?: string
-  rpName?: string
-}
-
 /**
  * Hook to detect if the platform supports passkeys (WebAuthn).
- * Uses the library's isSupported() only — no credential creation.
  *
- * @returns Object containing passkey support (isSupported, isPRFSupported set from the same check)
+ * Note: This only checks basic passkey support, not PRF extension support.
+ * PRF support can only be determined during passkey creation via the
+ * `clientExtensionResults.prf.enabled` field in the response.
+ *
+ * @returns Object with `isSupported` boolean and `isLoading` state
  */
-export function usePasskeySupport(_options?: UsePasskeySupportOptions) {
+export function usePasskeySupport() {
   const [isSupported, setIsSupported] = useState<boolean>(false)
-  const [isPRFSupported, setIsPRFSupported] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
   useEffect(() => {
@@ -23,10 +19,8 @@ export function usePasskeySupport(_options?: UsePasskeySupportOptions) {
       try {
         const available = await isPasskeySupported()
         setIsSupported(available)
-        setIsPRFSupported(available)
       } catch {
         setIsSupported(false)
-        setIsPRFSupported(false)
       } finally {
         setIsLoading(false)
       }
@@ -37,7 +31,6 @@ export function usePasskeySupport(_options?: UsePasskeySupportOptions) {
 
   return {
     isSupported,
-    isPRFSupported,
     isLoading,
   }
 }
