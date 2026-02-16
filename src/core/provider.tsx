@@ -30,6 +30,8 @@ export type CommonEmbeddedWalletConfiguration = {
   passkeyRpId?: string
   /** Passkey Relying Party Name for passkey-based recovery */
   passkeyRpName?: string
+  /** Display name shown next to the passkey credential in passkey dialogs. Defaults to "Openfort - Embedded Wallet". */
+  passkeyDisplayName?: string
 }
 
 /**
@@ -278,6 +280,7 @@ export const OpenfortProvider = ({
             shieldDebug: walletConfig.debug,
             passkeyRpId: walletConfig.passkeyRpId,
             passkeyRpName: walletConfig.passkeyRpName,
+            passkeyDisplayName: walletConfig.passkeyDisplayName,
           })
         : undefined,
       overrides: {
