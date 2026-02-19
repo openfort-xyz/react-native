@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { isPasskeySupported } from '../../native/passkey'
+import { isPasskeyPrfSupported } from '../../native/passkey'
 
 /**
  * Hook to detect if the platform supports passkeys (WebAuthn).
@@ -17,7 +17,7 @@ export function usePasskeySupport() {
   useEffect(() => {
     async function checkSupport() {
       try {
-        const available = await isPasskeySupported()
+        const available = await isPasskeyPrfSupported()
         setIsSupported(available)
       } catch {
         setIsSupported(false)
