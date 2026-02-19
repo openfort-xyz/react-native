@@ -6,6 +6,7 @@ import {
   PasskeySeedInvalidError,
   PasskeyUserCancelledError,
 } from '@openfort/openfort-js'
+import { Platform } from 'react-native'
 import { logger } from '../lib/logger'
 
 /**
@@ -173,10 +174,13 @@ export function getPasskeyDiagnostics(): {
 }
 
 /**
- * Checks if the device supports passkeys (WebAuthn). Uses the library's isSupported() only — no credential creation.
- * Normalizes sync/async and function/boolean from react-native-passkeys.
+ * Checks if the device supports passkeys (WebAuthn) with PRF extension. Requires Android 14+ or iOS 18+.
+ * Uses the library's isSupported() after platform version check. No credential creation.
  */
-export async function isPasskeySupported(): Promise<boolean> {
+export async function isPasskeyPrfSupported(): Promise<boolean> {
+  if (Platform.OS === 'android' && Platform.Version < 34) return false
+  if (Platform.OS === 'ios' && parseInt(String(Platform.Version), 10) < 18) return false
+  if (Platform.OS !== 'android' && Platform.OS !== 'ios') return false
   const api = getPasskeysAPI()
   if (!api || api.isSupported == null) {
     return false
