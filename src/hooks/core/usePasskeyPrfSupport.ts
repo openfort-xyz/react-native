@@ -10,7 +10,7 @@ import { isPasskeyPrfSupported } from '../../native/passkey'
  *
  * @returns Object with `isSupported` boolean and `isLoading` state
  */
-export function usePasskeySupport() {
+export function usePasskeyPrfSupport() {
   const [isSupported, setIsSupported] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
