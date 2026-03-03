@@ -1,23 +1,21 @@
 import { useEffect, useState } from 'react'
-import { isPasskeySupported } from '../../native/passkey'
+import { isPasskeyPrfSupported } from '../../native/passkey'
 
 /**
- * Hook to detect if the platform supports passkeys (WebAuthn).
- *
- * Note: This only checks basic passkey support, not PRF extension support.
- * PRF support can only be determined during passkey creation via the
- * `clientExtensionResults.prf.enabled` field in the response.
+ * Hook to detect if the device supports passkey-based wallet recovery with the PRF extension.
+ * Requires Android 14+ (API 34) or iOS 18+. On older versions or other platforms, returns
+ * `isSupported: false`. Use to conditionally show passkey options in your UI.
  *
  * @returns Object with `isSupported` boolean and `isLoading` state
  */
-export function usePasskeySupport() {
+export function usePasskeyPrfSupport() {
   const [isSupported, setIsSupported] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
   useEffect(() => {
     async function checkSupport() {
       try {
-        const available = await isPasskeySupported()
+        const available = await isPasskeyPrfSupported()
         setIsSupported(available)
       } catch {
         setIsSupported(false)
