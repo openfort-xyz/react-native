@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.8
+
+### Patch Changes
+
+- [#69](https://github.com/openfort-xyz/react-native/pull/69) [`d53c4df`](https://github.com/openfort-xyz/react-native/commit/d53c4df33d31b22c0969f2e807ed1a72234ce013) Thanks [@isardmart](https://github.com/isardmart)! - update isPasskeyPrfSupport with native platform version verification
+
 ## 1.0.7
 
 ### Patch Changes
