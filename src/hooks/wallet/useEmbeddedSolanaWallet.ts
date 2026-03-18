@@ -588,7 +588,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
       create,
       wallets,
       setActive,
-      exportPrivateKey: client.embeddedWallet.exportPrivateKey,
+      exportPrivateKey: () => client.embeddedWallet.exportPrivateKey(),
     }
 
     // Priority 1: Explicit action states (user-initiated operations)
