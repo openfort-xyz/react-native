@@ -34,9 +34,9 @@ type UseEmbeddedSolanaWalletOptions = {
 type WalletFlowStatus =
   | BaseFlowState
   | {
-      status: 'creating' | 'connecting' | 'reconnecting' | 'disconnected' | 'needs-recovery' | 'fetching-wallets'
-      error?: never
-    }
+    status: 'creating' | 'connecting' | 'reconnecting' | 'disconnected' | 'needs-recovery' | 'fetching-wallets'
+    error?: never
+  }
 
 /**
  * Hook for managing embedded Solana wallets.
@@ -188,7 +188,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
 
   // Sync active wallet ID and account with client
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       try {
         const embeddedAccount = await client.embeddedWallet.get()
         // here we check in case the current account is not SVM
@@ -296,7 +296,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
       return
     }
 
-    ;(async () => {
+    ; (async () => {
       try {
         logger.info('Initializing provider for recovered Solana wallet session')
         setStatus({ status: 'connecting' })
@@ -309,10 +309,10 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
           e instanceof OpenfortError
             ? e
             : new OpenfortError(
-                'Failed to initialize provider for active Solana wallet',
-                OpenfortErrorType.WALLET_ERROR,
-                { error: e }
-              )
+              'Failed to initialize provider for active Solana wallet',
+              OpenfortErrorType.WALLET_ERROR,
+              { error: e }
+            )
         logger.error('Solana provider initialization failed', error)
         setStatus({ status: 'error', error })
       }
@@ -344,10 +344,10 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
         const recoveryParams = await buildRecoveryParams(
           createOptions?.recoveryPassword || createOptions?.otpCode || user?.id
             ? {
-                recoveryPassword: createOptions?.recoveryPassword,
-                otpCode: createOptions?.otpCode,
-                userId: user?.id,
-              }
+              recoveryPassword: createOptions?.recoveryPassword,
+              otpCode: createOptions?.otpCode,
+              userId: user?.id,
+            }
             : undefined,
           walletConfig
         )
@@ -588,6 +588,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
       create,
       wallets,
       setActive,
+      exportPrivateKey: client.embeddedWallet.exportPrivateKey,
     }
 
     // Priority 1: Explicit action states (user-initiated operations)
@@ -631,7 +632,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
 
     // Default: disconnected (authenticated but no wallet selected)
     return { ...baseActions, status: 'disconnected', activeWallet: null }
-  }, [status, activeWallet, activeAccount, provider, wallets, embeddedState, create, setActive])
+  }, [status, activeWallet, activeAccount, provider, wallets, embeddedState, create, setActive, client.embeddedWallet])
 
   return state
 }
