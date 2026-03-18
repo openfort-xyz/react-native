@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.9
+
+### Patch Changes
+
+- [#72](https://github.com/openfort-xyz/react-native/pull/72) [`c8a9ae8`](https://github.com/openfort-xyz/react-native/commit/c8a9ae84c472d4973879970eeeb3566fa917ff31) Thanks [@isardmart](https://github.com/isardmart)! - Added exportprivateKey on Solana
+
 ## 1.0.8
 
 ### Patch Changes
