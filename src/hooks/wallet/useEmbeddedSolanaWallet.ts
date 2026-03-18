@@ -588,6 +588,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
       create,
       wallets,
       setActive,
+      exportPrivateKey: () => client.embeddedWallet.exportPrivateKey(),
     }
 
     // Priority 1: Explicit action states (user-initiated operations)
@@ -631,7 +632,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
 
     // Default: disconnected (authenticated but no wallet selected)
     return { ...baseActions, status: 'disconnected', activeWallet: null }
-  }, [status, activeWallet, activeAccount, provider, wallets, embeddedState, create, setActive])
+  }, [status, activeWallet, activeAccount, provider, wallets, embeddedState, create, setActive, client.embeddedWallet])
 
   return state
 }

@@ -376,6 +376,11 @@ export interface SolanaWalletActions {
    * Set a wallet as active (recover/connect to it)
    */
   setActive(options: SetActiveSolanaWalletOptions): Promise<void>
+
+  /**
+   * Export the private key of the active wallet
+   */
+  exportPrivateKey(): Promise<string>
 }
 
 // ============================================================================

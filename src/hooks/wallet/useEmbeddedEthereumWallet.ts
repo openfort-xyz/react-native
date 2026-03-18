@@ -678,7 +678,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
       wallets,
       setActive,
       setRecovery,
-      exportPrivateKey: client.embeddedWallet.exportPrivateKey,
+      exportPrivateKey: () => client.embeddedWallet.exportPrivateKey(),
     }
 
     // Priority 1: Explicit action states (user-initiated operations)
