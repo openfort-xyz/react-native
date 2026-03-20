@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.10
+
+### Patch Changes
+
+- [#74](https://github.com/openfort-xyz/react-native/pull/74) [`08e78ab`](https://github.com/openfort-xyz/react-native/commit/08e78ab6bb5105ad788a05f0f0af2cd559d8357e) Thanks [@0xbri3t](https://github.com/0xbri3t)! - fix: include DELEGATED_ACCOUNT in embedded wallet list filter
+
 ## 1.0.9
 
 ### Patch Changes
