@@ -160,7 +160,11 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
         const accounts = await client.embeddedWallet.list({
           limit: 100,
           chainType: ChainTypeEnum.EVM,
-          accountType: walletConfig?.accountType === AccountTypeEnum.EOA ? undefined : AccountTypeEnum.SMART_ACCOUNT,
+          accountType:
+            walletConfig?.accountType === AccountTypeEnum.EOA ||
+            walletConfig?.accountType === AccountTypeEnum.DELEGATED_ACCOUNT
+              ? undefined
+              : walletConfig?.accountType || AccountTypeEnum.SMART_ACCOUNT,
         })
         // Filter for Ethereum accounts only
         setEmbeddedAccounts(accounts)
@@ -350,7 +354,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
 
         // Build recovery params
         const recoveryParams = await buildRecoveryParams({ ...createOptions, userId: user?.id }, walletConfig)
-        const accountType = createOptions?.accountType || walletConfig?.accountType || AccountTypeEnum.SMART_ACCOUNT
+        const accountType = createOptions?.accountType || walletConfig?.accountType || AccountTypeEnum.EOA
         // Create embedded wallet
         const embeddedAccount = await client.embeddedWallet.create({
           chainId: accountType === AccountTypeEnum.EOA ? undefined : chainId,
