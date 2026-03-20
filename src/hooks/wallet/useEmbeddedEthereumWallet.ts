@@ -354,7 +354,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
 
         // Build recovery params
         const recoveryParams = await buildRecoveryParams({ ...createOptions, userId: user?.id }, walletConfig)
-        const accountType = createOptions?.accountType || walletConfig?.accountType || AccountTypeEnum.SMART_ACCOUNT
+        const accountType = createOptions?.accountType || walletConfig?.accountType || AccountTypeEnum.EOA
         // Create embedded wallet
         const embeddedAccount = await client.embeddedWallet.create({
           chainId: accountType === AccountTypeEnum.EOA ? undefined : chainId,
