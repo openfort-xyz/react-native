@@ -160,7 +160,11 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
         const accounts = await client.embeddedWallet.list({
           limit: 100,
           chainType: ChainTypeEnum.EVM,
-          accountType: walletConfig?.accountType === AccountTypeEnum.EOA || walletConfig?.accountType === AccountTypeEnum.DELEGATED_ACCOUNT ? undefined : walletConfig?.accountType || AccountTypeEnum.SMART_ACCOUNT,
+          accountType:
+            walletConfig?.accountType === AccountTypeEnum.EOA ||
+            walletConfig?.accountType === AccountTypeEnum.DELEGATED_ACCOUNT
+              ? undefined
+              : walletConfig?.accountType || AccountTypeEnum.SMART_ACCOUNT,
         })
         // Filter for Ethereum accounts only
         setEmbeddedAccounts(accounts)
@@ -287,7 +291,10 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
   const wallets: ConnectedEmbeddedEthereumWallet[] = useMemo(() => {
     // Deduplicate accounts based on account type
     const deduplicatedAccounts = embeddedAccounts.reduce((acc, account) => {
-      if (walletConfig?.accountType === AccountTypeEnum.EOA || walletConfig?.accountType === AccountTypeEnum.DELEGATED_ACCOUNT) {
+      if (
+        walletConfig?.accountType === AccountTypeEnum.EOA ||
+        walletConfig?.accountType === AccountTypeEnum.DELEGATED_ACCOUNT
+      ) {
         // For EOAs and delegated accounts, deduplicate by address only (they work across all chains)
         if (!acc.some((a) => a.address.toLowerCase() === account.address.toLowerCase())) {
           acc.push(account)
@@ -353,7 +360,10 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
         const accountType = createOptions?.accountType || walletConfig?.accountType || AccountTypeEnum.SMART_ACCOUNT
         // Create embedded wallet
         const embeddedAccount = await client.embeddedWallet.create({
-          chainId: accountType === AccountTypeEnum.EOA || accountType === AccountTypeEnum.DELEGATED_ACCOUNT ? undefined : chainId,
+          chainId:
+            accountType === AccountTypeEnum.EOA || accountType === AccountTypeEnum.DELEGATED_ACCOUNT
+              ? undefined
+              : chainId,
           accountType,
           chainType: ChainTypeEnum.EVM,
           recoveryParams,
@@ -465,7 +475,10 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
           // Find account to recover
           let embeddedAccountToRecover: EmbeddedAccount | undefined
 
-          if (walletConfig?.accountType === AccountTypeEnum.EOA || walletConfig?.accountType === AccountTypeEnum.DELEGATED_ACCOUNT) {
+          if (
+            walletConfig?.accountType === AccountTypeEnum.EOA ||
+            walletConfig?.accountType === AccountTypeEnum.DELEGATED_ACCOUNT
+          ) {
             // For EOAs and delegated accounts, match only by address (they work across all chains)
             embeddedAccountToRecover = embeddedAccounts.find(
               (account) => account.address.toLowerCase() === setActiveOptions.address.toLowerCase()
@@ -480,7 +493,8 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
 
           if (!embeddedAccountToRecover) {
             const errorMsg =
-              walletConfig?.accountType === AccountTypeEnum.EOA || walletConfig?.accountType === AccountTypeEnum.DELEGATED_ACCOUNT
+              walletConfig?.accountType === AccountTypeEnum.EOA ||
+              walletConfig?.accountType === AccountTypeEnum.DELEGATED_ACCOUNT
                 ? `No embedded ${walletConfig?.accountType} account found for address ${setActiveOptions.address}`
                 : `No embedded smart account found for address ${setActiveOptions.address} on chain ID ${chainId}`
             throw new OpenfortError(errorMsg, OpenfortErrorType.WALLET_ERROR)
