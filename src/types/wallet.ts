@@ -210,7 +210,7 @@ export type CreateEthereumWalletOptions = {
   /** OTP code for Shield verification when using automatic recovery */
   otpCode?: string
   accountType?: AccountTypeEnum
-  policyId?: string
+  feeSponsorshipId?: string
   /** Recovery method to use: 'automatic', 'password', or 'passkey' */
   recoveryMethod?: 'automatic' | 'password' | 'passkey'
   /** Passkey ID for passkey recovery (required when recoveryMethod is 'passkey' for recovery) */
