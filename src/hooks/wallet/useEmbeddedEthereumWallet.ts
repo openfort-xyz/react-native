@@ -206,23 +206,23 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
 
   // Get Ethereum provider
   const getEthereumProvider = useCallback(async () => {
-    const resolvePolicy = () => {
-      const ethereumProviderPolicyId = walletConfig?.ethereumProviderPolicyId
+    const resolveFeeSponsorship = () => {
+      const feeSponsorshipId = walletConfig?.feeSponsorshipId
 
-      if (!ethereumProviderPolicyId) return undefined
+      if (!feeSponsorshipId) return undefined
 
-      if (typeof ethereumProviderPolicyId === 'string') {
-        return ethereumProviderPolicyId
+      if (typeof feeSponsorshipId === 'string') {
+        return feeSponsorshipId
       }
 
       if (!options.chainId) return undefined
 
-      const policy = ethereumProviderPolicyId[options.chainId]
-      if (!policy) {
+      const feeSponsorship = feeSponsorshipId[options.chainId]
+      if (!feeSponsorship) {
         return undefined
       }
 
-      return policy
+      return feeSponsorship
     }
 
     // Build chains map from supportedChains (chainId -> rpcUrl)
@@ -242,7 +242,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
 
     return await client.embeddedWallet.getEthereumProvider({
       announceProvider: false,
-      policy: resolvePolicy(),
+      feeSponsorship: resolveFeeSponsorship(),
       chains: resolveChains(),
     })
   }, [client.embeddedWallet, walletConfig, options.chainId, supportedChains])

@@ -1,7 +1,6 @@
 import {
   type AccountTypeEnum,
   EmbeddedState,
-  type Openfort as OpenfortClient,
   type SDKOverrides,
   ShieldConfiguration,
   type ThirdPartyAuthConfiguration,
@@ -15,13 +14,13 @@ import type { OAuthFlowState, PasswordFlowState, RecoveryFlowState, SiweFlowStat
 import { createOpenfortClient, setDefaultClient } from './client'
 import { OpenfortContext, type OpenfortContextValue } from './context'
 
-type PolicyConfig = string | Record<number, string>
+type FeeSponsorshipConfig = string | Record<number, string>
 
 export type CommonEmbeddedWalletConfiguration = {
   /** Publishable key for the Shield API. */
   shieldPublishableKey: string
-  /** Policy ID (pol_...) for the embedded signer. */
-  ethereumProviderPolicyId?: PolicyConfig
+  /** Fee sponsorship ID for the embedded signer. */
+  feeSponsorshipId?: FeeSponsorshipConfig
   accountType?: AccountTypeEnum
   debug?: boolean
   /** Recovery method for the embedded wallet: 'automatic', 'password', or 'passkey' */
@@ -111,45 +110,6 @@ export type Chain = {
   }
   /** Flag for test networks. */
   testnet?: boolean
-}
-
-/**
- * Starts polling the embedded wallet state and invokes the callback when transitions occur.
- *
- * @param client - The Openfort client to query for embedded wallet state.
- * @param onChange - Callback invoked whenever the state changes.
- * @param intervalMs - Polling interval in milliseconds. Defaults to 1000ms.
- * @returns A function that stops polling when called.
- */
-function startEmbeddedStatePolling(
-  client: OpenfortClient,
-  onChange: (state: EmbeddedState) => void,
-  intervalMs: number = 1000
-): () => void {
-  let lastState: EmbeddedState | null = null
-  let stopped = false
-
-  const check = async () => {
-    if (stopped) return
-    try {
-      const state = await client.embeddedWallet.getEmbeddedState()
-      if (state !== lastState) {
-        lastState = state
-        onChange(state)
-      }
-    } catch (error) {
-      logger.error('Error checking embedded state with Openfort', error)
-    }
-  }
-
-  const intervalId: ReturnType<typeof setInterval> = setInterval(check, intervalMs)
-  // Run once immediately so we don't wait for the first interval tick
-  void check()
-
-  return () => {
-    stopped = true
-    clearInterval(intervalId as unknown as number)
-  }
 }
 
 /**
@@ -296,18 +256,18 @@ export const OpenfortProvider = ({
   // Embedded state
   const [embeddedState, setEmbeddedState] = useState<EmbeddedState>(EmbeddedState.NONE)
 
-  // Start polling embedded state: only update and log when state changes
+  // Watch embedded state: event-driven with polling fallback via core SDK
   useEffect(() => {
     if (!client) return
-    const stop = startEmbeddedStatePolling(
-      client,
-      (state) => {
+    return client.embeddedWallet.watchEmbeddedState({
+      onChange: (state) => {
         setEmbeddedState(state)
         logger.info('Current state of the embedded wallet:', getEmbeddedStateName(state))
       },
-      1000
-    )
-    return stop
+      onError: (error) => {
+        logger.error('Error watching embedded state', error)
+      },
+    })
   }, [client])
 
   // Core state
