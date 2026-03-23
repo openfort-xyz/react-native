@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0
+
+### Minor Changes
+
+- [#76](https://github.com/openfort-xyz/react-native/pull/76) [`07983eb`](https://github.com/openfort-xyz/react-native/commit/07983eb20d6c8bde0ce5d1671c31df330b07b101) Thanks [@jamalavedra](https://github.com/jamalavedra)! - update from policyId to feeSponsorshipId
+
 ## 1.0.10
 
 ### Patch Changes
