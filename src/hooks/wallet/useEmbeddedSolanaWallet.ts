@@ -3,14 +3,15 @@ import {
   ChainTypeEnum,
   type EmbeddedAccount,
   EmbeddedState,
+  OpenfortError,
   RecoveryMethod,
+  SignerError,
 } from '@openfort/openfort-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
 import { logger } from '../../lib/logger'
 import type { BaseFlowState } from '../../types/baseFlowState'
-import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
 import type {
   ConnectedEmbeddedSolanaWallet,
   CreateSolanaWalletOptions,
@@ -225,9 +226,9 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
           // @solana/web3.js Transaction
           messageBytes = transaction.serializeMessage()
         } else {
-          throw new OpenfortError(
-            'Unsupported transaction format. Expected @solana/kit compiled transaction, @solana/web3.js Transaction, or Uint8Array',
-            OpenfortErrorType.WALLET_ERROR
+          throw new SignerError(
+            'wallet_error',
+            'Unsupported transaction format. Expected @solana/kit compiled transaction, @solana/web3.js Transaction, or Uint8Array'
           )
         }
 
@@ -308,11 +309,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
         const error =
           e instanceof OpenfortError
             ? e
-            : new OpenfortError(
-                'Failed to initialize provider for active Solana wallet',
-                OpenfortErrorType.WALLET_ERROR,
-                { error: e }
-              )
+            : new SignerError('wallet_error', 'Failed to initialize provider for active Solana wallet')
         logger.error('Solana provider initialization failed', error)
         setStatus({ status: 'error', error })
       }
@@ -391,10 +388,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
 
         return embeddedAccount
       } catch (e) {
-        const error =
-          e instanceof OpenfortError
-            ? e
-            : new OpenfortError('Failed to create Solana wallet', OpenfortErrorType.WALLET_ERROR, { error: e })
+        const error = e instanceof OpenfortError ? e : new SignerError('wallet_error', 'Failed to create Solana wallet')
         setStatus({ status: 'error', error })
 
         onError({
@@ -425,10 +419,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
       }
 
       if (wallets.length === 0) {
-        const error = new OpenfortError(
-          'No embedded Solana wallets available to set as active',
-          OpenfortErrorType.WALLET_ERROR
-        )
+        const error = new SignerError('wallet_error', 'No embedded Solana wallets available to set as active')
         onError({
           options: setActiveOptions,
           error,
@@ -452,9 +443,9 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
           )
 
           if (!embeddedAccountToRecover) {
-            throw new OpenfortError(
-              `No embedded Solana account found for address ${setActiveOptions.address}`,
-              OpenfortErrorType.WALLET_ERROR
+            throw new SignerError(
+              'wallet_error',
+              `No embedded Solana account found for address ${setActiveOptions.address}`
             )
           }
 
@@ -537,9 +528,7 @@ export function useEmbeddedSolanaWallet(options: UseEmbeddedSolanaWalletOptions 
         } catch (e) {
           recoverPromiseRef.current = null
           const error =
-            e instanceof OpenfortError
-              ? e
-              : new OpenfortError('Failed to set active Solana wallet', OpenfortErrorType.WALLET_ERROR)
+            e instanceof OpenfortError ? e : new SignerError('wallet_error', 'Failed to set active Solana wallet')
           setStatus({ status: 'error', error })
 
           onError({

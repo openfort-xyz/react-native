@@ -1,11 +1,11 @@
 import type { User as OpenfortUser } from '@openfort/openfort-js'
+import { AuthenticationError, OpenfortError } from '@openfort/openfort-js'
 import { useCallback } from 'react'
 import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
 import { createOAuthRedirectUri } from '../../native/oauth'
 import type { PasswordFlowState } from '../../types'
 import type { OpenfortHookOptions } from '../../types/hookOption'
-import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
 
 export type EmailAuthResult = {
   error?: OpenfortError
@@ -143,11 +143,10 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
           })
         }
       } catch (e) {
-        const error = new OpenfortError(
-          'Failed to login with email and password',
-          OpenfortErrorType.AUTHENTICATION_ERROR,
-          { error: e }
-        )
+        const error =
+          e instanceof OpenfortError
+            ? e
+            : new AuthenticationError('email_login_error', 'Failed to login with email and password')
         setPasswordState({
           status: 'error',
           error,
@@ -199,11 +198,10 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
           })
         }
       } catch (e) {
-        const error = new OpenfortError(
-          'Failed to signup with email and password',
-          OpenfortErrorType.AUTHENTICATION_ERROR,
-          { error: e }
-        )
+        const error =
+          e instanceof OpenfortError
+            ? e
+            : new AuthenticationError('email_signup_error', 'Failed to signup with email and password')
         setPasswordState({
           status: 'error',
           error,
@@ -296,9 +294,10 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
           data: { requiresEmailVerification: true },
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to request password reset', OpenfortErrorType.AUTHENTICATION_ERROR, {
-          error: e,
-        })
+        const error =
+          e instanceof OpenfortError
+            ? e
+            : new AuthenticationError('password_reset_error', 'Failed to request password reset')
         setPasswordState({
           status: 'error',
           error,
@@ -332,9 +331,8 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
           data: {},
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to reset password', OpenfortErrorType.AUTHENTICATION_ERROR, {
-          error: e,
-        })
+        const error =
+          e instanceof OpenfortError ? e : new AuthenticationError('password_reset_error', 'Failed to reset password')
         setPasswordState({
           status: 'error',
           error,
@@ -367,7 +365,8 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
           data: {},
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to verify email', OpenfortErrorType.AUTHENTICATION_ERROR, { error: e })
+        const error =
+          e instanceof OpenfortError ? e : new AuthenticationError('email_verification_error', 'Failed to verify email')
         setPasswordState({
           status: 'error',
           error,

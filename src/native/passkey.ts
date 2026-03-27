@@ -14,19 +14,6 @@ import { logger } from '../lib/logger'
  * Handles base64/base64url encoding, key extraction, and challenge generation.
  */
 const PasskeyUtils = {
-  /** Valid byte lengths for derived keys (AES-128, AES-192, AES-256) */
-  validByteLengths: [16, 24, 32],
-
-  /**
-   * Validates that the key byte length is valid for AES encryption.
-   * @throws Error if length is not 16, 24, or 32
-   */
-  validateKeyByteLength(length: number): void {
-    if (!this.validByteLengths.includes(length)) {
-      throw new Error(`Invalid key byte length ${length}. Must be 16, 24, or 32.`)
-    }
-  },
-
   /**
    * Generates a random 32-byte challenge for WebAuthn operations.
    */
@@ -199,8 +186,7 @@ export async function isPasskeyPrfSupported(): Promise<boolean> {
 export interface NativePasskeyHandlerConfig {
   rpId?: string
   rpName?: string
-  timeout?: number
-  derivedKeyLengthBytes?: number
+  displayName?: string
 }
 
 // Type definitions for react-native-passkeys
@@ -244,10 +230,8 @@ export class NativePasskeyHandler implements IPasskeyHandler {
   constructor(config: NativePasskeyHandlerConfig) {
     this.rpId = config.rpId
     this.rpName = config.rpName
-    this.timeout = config.timeout ?? 60_000
-    this.derivedKeyLengthBytes = config.derivedKeyLengthBytes ?? 32
-
-    PasskeyUtils.validateKeyByteLength(this.derivedKeyLengthBytes)
+    this.timeout = 60_000
+    this.derivedKeyLengthBytes = 32
   }
 
   /**

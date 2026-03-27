@@ -3,14 +3,15 @@ import {
   ChainTypeEnum,
   type EmbeddedAccount,
   EmbeddedState,
+  OpenfortError,
   RecoveryMethod,
+  SignerError,
 } from '@openfort/openfort-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
 import { logger } from '../../lib/logger'
 import type { BaseFlowState } from '../../types/baseFlowState'
-import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
 import type {
   ConnectedEmbeddedEthereumWallet,
   CreateEthereumWalletOptions,
@@ -276,11 +277,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
         const error =
           e instanceof OpenfortError
             ? e
-            : new OpenfortError(
-                'Failed to initialize provider for active Ethereum wallet',
-                OpenfortErrorType.WALLET_ERROR,
-                { error: e }
-              )
+            : new SignerError('wallet_error', 'Failed to initialize provider for active Ethereum wallet')
         logger.error('Ethereum provider initialization failed', error)
         setStatus({ status: 'error', error })
       }
@@ -338,9 +335,9 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
         let chainId: number | undefined
         if (createOptions?.chainId) {
           if (!supportedChains || !supportedChains.some((chain) => chain.id === createOptions.chainId)) {
-            throw new OpenfortError(
-              `Chain ID ${createOptions.chainId} is not supported. Supported chains: ${supportedChains?.map((c) => c.id).join(', ') || 'none'}`,
-              OpenfortErrorType.WALLET_ERROR
+            throw new SignerError(
+              'unsupported_chain',
+              `Chain ID ${createOptions.chainId} is not supported. Supported chains: ${supportedChains?.map((c) => c.id).join(', ') || 'none'}`
             )
           }
           chainId = createOptions.chainId
@@ -349,7 +346,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
         } else if (supportedChains && supportedChains.length > 0) {
           chainId = supportedChains[0].id
         } else {
-          throw new OpenfortError('No supported chains available for wallet creation', OpenfortErrorType.WALLET_ERROR)
+          throw new SignerError('unsupported_chain', 'No supported chains available for wallet creation')
         }
 
         // Build recovery params
@@ -396,9 +393,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
         return embeddedAccount
       } catch (e) {
         const error =
-          e instanceof OpenfortError
-            ? e
-            : new OpenfortError('Failed to create Ethereum wallet', OpenfortErrorType.WALLET_ERROR, { error: e })
+          e instanceof OpenfortError ? e : new SignerError('wallet_error', 'Failed to create Ethereum wallet')
         setStatus({ status: 'error', error })
 
         onError({
@@ -429,10 +424,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
       }
 
       if (wallets.length === 0) {
-        const error = new OpenfortError(
-          'No embedded Ethereum wallets available to set as active',
-          OpenfortErrorType.WALLET_ERROR
-        )
+        const error = new SignerError('wallet_error', 'No embedded Ethereum wallets available to set as active')
         onError({
           options: setActiveOptions,
           error,
@@ -454,9 +446,9 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
           let chainId: number | undefined
           if (setActiveOptions.chainId) {
             if (!supportedChains || !supportedChains.some((chain) => chain.id === setActiveOptions.chainId)) {
-              throw new OpenfortError(
-                `Chain ID ${setActiveOptions.chainId} is not supported. Supported chains: ${supportedChains?.map((c) => c.id).join(', ') || 'none'}`,
-                OpenfortErrorType.WALLET_ERROR
+              throw new SignerError(
+                'unsupported_chain',
+                `Chain ID ${setActiveOptions.chainId} is not supported. Supported chains: ${supportedChains?.map((c) => c.id).join(', ') || 'none'}`
               )
             }
             chainId = setActiveOptions.chainId
@@ -487,7 +479,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
               walletConfig?.accountType === AccountTypeEnum.EOA
                 ? `No embedded EOA account found for address ${setActiveOptions.address}`
                 : `No embedded smart account found for address ${setActiveOptions.address} on chain ID ${chainId}`
-            throw new OpenfortError(errorMsg, OpenfortErrorType.WALLET_ERROR)
+            throw new SignerError('wallet_error', errorMsg)
           }
 
           // Auto-detect recovery method from account if not explicitly provided
@@ -578,9 +570,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
         } catch (e) {
           recoverPromiseRef.current = null
           const error =
-            e instanceof OpenfortError
-              ? e
-              : new OpenfortError('Failed to set active Ethereum wallet', OpenfortErrorType.WALLET_ERROR)
+            e instanceof OpenfortError ? e : new SignerError('wallet_error', 'Failed to set active Ethereum wallet')
           setStatus({ status: 'error', error })
 
           onError({
@@ -626,9 +616,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
           options.onSetRecoverySuccess()
         }
       } catch (e) {
-        const error = new OpenfortError('Failed to set wallet recovery', OpenfortErrorType.WALLET_ERROR, {
-          error: e instanceof Error ? e : new Error('Unknown error'),
-        })
+        const error = e instanceof OpenfortError ? e : new SignerError('wallet_error', 'Failed to set wallet recovery')
         setStatus({ status: 'error', error })
 
         onError({

@@ -1,5 +1,5 @@
+import type { OpenfortError } from '@openfort/openfort-js'
 import type { OpenfortHookOptions } from '../types/hookOption'
-import type { OpenfortError } from '../types/openfortError'
 
 /**
  * Handles successful hook operation callbacks
@@ -55,7 +55,7 @@ export const onSuccess = <T>({
  * try {
  *   await someAsyncOperation();
  * } catch (e) {
- *   const error = new OpenfortError('Operation failed', OpenfortErrorType.GENERIC);
+ *   const error = new AuthenticationError('operation_failed', 'Operation failed');
  *   return onError({
  *     hookOptions,
  *     options,

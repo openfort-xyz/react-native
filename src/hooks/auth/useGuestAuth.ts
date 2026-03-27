@@ -1,10 +1,10 @@
 import type { User as OpenfortUser } from '@openfort/openfort-js'
+import { AuthenticationError, OpenfortError } from '@openfort/openfort-js'
 import { useCallback, useState } from 'react'
 import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
 import { type BaseFlowState, mapStatus } from '../../types/baseFlowState'
 import type { OpenfortHookOptions } from '../../types/hookOption'
-import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
 
 export type GuestHookResult = {
   error?: OpenfortError
@@ -84,9 +84,10 @@ export const useGuestAuth = (hookOptions: GuestHookOptions = {}) => {
 
         return { user /* wallet */ }
       } catch (error) {
-        const openfortError = new OpenfortError('Failed to signup guest', OpenfortErrorType.AUTHENTICATION_ERROR, {
-          error,
-        })
+        const openfortError =
+          error instanceof OpenfortError
+            ? error
+            : new AuthenticationError('guest_signup_error', 'Failed to signup guest')
 
         setStatus({
           status: 'error',

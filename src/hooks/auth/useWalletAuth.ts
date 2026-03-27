@@ -1,10 +1,10 @@
 import type { User as OpenfortUser } from '@openfort/openfort-js'
+import { AuthenticationError, OpenfortError } from '@openfort/openfort-js'
 import { useCallback } from 'react'
 import type { SiweFlowState } from '../..'
 import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
 import type { OpenfortHookOptions } from '../../types/hookOption'
-import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
 
 export type WalletHookResult = {
   error?: OpenfortError
@@ -135,9 +135,10 @@ export function useWalletAuth(hookOptions?: WalletHookOptions) {
         return onError({
           hookOptions,
           options: args,
-          error: new OpenfortError('Failed to generate SIWE message', OpenfortErrorType.AUTHENTICATION_ERROR, {
-            error: errorObj,
-          }),
+          error:
+            errorObj instanceof OpenfortError
+              ? errorObj
+              : new AuthenticationError('siwe_error', 'Failed to generate SIWE message'),
         })
       }
     },
@@ -180,9 +181,8 @@ export function useWalletAuth(hookOptions?: WalletHookOptions) {
           data: { user },
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to link in with Ethereum', OpenfortErrorType.AUTHENTICATION_ERROR, {
-          error: e,
-        })
+        const error =
+          e instanceof OpenfortError ? e : new AuthenticationError('siwe_error', 'Failed to link in with Ethereum')
         setSiweState({
           status: 'error',
           error,
@@ -227,9 +227,8 @@ export function useWalletAuth(hookOptions?: WalletHookOptions) {
           data: { user },
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to sign in with Ethereum', OpenfortErrorType.AUTHENTICATION_ERROR, {
-          error: e,
-        })
+        const error =
+          e instanceof OpenfortError ? e : new AuthenticationError('siwe_error', 'Failed to sign in with Ethereum')
         setSiweState({
           status: 'error',
           error,

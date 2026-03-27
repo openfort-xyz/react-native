@@ -1,10 +1,10 @@
 import type { User } from '@openfort/openfort-js'
+import { AuthenticationError, OpenfortError } from '@openfort/openfort-js'
 import { useCallback, useState } from 'react'
 import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
 import { type BaseFlowState, mapStatus } from '../../types/baseFlowState'
 import type { OpenfortHookOptions } from '../../types/hookOption'
-import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
 
 export type EmailOtpAuthResult = {
   error?: OpenfortError
@@ -37,7 +37,7 @@ export const useEmailAuthOtp = (hookOptions: UseEmailOtpHookOptions = {}) => {
         })
 
         if (!options.email || !options.otp) {
-          const error = new OpenfortError('Email and OTP are required', OpenfortErrorType.AUTHENTICATION_ERROR)
+          const error = new AuthenticationError('validation_error', 'Email and OTP are required')
           setStatus({
             status: 'error',
             error,
@@ -66,9 +66,8 @@ export const useEmailAuthOtp = (hookOptions: UseEmailOtpHookOptions = {}) => {
           options,
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to login with email OTP', OpenfortErrorType.AUTHENTICATION_ERROR, {
-          error: e,
-        })
+        const error =
+          e instanceof OpenfortError ? e : new AuthenticationError('email_otp_error', 'Failed to login with email OTP')
 
         setStatus({
           status: 'error',
@@ -93,7 +92,7 @@ export const useEmailAuthOtp = (hookOptions: UseEmailOtpHookOptions = {}) => {
         })
 
         if (!options.email) {
-          const error = new OpenfortError('Email is required', OpenfortErrorType.AUTHENTICATION_ERROR)
+          const error = new AuthenticationError('validation_error', 'Email is required')
           setStatus({
             status: 'error',
             error,
@@ -118,9 +117,8 @@ export const useEmailAuthOtp = (hookOptions: UseEmailOtpHookOptions = {}) => {
           options,
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to request email OTP', OpenfortErrorType.AUTHENTICATION_ERROR, {
-          error: e,
-        })
+        const error =
+          e instanceof OpenfortError ? e : new AuthenticationError('email_otp_error', 'Failed to request email OTP')
 
         setStatus({
           status: 'error',
