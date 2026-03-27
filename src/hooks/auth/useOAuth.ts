@@ -1,4 +1,4 @@
-import { OAuthProvider, type User as OpenfortUser } from '@openfort/openfort-js'
+import { AuthenticationError, OAuthProvider, OpenfortError, type User as OpenfortUser } from '@openfort/openfort-js'
 import { useCallback } from 'react'
 import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
@@ -12,7 +12,6 @@ import {
 } from '../../native'
 import type { OpenfortHookOptions } from '../../types/hookOption'
 import { mapOAuthStatus } from '../../types/oauth'
-import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
 
 export type InitializeOAuthOptions = {
   provider: OAuthProvider
@@ -119,9 +118,10 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
                 data: { user },
               })
             } catch (e) {
-              const error = new OpenfortError('Apple authentication failed', OpenfortErrorType.AUTHENTICATION_ERROR, {
-                error: e,
-              })
+              const error =
+                e instanceof OpenfortError
+                  ? e
+                  : new AuthenticationError('apple_auth_error', 'Apple authentication failed')
               setOAuthState({
                 status: 'error',
                 error,
@@ -168,10 +168,7 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
             data: { user },
           })
         } else if (oauthResult.type === 'cancel') {
-          const error = new OpenfortError(
-            'OAuth authentication was cancelled by user',
-            OpenfortErrorType.AUTHENTICATION_ERROR
-          )
+          const error = new AuthenticationError('oauth_cancelled', 'OAuth authentication was cancelled by user')
           setOAuthState({
             status: 'error',
             error,
@@ -182,10 +179,7 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
             error,
           })
         } else {
-          const error = new OpenfortError(
-            oauthResult.error || 'OAuth authentication failed',
-            OpenfortErrorType.AUTHENTICATION_ERROR
-          )
+          const error = new AuthenticationError('oauth_error', oauthResult.error || 'OAuth authentication failed')
           setOAuthState({
             status: 'error',
             error,
@@ -197,9 +191,8 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
           })
         }
       } catch (e) {
-        const error = new OpenfortError('OAuth initialization failed', OpenfortErrorType.AUTHENTICATION_ERROR, {
-          error: e,
-        })
+        const error =
+          e instanceof OpenfortError ? e : new AuthenticationError('oauth_error', 'OAuth initialization failed')
         setOAuthState({
           status: 'error',
           error,
@@ -265,9 +258,8 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
                 data: { user },
               })
             } catch (e) {
-              const error = new OpenfortError('Apple linking failed', OpenfortErrorType.AUTHENTICATION_ERROR, {
-                error: e,
-              })
+              const error =
+                e instanceof OpenfortError ? e : new AuthenticationError('apple_link_error', 'Apple linking failed')
               setOAuthState({
                 status: 'error',
                 error,
@@ -314,7 +306,7 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
             data: { user },
           })
         } else if (oauthResult.type === 'cancel') {
-          const error = new OpenfortError('OAuth linking was cancelled by user', OpenfortErrorType.AUTHENTICATION_ERROR)
+          const error = new AuthenticationError('oauth_cancelled', 'OAuth linking was cancelled by user')
           setOAuthState({
             status: 'error',
             error,
@@ -325,10 +317,7 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
             error,
           })
         } else {
-          const error = new OpenfortError(
-            oauthResult.error || 'OAuth linking failed',
-            OpenfortErrorType.AUTHENTICATION_ERROR
-          )
+          const error = new AuthenticationError('oauth_error', oauthResult.error || 'OAuth linking failed')
           setOAuthState({
             status: 'error',
             error,
@@ -340,7 +329,7 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
           })
         }
       } catch (e) {
-        const error = new OpenfortError('OAuth linking failed', OpenfortErrorType.AUTHENTICATION_ERROR, { error: e })
+        const error = e instanceof OpenfortError ? e : new AuthenticationError('oauth_error', 'OAuth linking failed')
         setOAuthState({
           status: 'error',
           error,

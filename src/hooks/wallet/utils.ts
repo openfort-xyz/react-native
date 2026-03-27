@@ -1,7 +1,6 @@
 import type { RecoveryParams } from '@openfort/openfort-js'
-import { RecoveryMethod } from '@openfort/openfort-js'
+import { OpenfortError, RecoveryMethod, SignerError } from '@openfort/openfort-js'
 import type { EmbeddedWalletConfiguration } from '../../core/provider'
-import { OpenfortError, OpenfortErrorType } from '../../types/openfortError'
 
 /**
  * Resolves an encryption session from wallet configuration.
@@ -23,7 +22,7 @@ async function resolveEncryptionSession(
   userId?: string
 ): Promise<string> {
   if (!walletConfig) {
-    throw new OpenfortError('Encryption session configuration is required', OpenfortErrorType.WALLET_ERROR)
+    throw new SignerError('missing_encryption_session', 'Encryption session configuration is required')
   }
 
   // Try callback-based session retrieval first
@@ -43,16 +42,14 @@ async function resolveEncryptionSession(
       })
 
       if (!response.ok) {
-        throw new OpenfortError('Failed to create encryption session', OpenfortErrorType.WALLET_ERROR, {
-          status: response.status,
-        })
+        throw new SignerError('encryption_session_error', 'Failed to create encryption session')
       }
 
       const body = (await response.json()) as { session?: string }
       if (!body?.session || typeof body.session !== 'string') {
-        throw new OpenfortError(
-          'Encryption session response is missing the `session` property',
-          OpenfortErrorType.WALLET_ERROR
+        throw new SignerError(
+          'encryption_session_error',
+          'Encryption session response is missing the `session` property'
         )
       }
 
@@ -61,11 +58,11 @@ async function resolveEncryptionSession(
       if (error instanceof OpenfortError) {
         throw error
       }
-      throw new OpenfortError('Failed to create encryption session', OpenfortErrorType.WALLET_ERROR, { error })
+      throw new SignerError('encryption_session_error', 'Failed to create encryption session')
     }
   }
 
-  throw new OpenfortError('Encryption session configuration is required', OpenfortErrorType.WALLET_ERROR)
+  throw new SignerError('missing_encryption_session', 'Encryption session configuration is required')
 }
 
 /**
@@ -112,9 +109,9 @@ export async function buildRecoveryParams(
   // If password recovery method is explicitly requested or password is provided
   if (options?.recoveryMethod === 'password' || options?.recoveryPassword) {
     if (!options?.recoveryPassword) {
-      throw new OpenfortError(
-        'Recovery password is required when using password recovery method',
-        OpenfortErrorType.WALLET_ERROR
+      throw new SignerError(
+        'missing_recovery_password',
+        'Recovery password is required when using password recovery method'
       )
     }
     return {

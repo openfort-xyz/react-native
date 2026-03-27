@@ -15,6 +15,7 @@
 // Re-export event listener functionality from @openfort/openfort-js
 export {
   AccountTypeEnum,
+  AuthenticationError,
   AuthInitPayload,
   AuthResponse,
   ChainTypeEnum,
@@ -28,10 +29,13 @@ export {
   OpenfortEvents,
   openfortEvents,
   Provider,
+  RecoveryError,
   RecoveryMethod,
   RecoveryParams,
+  SessionError,
   ShieldConfiguration,
   SignedMessagePayload,
+  SignerError,
   ThirdPartyOAuthProvider,
 } from '@openfort/openfort-js'
 // Re-export all components and UI elements

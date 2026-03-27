@@ -11,9 +11,9 @@ import type {
  */
 export type RecoveryMethodDetails = EmbeddedAccount['recoveryMethodDetails']
 
+import type { OpenfortError } from '@openfort/openfort-js'
 import type { Hex } from './hex'
 import type { OpenfortHookOptions } from './hookOption'
-import type { OpenfortError } from './openfortError'
 
 // ============================================================================
 // EIP-1193 Types for Ethereum Provider
