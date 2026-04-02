@@ -34,25 +34,25 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({ cl
   const webViewRef = useRef<WebView>(null)
 
   // Handle app state changes to monitor WebView health
-  useEffect(() => {
-    const handleAppStateChange = async (nextAppState: string) => {
-      if (nextAppState === 'active') {
-        // Check if embedded wallet is still responsive
-        try {
-          await client.embeddedWallet.ping(500)
-          // if (!isResponsive) {
-          //   onProxyStatusChange?.('reloading');
-          //   // client.embeddedWallet.reload();
-          // }
-        } catch (error) {
-          logger.warn('Failed to ping embedded wallet', error)
-        }
-      }
-    }
+  // useEffect(() => {
+  //   const handleAppStateChange = async (nextAppState: string) => {
+  //     if (nextAppState === 'active') {
+  //       // Check if embedded wallet is still responsive
+  //       try {
+  //         await client.embeddedWallet.ping(500)
+  //         // if (!isResponsive) {
+  //         //   onProxyStatusChange?.('reloading');
+  //         //   // client.embeddedWallet.reload();
+  //         // }
+  //       } catch (error) {
+  //         logger.warn('Failed to ping embedded wallet', error)
+  //       }
+  //     }
+  //   }
 
-    const subscription = AppState.addEventListener('change', handleAppStateChange)
-    return () => subscription?.remove()
-  }, [client, onProxyStatusChange])
+  //   const subscription = AppState.addEventListener('change', handleAppStateChange)
+  //   return () => subscription?.remove()
+  // }, [client, onProxyStatusChange])
 
   // Handle WebView load events
   const handleLoad = useCallback(() => {
