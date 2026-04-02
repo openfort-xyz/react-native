@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.2
+
+### Patch Changes
+
+- [#82](https://github.com/openfort-xyz/react-native/pull/82) [`370f30c`](https://github.com/openfort-xyz/react-native/commit/370f30c89974811b6452a1d2668007db787cdc36) Thanks [@jamalavedra](https://github.com/jamalavedra)! - fix webview connection
+
 ## 1.1.1
 
 ### Patch Changes
