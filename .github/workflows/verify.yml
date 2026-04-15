@@ -27,17 +27,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Security audit is temporarily disabled: `pnpm audit` hits the retired
-      # npm `/-/npm/v1/security/audits` endpoint (HTTP 410) on pnpm <=10.33.0
-      # and is only fixed in the pnpm 11.x line (currently 11.0.0-rc.0). Using
-      # `npm audit` here would require generating a package-lock.json from the
-      # pnpm-lock.yaml, which re-resolves the tree and drifts from what we
-      # actually ship. Dependabot is enabled on this repo and covers the same
-      # advisory surface, so we rely on it until pnpm 11 is stable.
-      # Tracking: https://github.com/pnpm/pnpm/issues/9014
-      - name: Security audit
-        run: echo "Skipped — see comment above. Dependabot is the source of truth."
-
       - name: Lint
         run: pnpm lint
 
