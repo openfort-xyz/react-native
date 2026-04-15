@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.3
+
+### Patch Changes
+
+- [#85](https://github.com/openfort-xyz/react-native/pull/85) [`9f02ed6`](https://github.com/openfort-xyz/react-native/commit/9f02ed67e07fc853e4dc4e480cd7e182103a7698) Thanks [@jamalavedra](https://github.com/jamalavedra)! - Update dependencies to latest compatible versions and tighten axios override to enforce the patched `>=1.15.0` range (resolves Dependabot SSRF advisory).
+
 ## 1.1.2
 
 ### Patch Changes
