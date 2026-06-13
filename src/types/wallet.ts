@@ -334,6 +334,14 @@ export interface EthereumWalletActions {
   create(options?: CreateEthereumWalletOptions): Promise<EmbeddedAccount>
 
   /**
+   * Ensure a connected embedded Ethereum wallet in one call: if the user already
+   * has a wallet it is recovered and activated, otherwise a new one is created.
+   * Either way the wallet ends up connected (provider ready). Useful for the
+   * common onboarding path so callers don't branch on `wallets.length` themselves.
+   */
+  createAndActivate(options?: CreateEthereumWalletOptions): Promise<EmbeddedAccount>
+
+  /**
    * List of available wallets
    */
   wallets: ConnectedEmbeddedEthereumWallet[]

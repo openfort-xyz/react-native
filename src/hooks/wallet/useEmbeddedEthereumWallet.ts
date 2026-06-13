@@ -12,6 +12,7 @@ import { useOpenfortContext } from '../../core/context'
 import { onError, onSuccess } from '../../lib/hookConsistency'
 import { logger } from '../../lib/logger'
 import type { BaseFlowState } from '../../types/baseFlowState'
+import type { Hex } from '../../types/hex'
 import type {
   ConnectedEmbeddedEthereumWallet,
   CreateEthereumWalletOptions,
@@ -594,6 +595,29 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
     [client, supportedChains, walletConfig, embeddedAccounts, options, wallets.length, getEthereumProvider, user]
   )
 
+  // Create-or-recover convenience: connect an existing wallet, or create a new one.
+  const createAndActivate = useCallback(
+    async (createOptions?: CreateEthereumWalletOptions): Promise<EmbeddedAccount> => {
+      if (wallets.length > 0) {
+        const existing = wallets[0]
+        await setActive({
+          address: existing.address as Hex,
+          chainId: createOptions?.chainId,
+          recoveryMethod: createOptions?.recoveryMethod,
+          recoveryPassword: createOptions?.recoveryPassword,
+          passkeyId: createOptions?.passkeyId,
+          otpCode: createOptions?.otpCode,
+        })
+        const account = embeddedAccounts.find((a) => a.address.toLowerCase() === existing.address.toLowerCase())
+        if (account) {
+          return account
+        }
+      }
+      return create(createOptions)
+    },
+    [wallets, embeddedAccounts, setActive, create]
+  )
+
   // Set recovery method action
   const setRecovery = useCallback(
     async (params: SetRecoveryOptions): Promise<void> => {
@@ -667,6 +691,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
   const state: EmbeddedEthereumWalletState = useMemo(() => {
     const baseActions = {
       create,
+      createAndActivate,
       wallets,
       setActive,
       setRecovery,
@@ -730,6 +755,7 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
     wallets,
     embeddedState,
     create,
+    createAndActivate,
     setActive,
     setRecovery,
     client.embeddedWallet,
