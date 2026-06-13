@@ -46,6 +46,9 @@ export * from './constants'
 export * from './core'
 // Re-export all hooks
 export * from './hooks'
+export type { TypedDataInput } from './lib/signTypedData'
+// Re-export the EIP-712 typed-data signing helper
+export { signTypedData } from './lib/signTypedData'
 // Re-export native functionality
 export * from './native'
 // Re-export all types from the main types module
