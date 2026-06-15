@@ -35,6 +35,26 @@ smart-account owners require ERC-1271 contract signatures.
 no Shield encryption-session backend is required. `recoveryMethod: 'automatic'` needs a
 `getEncryptionSession` callback (and a backend) instead.
 
+### Authentication hooks
+
+Sign-in lives in dedicated hooks: `useGuestAuth` (`signUpGuest`), `useEmailAuthOtp`
+(`requestEmailOtp` → `signInEmailOtp`, passwordless), `useEmailAuth` (email + password),
+`useOAuth`, `usePhoneAuthOtp`, `useWalletAuth`, and `useSignOut`. A successful sign-in
+refreshes the session — read the user with `useUser`.
+
+These methods **resolve with `{ user?, error? }`; they do not throw.** Check `error` on
+the result instead of wrapping the call in `try/catch`:
+
+```ts
+const { requestEmailOtp, signInEmailOtp } = useEmailAuthOtp()
+
+await requestEmailOtp({ email })
+const { error } = await signInEmailOtp({ email, otp })
+if (error) {
+  // surface error.message — a thrown-exception handler will not catch this
+}
+```
+
 ### Creating and connecting a wallet
 
 `useEmbeddedEthereumWallet().create()` returns the new account but does **not** activate
