@@ -2,18 +2,17 @@
  * Funding (cross-chain deposit) hook for the Openfort React Native SDK.
  */
 
-export { useFunding } from './useFunding'
 export type {
-  CexGuidance,
+  FundingCexGuidance,
   FundingFee,
+  FundingPaymentMethod,
+  FundingPaymentMethodInput,
   FundingSession,
+  FundingSessionStatus,
   FundingSource,
   FundingTarget,
-  PaymentMethod,
-  PaymentMethodInput,
-  PaymentMethodType,
+  FundingWalletDeeplink,
   PayLinkParams,
-  SessionStatus,
   UseFunding,
-  WalletDeeplink,
 } from './useFunding'
+export { useFunding } from './useFunding'
