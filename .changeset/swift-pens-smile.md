@@ -1,0 +1,5 @@
+---
+"@openfort/react-native": minor
+---
+
+Add useFunding and useFundingChains hooks for the cross-chain funding (deposit) flow
