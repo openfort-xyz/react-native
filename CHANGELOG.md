@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.4
+
+### Patch Changes
+
+- [#109](https://github.com/openfort-xyz/react-native/pull/109) [`ed69c76`](https://github.com/openfort-xyz/react-native/commit/ed69c7648ff8523f1b182655801bc4415a92a7dd) Thanks [@0xbri3t](https://github.com/0xbri3t)! - Add useFunding and useFundingChains hooks for the cross-chain funding (deposit) flow
+
 ## 1.1.3
 
 ### Patch Changes
