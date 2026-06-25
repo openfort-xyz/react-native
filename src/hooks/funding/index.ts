@@ -16,3 +16,16 @@ export type {
   UseFunding,
 } from './useFunding'
 export { useFunding } from './useFunding'
+export type {
+  FundingChain,
+  FundingCurrency,
+  UseFundingChains,
+  UseFundingChainsOptions,
+} from './useFundingChains'
+export {
+  curateChains,
+  DEFAULT_SOURCE_CHAINS,
+  DEFAULT_SOURCE_CURRENCIES,
+  nominalUnits,
+  useFundingChains,
+} from './useFundingChains'

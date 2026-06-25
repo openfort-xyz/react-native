@@ -150,7 +150,7 @@ export function useFunding(): UseFunding {
         if (!isCurrent()) return current
         setSession(current)
         setLoading(false)
-        return pollUntilTerminal(funding, setSession, current, isCurrent)
+        return await pollUntilTerminal(funding, setSession, current, isCurrent)
       } catch (e) {
         const err = e instanceof Error ? e : new Error(String(e))
         if (isCurrent()) {
