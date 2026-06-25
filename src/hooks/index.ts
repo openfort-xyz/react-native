@@ -9,12 +9,16 @@
  * - Core: Lifecycle/state helpers (e.g. `useOpenfort`)
  * - Auth: Authentication helpers (email, OAuth, SIWE, guest)
  * - Wallet: Embedded wallet management utilities
+ * - Funding: Cross-chain deposit flow (`useFunding`)
  */
 
 // Re-export all authentication hooks
 export * from './auth'
 // Re-export all core hooks
 export * from './core'
+
+// Re-export all funding hooks
+export * from './funding'
 
 // Re-export all wallet hooks
 export * from './wallet'
