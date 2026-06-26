@@ -3,7 +3,7 @@
  */
 const KEY_TO_ENV_VAR: Record<string, string> = {
   publishableKey: 'OPENFORT_PUBLISHABLE_KEY',
-  shieldPublishableKey: 'OPENFORT_SHIELD_PUBLISHABLE_KEY',
+  shieldPublishableKey: 'SHIELD_PUBLISHABLE_KEY',
 }
 
 /**
