@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.5
+
+### Patch Changes
+
+- [#113](https://github.com/openfort-xyz/react-native/pull/113) [`1b2781b`](https://github.com/openfort-xyz/react-native/commit/1b2781b0ba1c6af49e9bb83362eea80377ee109f) Thanks [@jamalavedra](https://github.com/jamalavedra)! - Update dependencies and resolve `pnpm audit` advisories. Bumps `react-native-passkeys` and dev tooling (Biome, changesets), and adds `pnpm.overrides` for transitive advisories (`axios`, `form-data`, `ws`, `shell-quote`, `tmp`, `@xmldom/xmldom`, `uuid`, `brace-expansion`, `linkify-it`, `markdown-it`, `js-yaml`, `@babel/core`) so `pnpm audit` reports no known vulnerabilities.
+
 ## 1.1.4
 
 ### Patch Changes
