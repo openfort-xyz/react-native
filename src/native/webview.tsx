@@ -7,6 +7,7 @@ import { AppState, Platform, View } from 'react-native'
 import type { WebViewMessageEvent } from 'react-native-webview'
 import WebView from 'react-native-webview'
 import { logger } from '../lib/logger'
+import { createReloadThrottle, getRetryDelayMs } from './reloadPolicy'
 import { handleSecureStorageMessage, isSecureStorageMessage } from './storage'
 
 /**
@@ -33,47 +34,119 @@ interface EmbeddedWalletWebViewProps {
 export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({ client, onProxyStatusChange, debug }) => {
   const webViewRef = useRef<WebView>(null)
 
-  // Handle app state changes to monitor WebView health
-  // useEffect(() => {
-  //   const handleAppStateChange = async (nextAppState: string) => {
-  //     if (nextAppState === 'active') {
-  //       // Check if embedded wallet is still responsive
-  //       try {
-  //         await client.embeddedWallet.ping(500)
-  //         // if (!isResponsive) {
-  //         //   onProxyStatusChange?.('reloading');
-  //         //   // client.embeddedWallet.reload();
-  //         // }
-  //       } catch (error) {
-  //         logger.warn('Failed to ping embedded wallet', error)
-  //       }
-  //     }
-  //   }
+  // Consecutive load failures since the last successful load.
+  const loadFailureCountRef = useRef(0)
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Throttles health-check reloads; renderer-crash reloads bypass it because
+  // the process is definitively gone.
+  const shouldWatchdogReloadRef = useRef(createReloadThrottle())
+  // Prevents overlapping health checks when the app foregrounds repeatedly.
+  const healthCheckInFlightRef = useRef(false)
 
-  //   const subscription = AppState.addEventListener('change', handleAppStateChange)
-  //   return () => subscription?.remove()
-  // }, [client, onProxyStatusChange])
+  const clearRetryTimer = useCallback(() => {
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current)
+      retryTimerRef.current = null
+    }
+  }, [])
+
+  const reloadWebView = useCallback(
+    (reason: string) => {
+      logger.warn('Reloading embedded wallet WebView:', reason)
+      onProxyStatusChange?.('reloading')
+      webViewRef.current?.reload()
+    },
+    [onProxyStatusChange]
+  )
 
   // Handle WebView load events
   const handleLoad = useCallback(() => {
+    loadFailureCountRef.current = 0
+    clearRetryTimer()
     onProxyStatusChange?.('loaded')
-  }, [onProxyStatusChange])
+  }, [onProxyStatusChange, clearRetryTimer])
 
-  const handleError = useCallback((error: any) => {
-    logger.error('WebView error', error)
-  }, [])
+  // Page load failures (e.g. no network at app start) are retried with
+  // backoff — without a retry the wallet page would stay unloaded for the
+  // rest of the session.
+  const handleError = useCallback(
+    (error: any) => {
+      logger.error('WebView error', error)
+      loadFailureCountRef.current += 1
+      const attempt = loadFailureCountRef.current
+      clearRetryTimer()
+      retryTimerRef.current = setTimeout(() => {
+        reloadWebView(`load failed, retry attempt ${attempt}`)
+      }, getRetryDelayMs(attempt))
+    },
+    [clearRetryTimer, reloadWebView]
+  )
 
-  // Set up WebView reference with client immediately when both are available
-  useEffect(() => {
-    if (webViewRef.current) {
-      const messagePoster = {
-        postMessage: (message: string) => {
-          webViewRef.current?.postMessage(message)
-        },
+  // The OS can reclaim the WebView's renderer process (memory pressure,
+  // long backgrounding). The page goes blank and stops responding — reload
+  // to restore the communication channel.
+  const handleContentProcessTerminated = useCallback(() => {
+    reloadWebView('content process terminated')
+  }, [reloadWebView])
+
+  const handleRenderProcessGone = useCallback(() => {
+    reloadWebView('render process gone')
+  }, [reloadWebView])
+
+  const watchdogReload = useCallback(
+    (reason: string) => {
+      if (shouldWatchdogReloadRef.current()) {
+        reloadWebView(reason)
       }
-      client.embeddedWallet.setMessagePoster(messagePoster)
+    },
+    [reloadWebView]
+  )
+
+  // On returning to the foreground, verify a previously-connected wallet
+  // page is still responsive; reload it if not.
+  useEffect(() => {
+    const handleAppStateChange = async (nextAppState: string) => {
+      if (nextAppState !== 'active') return
+      // Only check connections that were established — if the wallet was
+      // never connected there is nothing to restore yet.
+      if (!client.embeddedWallet.isReady()) return
+      if (healthCheckInFlightRef.current) return
+      healthCheckInFlightRef.current = true
+      try {
+        const responsive = await client.embeddedWallet.ping(500)
+        if (!responsive) {
+          watchdogReload('unresponsive after returning to foreground')
+        }
+      } catch (error) {
+        logger.warn('Embedded wallet health check failed', error)
+      } finally {
+        healthCheckInFlightRef.current = false
+      }
     }
-  }, [client])
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange)
+    return () => subscription?.remove()
+  }, [client, watchdogReload])
+
+  // React to connection-health events from the SDK: an RPC or handshake
+  // timeout means the page is unresponsive and a reload restores it. An
+  // 'iframe-reloaded' event means the transport already recovered on its
+  // own, so no action is needed. Older SDK versions don't emit this event;
+  // the subscription is simply inert there.
+  useEffect(() => {
+    const handleConnectionLost = (payload: { reason?: string }) => {
+      if (payload?.reason === 'iframe-reloaded') return
+      watchdogReload(`connection lost (${payload?.reason ?? 'unknown'})`)
+    }
+
+    client.eventEmitter.on('onEmbeddedWalletConnectionLost', handleConnectionLost)
+    return () => {
+      client.eventEmitter.off('onEmbeddedWalletConnectionLost', handleConnectionLost)
+    }
+  }, [client, watchdogReload])
+
+  // Clear any pending retry timer on unmount.
+  useEffect(() => clearRetryTimer, [clearRetryTimer])
 
   // Clean message handler using the new penpal bridge
   const handleMessage = useCallback(
@@ -131,6 +204,8 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({ cl
         onLoad={handleLoad}
         onError={handleError}
         onMessage={handleMessage}
+        onContentProcessDidTerminate={handleContentProcessTerminated}
+        onRenderProcessGone={handleRenderProcessGone}
       />
     </View>
   )

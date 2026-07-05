@@ -22,6 +22,7 @@
     "check:unused": "pnpm clean && knip",
     "check:fix": "biome check --write --unsafe",
     "lint": "tsc -b && biome lint .",
+    "test": "vitest run",
     "link": "pnpm link",
     "unlink": "pnpm unlink",
     "docs:build": "typedoc",
@@ -73,7 +74,8 @@
     "react-native-webview": "^13.16.1",
     "size-limit": "^11.2.0",
     "typedoc": "^0.28.19",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "4.1.9"
   },
   "knip": {
     "entry": [
