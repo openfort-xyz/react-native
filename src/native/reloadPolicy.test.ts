@@ -3,8 +3,7 @@ import {
   createCrashBackoff,
   createPendingCallTracker,
   createReloadThrottle,
-  getPenpalCallId,
-  getPenpalReplyId,
+  getPenpalMessageId,
   getRetryDelayMs,
   INITIAL_RETRY_DELAY_MS,
   MAX_RETRY_DELAY_MS,
@@ -174,21 +173,16 @@ describe('createPendingCallTracker', () => {
 
 describe('penpal message id extraction', () => {
   it('recognizes deprecated-format calls and replies (the RN wire format)', () => {
-    expect(getPenpalCallId({ penpal: 'call', id: 42, methodName: 'sign', args: [] })).toBe(42)
-    expect(getPenpalReplyId({ penpal: 'reply', id: 42, resolution: 'fulfilled', returnValue: {} })).toBe(42)
-  })
-
-  it('recognizes modern-format calls and replies', () => {
-    expect(getPenpalCallId({ namespace: 'penpal', type: 'CALL', id: 'uuid-1', methodPath: ['sign'] })).toBe('uuid-1')
-    expect(getPenpalReplyId({ namespace: 'penpal', type: 'REPLY', callId: 'uuid-1' })).toBe('uuid-1')
+    expect(getPenpalMessageId({ penpal: 'call', id: 42, methodName: 'sign', args: [] }, 'call')).toBe(42)
+    expect(getPenpalMessageId({ penpal: 'reply', id: 42, resolution: 'fulfilled', returnValue: {} }, 'reply')).toBe(42)
   })
 
   it('returns null for handshake, storage, and malformed messages', () => {
-    expect(getPenpalCallId({ penpal: 'syn' })).toBeNull()
-    expect(getPenpalCallId({ event: 'app:secure-storage:get', id: 'op-1' })).toBeNull()
-    expect(getPenpalCallId(null)).toBeNull()
-    expect(getPenpalCallId('string')).toBeNull()
-    expect(getPenpalReplyId({ penpal: 'synAck' })).toBeNull()
-    expect(getPenpalReplyId(undefined)).toBeNull()
+    expect(getPenpalMessageId({ penpal: 'syn' }, 'call')).toBeNull()
+    expect(getPenpalMessageId({ event: 'app:secure-storage:get', id: 'op-1' }, 'call')).toBeNull()
+    expect(getPenpalMessageId(null, 'call')).toBeNull()
+    expect(getPenpalMessageId('string', 'call')).toBeNull()
+    expect(getPenpalMessageId({ penpal: 'synAck' }, 'reply')).toBeNull()
+    expect(getPenpalMessageId(undefined, 'reply')).toBeNull()
   })
 })

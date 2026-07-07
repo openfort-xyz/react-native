@@ -11,8 +11,7 @@ import {
   createCrashBackoff,
   createPendingCallTracker,
   createReloadThrottle,
-  getPenpalCallId,
-  getPenpalReplyId,
+  getPenpalMessageId,
   getRetryDelayMs,
 } from './reloadPolicy'
 import { handleSecureStorageMessage, isSecureStorageMessage } from './storage'
@@ -213,7 +212,7 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({ cl
           return
         }
         // A reply settles its in-flight call (see the pending-call tracker).
-        const replyId = getPenpalReplyId(messageData)
+        const replyId = getPenpalMessageId(messageData, 'reply')
         if (replyId !== null) {
           pendingCallsRef.current.callSettled(replyId)
         }
@@ -239,7 +238,7 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({ cl
             // Track outgoing penpal calls so reload triggers know a wallet
             // operation is crossing the bridge (a reload would abandon it).
             try {
-              const callId = getPenpalCallId(JSON.parse(message))
+              const callId = getPenpalMessageId(JSON.parse(message), 'call')
               if (callId !== null) {
                 pendingCallsRef.current.callStarted(callId)
               }

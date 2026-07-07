@@ -111,12 +111,10 @@ export function createCrashBackoff(
 }
 
 /**
- * Tracks penpal calls crossing the WebView bridge so reload triggers can tell
- * whether a wallet operation is in flight. A reload destroys the page and
- * silently abandons pending RPCs (they only settle via the SDK's own
- * timeout), so the foreground health check must not probe-and-reload while
- * the page is legitimately busy. Entries older than `maxAgeMs` are treated
- * as abandoned so a lost reply can never suppress health checks forever.
+ * Tracks penpal calls crossing the WebView bridge so reload triggers know a
+ * wallet operation is in flight (a reload would silently abandon it).
+ * Entries older than `maxAgeMs` count as abandoned, so a lost reply can
+ * never suppress health checks forever.
  */
 export function createPendingCallTracker(
   maxAgeMs: number = PENDING_CALL_MAX_AGE_MS,
@@ -146,34 +144,13 @@ export function createPendingCallTracker(
 }
 
 /**
- * Extracts the call id from an outgoing penpal CALL message (either the
- * deprecated wire format the React Native bridge uses or the modern one),
- * or null for anything else.
+ * Extracts the id of a penpal call/reply message, or null for anything else.
+ * The bridge only carries the deprecated penpal wire format (the SDK's
+ * ReactNativeMessenger downgrades every message); if that ever changes,
+ * unmatched entries age out via PENDING_CALL_MAX_AGE_MS.
  */
-export function getPenpalCallId(message: unknown): string | number | null {
+export function getPenpalMessageId(message: unknown, kind: 'call' | 'reply'): string | number | null {
   if (!message || typeof message !== 'object') return null
-  const m = message as Record<string, unknown>
-  if (m.penpal === 'call' && (typeof m.id === 'string' || typeof m.id === 'number')) return m.id
-  if (m.namespace === 'penpal' && m.type === 'CALL' && (typeof m.id === 'string' || typeof m.id === 'number')) {
-    return m.id
-  }
-  return null
-}
-
-/**
- * Extracts the call id an incoming penpal REPLY message settles (deprecated
- * or modern wire format), or null for anything else.
- */
-export function getPenpalReplyId(message: unknown): string | number | null {
-  if (!message || typeof message !== 'object') return null
-  const m = message as Record<string, unknown>
-  if (m.penpal === 'reply' && (typeof m.id === 'string' || typeof m.id === 'number')) return m.id
-  if (
-    m.namespace === 'penpal' &&
-    m.type === 'REPLY' &&
-    (typeof m.callId === 'string' || typeof m.callId === 'number')
-  ) {
-    return m.callId
-  }
-  return null
+  const { penpal, id } = message as Record<string, unknown>
+  return penpal === kind && (typeof id === 'string' || typeof id === 'number') ? id : null
 }
