@@ -60,4 +60,33 @@ describe('computeClientConfigKey', () => {
 
     expect(first).not.toBe(second)
   })
+
+  it('is insensitive to property order in overrides/thirdPartyAuth (deep key sort)', () => {
+    // Two code paths building the same overrides object in different key
+    // order must not produce different keys — that would rebuild the client
+    // (and tear down the wallet connection) on a semantic no-op.
+    const first = computeClientConfigKey({
+      ...baseInputs,
+      overrides: { backendUrl: 'https://api.test', shieldUrl: 'https://shield.test' } as never,
+    })
+    const second = computeClientConfigKey({
+      ...baseInputs,
+      overrides: { shieldUrl: 'https://shield.test', backendUrl: 'https://api.test' } as never,
+    })
+
+    expect(first).toBe(second)
+  })
+
+  it('still distinguishes different overrides values', () => {
+    const first = computeClientConfigKey({
+      ...baseInputs,
+      overrides: { backendUrl: 'https://api.test' } as never,
+    })
+    const second = computeClientConfigKey({
+      ...baseInputs,
+      overrides: { backendUrl: 'https://api2.test' } as never,
+    })
+
+    expect(first).not.toBe(second)
+  })
 })
