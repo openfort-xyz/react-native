@@ -69,10 +69,13 @@ export async function handleSecureStorageMessage(message: SecureStorageMessage):
         }
       } catch (error) {
         logger.warn('Failed to get the value from secure store', error)
+        // Report the failure explicitly instead of returning a bare null.
+        // A read error (e.g. secure storage not available yet) is not the
+        // same as "no value stored" — callers need to tell them apart.
         return {
           event: message.event,
           id: message.id,
-          data: { value: null },
+          data: { value: null, error: 'secure-storage-read-failed' },
         }
       }
     }

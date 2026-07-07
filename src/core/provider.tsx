@@ -12,6 +12,7 @@ import { getEmbeddedStateName, logger } from '../lib/logger'
 import { EmbeddedWalletWebView, NativePasskeyHandler, WebViewUtils } from '../native'
 import type { OAuthFlowState, PasswordFlowState, RecoveryFlowState, SiweFlowState } from '../types'
 import { createOpenfortClient, setDefaultClient } from './client'
+import { computeClientConfigKey } from './clientKey'
 import { OpenfortContext, type OpenfortContextValue } from './context'
 
 type FeeSponsorshipConfig = string | Record<number, string>
@@ -214,22 +215,27 @@ export const OpenfortProvider = ({
     logger.setVerbose(verbose)
   }, [verbose])
 
-  // Create passkey handler if passkey recovery is configured (single instance for SDK and WebView)
-  const passkeyHandler = useMemo(() => {
+  // Recreating the client tears down the embedded wallet connection, so it
+  // must only happen when the configuration meaningfully changes — not when a
+  // parent re-render passes a new inline object with the same contents.
+  const clientKey = computeClientConfigKey({ publishableKey, walletConfig, overrides, thirdPartyAuth })
+
+  // useRef instead of useMemo: React may discard memo caches, and a discarded
+  // cache here would recreate the client mid-session.
+  const clientBundleRef = React.useRef<{ key: string; client: ReturnType<typeof createOpenfortClient> } | null>(null)
+  if (clientBundleRef.current?.key !== clientKey) {
+    // Passkey handler shares the client's lifetime (single instance for SDK and WebView)
+    let passkeyHandler: NativePasskeyHandler | undefined
     if (walletConfig?.passkeyRpId) {
       if (!walletConfig.passkeyRpName) {
         logger.warn('passkeyRpName is required when passkeyRpId is provided for passkey recovery')
       }
-      return new NativePasskeyHandler({
+      passkeyHandler = new NativePasskeyHandler({
         rpId: walletConfig.passkeyRpId,
         rpName: walletConfig.passkeyRpName ?? walletConfig.passkeyRpId,
       })
     }
-    return undefined
-  }, [walletConfig?.passkeyRpId, walletConfig?.passkeyRpName])
 
-  // Create client with passkeyHandler in overrides when configured
-  const client = useMemo(() => {
     const newClient = createOpenfortClient({
       baseConfiguration: {
         publishableKey: publishableKey,
@@ -250,8 +256,9 @@ export const OpenfortProvider = ({
       thirdPartyAuth,
     })
     setDefaultClient(newClient)
-    return newClient
-  }, [publishableKey, walletConfig, overrides, thirdPartyAuth, passkeyHandler])
+    clientBundleRef.current = { key: clientKey, client: newClient }
+  }
+  const client = clientBundleRef.current.client
 
   // Embedded state
   const [embeddedState, setEmbeddedState] = useState<EmbeddedState>(EmbeddedState.NONE)
