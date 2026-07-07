@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.6
+
+### Patch Changes
+
+- [#116](https://github.com/openfort-xyz/react-native/pull/116) [`de82ecc`](https://github.com/openfort-xyz/react-native/commit/de82ecc93c324011c7debb2a698c71d58e1b2ba7) Thanks [@jamalavedra](https://github.com/jamalavedra)! - Improve embedded wallet WebView reliability: automatically reload the hidden WebView when its renderer process is terminated by the OS, retry failed page loads with backoff, health-check the wallet page when the app returns to the foreground, and react to connection-loss events from the core SDK. Secure-storage read failures are now reported explicitly to the wallet page instead of appearing as missing values, and the Openfort client is no longer recreated when a parent re-render passes equivalent inline configuration objects.
+
 ## 1.1.5
 
 ### Patch Changes
