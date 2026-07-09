@@ -3,7 +3,7 @@
 import type { Openfort as OpenfortClient } from '@openfort/openfort-js'
 // biome-ignore lint: need to import react
 import React, { useCallback, useEffect, useRef } from 'react'
-import { AppState, Platform, View } from 'react-native'
+import { Platform, View } from 'react-native'
 import type { WebViewMessageEvent } from 'react-native-webview'
 import WebView from 'react-native-webview'
 import { logger } from '../lib/logger'
@@ -53,8 +53,6 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({ cl
   // Penpal calls currently crossing the bridge — a reload silently abandons
   // them, so reload triggers consult this before acting.
   const pendingCallsRef = useRef(createPendingCallTracker())
-  // Prevents overlapping health checks when the app foregrounds repeatedly.
-  const healthCheckInFlightRef = useRef(false)
 
   const clearRetryTimer = useCallback(() => {
     if (retryTimerRef.current) {
@@ -141,37 +139,17 @@ export const EmbeddedWalletWebView: React.FC<EmbeddedWalletWebViewProps> = ({ cl
     [reloadWebView]
   )
 
-  // On returning to the foreground, verify a previously-connected wallet
-  // page is still responsive; reload it if not.
-  useEffect(() => {
-    const handleAppStateChange = async (nextAppState: string) => {
-      if (nextAppState !== 'active') return
-      // Only check connections that were established — if the wallet was
-      // never connected there is nothing to restore yet.
-      if (!client.embeddedWallet.isReady()) return
-      // A wallet operation is mid-flight (e.g. a sign whose biometric prompt
-      // backgrounded the app). Probing now could misread a busy page as dead
-      // and reload it out from under the operation; if the page really is
-      // stuck, the SDK's per-call timeout fires the connection-lost event
-      // and recovery happens through that path instead.
-      if (pendingCallsRef.current.hasPendingCalls()) return
-      if (healthCheckInFlightRef.current) return
-      healthCheckInFlightRef.current = true
-      try {
-        const responsive = await client.embeddedWallet.ping(500)
-        if (!responsive) {
-          watchdogReload('unresponsive after returning to foreground')
-        }
-      } catch (error) {
-        logger.warn('Embedded wallet health check failed', error)
-      } finally {
-        healthCheckInFlightRef.current = false
-      }
-    }
-
-    const subscription = AppState.addEventListener('change', handleAppStateChange)
-    return () => subscription?.remove()
-  }, [client, watchdogReload])
+  // Returning to the foreground must NOT reload the wallet WebView. A reload
+  // reloads the embed page, which discards its in-memory signer/session state
+  // (see IframeManager's onRemoteReconnect: "embed page reloaded, in-memory
+  // signer state may be lost"). With no re-configure/recover afterwards the
+  // wallet drops back to a disconnected state — the UI falls back to the
+  // connect screen and subsequent RPCs throw "Unauthorized - call
+  // eth_requestAccounts first". A brief post-foreground unresponsiveness (iOS
+  // suspends the renderer while backgrounded) is not a dead page, so we never
+  // probe-and-reload here. Genuinely dead renderers are still recovered via
+  // the crash handlers below, and real RPC/handshake timeouts via the
+  // connection-lost event.
 
   // React to connection-health events from the SDK: an RPC or handshake
   // timeout means the page is unresponsive and a reload restores it. An
