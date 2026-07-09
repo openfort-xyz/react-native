@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.7
+
+### Patch Changes
+
+- [#118](https://github.com/openfort-xyz/react-native/pull/118) [`ac1302e`](https://github.com/openfort-xyz/react-native/commit/ac1302eda4527f7938d3992c90e7a50479916931) Thanks [@jamalavedra](https://github.com/jamalavedra)! - Fix embedded wallet disconnecting after the app returns from the background. The foreground health-check no longer reloads the wallet WebView: a reload discards the embed page's in-memory signer/session state with no re-configure afterwards, which dropped the wallet back to a disconnected state (the UI fell back to the connect screen and subsequent RPCs failed with "Unauthorized - call eth_requestAccounts first"). Genuinely dead renderers are still recovered via the renderer-crash handlers, and real RPC/handshake timeouts via the connection-lost event.
+
 ## 1.1.6
 
 ### Patch Changes
