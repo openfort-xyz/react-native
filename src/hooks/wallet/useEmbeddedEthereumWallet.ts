@@ -158,14 +158,18 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
         if (!options?.silent) {
           setStatus({ status: 'fetching-wallets' })
         }
+        // Default to EOA when no accountType is configured, matching the
+        // createWallet default so both paths agree on the same default type.
+        // EOA and DELEGATED_ACCOUNT are not filterable smart-account types, so
+        // they map to no accountType filter (list all EVM accounts).
+        const effectiveAccountType = walletConfig?.accountType || AccountTypeEnum.EOA
         const accounts = await client.embeddedWallet.list({
           limit: 100,
           chainType: ChainTypeEnum.EVM,
           accountType:
-            walletConfig?.accountType === AccountTypeEnum.EOA ||
-            walletConfig?.accountType === AccountTypeEnum.DELEGATED_ACCOUNT
+            effectiveAccountType === AccountTypeEnum.EOA || effectiveAccountType === AccountTypeEnum.DELEGATED_ACCOUNT
               ? undefined
-              : walletConfig?.accountType || AccountTypeEnum.SMART_ACCOUNT,
+              : effectiveAccountType,
         })
         // Filter for Ethereum accounts only
         setEmbeddedAccounts(accounts)
@@ -353,15 +357,16 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
         const recoveryParams = await buildRecoveryParams({ ...createOptions, userId: user?.id }, walletConfig)
         const accountType = createOptions?.accountType || walletConfig?.accountType || AccountTypeEnum.EOA
 
-        // Fee sponsorship (gas policies) only applies to smart accounts. Creating
-        // an EOA while a feeSponsorshipId is configured otherwise fails later at
-        // send time with a misleading "insufficient funds" error, which points at
-        // funding rather than the real cause.
+        // Fee sponsorship (gas policies) requires a smart account or a delegated
+        // account — a plain EOA cannot be sponsored. Creating an EOA while a
+        // feeSponsorshipId is configured otherwise fails later at send time with
+        // a misleading "insufficient funds" error, which points at funding rather
+        // than the real cause.
         if (accountType === AccountTypeEnum.EOA && walletConfig?.feeSponsorshipId) {
           throw new SignerError(
             'wallet_error',
-            'This embedded wallet is being created as an EOA, but fee sponsorship (gas policy) requires a smart account. ' +
-              'Set a smart account type via accountType (on the wallet config or createWallet options), or remove feeSponsorshipId.'
+            'This embedded wallet is being created as an EOA, but fee sponsorship (gas policy) requires a smart account or a delegated account. ' +
+              'Set accountType to a smart account or delegated account (on the wallet config or createWallet options), or remove feeSponsorshipId.'
           )
         }
 
