@@ -7,6 +7,7 @@ import {
   type User,
 } from '@openfort/openfort-js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { validateSupportedChains } from '../lib/chainValidation'
 import { validateEnvironment } from '../lib/environmentValidation'
 import { getEmbeddedStateName, logger } from '../lib/logger'
 import { EmbeddedWalletWebView, NativePasskeyHandler, WebViewUtils } from '../native'
@@ -200,6 +201,11 @@ export const OpenfortProvider = ({
     publishableKey,
     shieldPublishableKey: walletConfig?.shieldPublishableKey,
   })
+
+  // Fail loudly on a malformed `supportedChains` prop (e.g. raw chain IDs
+  // instead of viem Chain objects) instead of silently building a broken
+  // chains map downstream.
+  validateSupportedChains(supportedChains)
 
   // Prevent multiple OpenfortProvider instances
   const existingContext = React.useContext(OpenfortContext)

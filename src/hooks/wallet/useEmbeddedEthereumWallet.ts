@@ -352,6 +352,19 @@ export function useEmbeddedEthereumWallet(options: UseEmbeddedEthereumWalletOpti
         // Build recovery params
         const recoveryParams = await buildRecoveryParams({ ...createOptions, userId: user?.id }, walletConfig)
         const accountType = createOptions?.accountType || walletConfig?.accountType || AccountTypeEnum.EOA
+
+        // Fee sponsorship (gas policies) only applies to smart accounts. Creating
+        // an EOA while a feeSponsorshipId is configured otherwise fails later at
+        // send time with a misleading "insufficient funds" error, which points at
+        // funding rather than the real cause.
+        if (accountType === AccountTypeEnum.EOA && walletConfig?.feeSponsorshipId) {
+          throw new SignerError(
+            'wallet_error',
+            'This embedded wallet is being created as an EOA, but fee sponsorship (gas policy) requires a smart account. ' +
+              'Set a smart account type via accountType (on the wallet config or createWallet options), or remove feeSponsorshipId.'
+          )
+        }
+
         // Create embedded wallet
         const embeddedAccount = await client.embeddedWallet.create({
           chainId: accountType === AccountTypeEnum.EOA ? undefined : chainId,
