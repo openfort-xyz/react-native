@@ -37,12 +37,6 @@ export type ResetPasswordOptions = {
   token: string
 } & OpenfortHookOptions<EmailAuthResult>
 
-export type LinkEmailOptions = {
-  email: string
-  password: string
-  emailVerificationRedirectTo?: string
-} & OpenfortHookOptions<EmailAuthResult>
-
 export type VerifyEmailOptions = {
   token: string
 } & OpenfortHookOptions<EmailVerificationResult>
@@ -70,13 +64,12 @@ const mapStatus = (status: PasswordFlowState) => {
  * Hook for email and password authentication.
  *
  * This hook provides comprehensive email/password authentication flows including sign-in,
- * sign-up, account linking, password reset, and email verification functionality.
+ * sign-up, password reset, and email verification functionality.
  *
  * @param hookOptions - Optional configuration with callback functions and email verification settings
  * @returns Email authentication state and methods with flow status indicators including:
  *   - `signInEmail` - Sign in with email and password
  *   - `signUpEmail` - Create new account with email and password
- *   - `linkEmail` - Link email/password to existing authenticated account
  *   - `requestResetPassword` - Request password reset email
  *   - `resetPassword` - Complete password reset with token from email
  *   - `verifyEmail` - Verify email address with verification code
@@ -89,7 +82,7 @@ const mapStatus = (status: PasswordFlowState) => {
  *
  * @example
  * ```tsx
- * const { signInEmail, signUpEmail, linkEmail, isLoading, requiresEmailVerification } = useEmailAuth({
+ * const { signInEmail, signUpEmail, isLoading, requiresEmailVerification } = useEmailAuth({
  *   onSuccess: ({ user }) => console.log('Email auth successful:', user?.id),
  *   onError: ({ error }) => console.error('Email auth failed:', error?.message),
  * });
@@ -216,65 +209,6 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
     [client, setPasswordState, _internal, hookOptions]
   )
 
-  // TODO: Auth V2
-  // const linkEmail = useCallback(
-  //   async (options: LinkEmailOptions): Promise<EmailAuthResult> => {
-  //     try {
-  //       setPasswordState({ status: 'sending-verification-code' })
-
-  //       // Get current user access token
-  //       const accessToken = await client.getAccessToken()
-  //       if (!accessToken) {
-  //         throw new Error('User must be authenticated to link email')
-  //       }
-
-  //       // Link email account
-  //       const result = await client.auth.linkEmailPassword({
-  //         email: options.email,
-  //         password: options.password,
-  //         authToken: accessToken,
-  //       })
-
-  //       // Check if action is required (email verification)
-  //       if ('action' in result) {
-  //         setPasswordState({
-  //           status: 'awaiting-code-input',
-  //         })
-  //         // Return undefined as email verification is required
-  //         return onSuccess({
-  //           hookOptions,
-  //           options,
-  //           data: { requiresEmailVerification: true },
-  //         })
-  //       } else {
-  //         // Link successful
-  //         setPasswordState({ status: 'done' })
-  //         // Refresh user state to reflect email linking
-  //         await _internal.refreshUserState()
-  //         return onSuccess({
-  //           hookOptions,
-  //           options,
-  //           data: { user: result },
-  //         })
-  //       }
-  //     } catch (e) {
-  //       const error = new OpenfortError('Failed to link email and password', OpenfortErrorType.AUTHENTICATION_ERROR, {
-  //         error: e,
-  //       })
-  //       setPasswordState({
-  //         status: 'error',
-  //         error,
-  //       })
-  //       return onError({
-  //         hookOptions,
-  //         options,
-  //         error,
-  //       })
-  //     }
-  //   },
-  //   [client, setPasswordState, _internal, hookOptions]
-  // )
-
   const requestResetPassword = useCallback(
     async (options: RequestResetPasswordOptions): Promise<EmailAuthResult> => {
       try {
@@ -389,7 +323,6 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
     signInEmail,
     signUpEmail,
     verifyEmail,
-    linkEmail: () => {},
     requestResetPassword,
     resetPassword,
     reset,

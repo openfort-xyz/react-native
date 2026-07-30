@@ -42,7 +42,7 @@ export type GuestHookOptions = OpenfortHookOptions<GuestHookResult>
  * }
  *
  * // Later, upgrade to permanent account by linking authentication
- * // Use linkEmail, linkOauth, or linkSiwe from other hooks
+ * // Use linkOauth from useOAuth, or linkSiwe from useWalletAuth
  * ```
  */
 export const useGuestAuth = (hookOptions: GuestHookOptions = {}) => {

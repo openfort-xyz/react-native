@@ -25,3 +25,9 @@ types of `useEmailAuth`, `useWalletAuth` and `useOAuth` directly, and
 - `UseLoginWithOAuth`, `LoginWithOAuthInput`, `LinkWithOAuthInput`
 - `AuthSuccessCallback`, `ErrorCallback`
 - `GenerateSiweMessage`, `GenerateSiweMessageResponse`
+
+**Breaking:** `useEmailAuth` no longer returns `linkEmail`, and `LinkEmailOptions`
+is removed. It was a no-op that silently did nothing while the documentation
+advertised it, and openfort-js 2.0.0 has no `auth.linkEmailPassword` to
+implement it against. For linking to an existing account, use `linkOauth` from
+`useOAuth` or `linkSiwe` from `useWalletAuth`.
