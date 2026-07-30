@@ -18,26 +18,9 @@ export {
   PasskeyUserCancelledError,
 } from '@openfort/openfort-js'
 // Authentication types
-export type {
-  AuthSuccessCallback,
-  EmailLoginHookOptions,
-  EmailLoginHookResult,
-  ErrorCallback,
-  GenerateSiweMessage,
-  GenerateSiweMessageResponse,
-  PasswordFlowState,
-  RecoveryFlowState,
-  SiweFlowState,
-  SiweLoginHookOptions,
-  SiweLoginHookResult,
-} from './auth'
+export type { PasswordFlowState, RecoveryFlowState, SiweFlowState } from './auth'
 // OAuth types
-export type {
-  LinkWithOAuthInput,
-  LoginWithOAuthInput,
-  OAuthFlowState,
-  UseLoginWithOAuth,
-} from './oauth'
+export type { OAuthFlowState } from './oauth'
 // Wallet types
 export type {
   // Connected wallet types
