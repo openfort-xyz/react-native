@@ -29,3 +29,10 @@ export {
   nominalUnits,
   useFundingChains,
 } from './useFundingChains'
+export type {
+  UseWalletPayVerification,
+  UseWalletPayVerificationOptions,
+  WalletPayIdentity,
+  WalletPayVerificationStep,
+} from './useWalletPayVerification'
+export { initialWalletPayStep, US_MOBILE_E164, useWalletPayVerification } from './useWalletPayVerification'
