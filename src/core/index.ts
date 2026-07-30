@@ -1,10 +1,8 @@
 // Client creation and configuration
 
-export type { SDKOverrides } from '@openfort/openfort-js'
-
 // Re-export important types and enums from openfort-js
 export { RecoveryMethod } from '@openfort/openfort-js'
-export { createOpenfortClient } from './client'
+export { createOpenfortClient, type SDKOverrides } from './client'
 export type { OpenfortContextValue } from './context'
 // React context and hooks
 export { isOpenfortContextValue, OpenfortContext, useOpenfortContext, useOpenfortContextSafe } from './context'

@@ -8,7 +8,6 @@
 export type {
   EmailAuthResult,
   EmailVerificationResult,
-  LinkEmailOptions,
   RequestResetPasswordOptions,
   ResetPasswordOptions,
   SignInEmailOptions,

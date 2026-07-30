@@ -1,5 +1,3 @@
-import type { OAuthProvider } from '@openfort/openfort-js'
-
 /**
  * OAuth authentication flow state
  */
@@ -20,26 +18,4 @@ export const mapOAuthStatus = (status: OAuthFlowState) => {
     isSuccess: status.status === 'done',
     error: status.error,
   }
-}
-
-/**
- * Login with OAuth input parameters
- */
-export type LoginWithOAuthInput = LinkWithOAuthInput
-
-/**
- * Link with OAuth input parameters
- */
-export type LinkWithOAuthInput = {
-  provider: OAuthProvider
-  redirectUri?: string | undefined
-  isLegacyAppleIosBehaviorEnabled?: boolean
-}
-
-/**
- * Login with OAuth hook interface
- */
-export interface UseLoginWithOAuth {
-  state: OAuthFlowState
-  login: (input: LoginWithOAuthInput) => Promise<import('@openfort/openfort-js').AuthResponse | undefined>
 }

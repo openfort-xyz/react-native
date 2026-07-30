@@ -1,7 +1,6 @@
 import {
   type AccountTypeEnum,
   EmbeddedState,
-  type SDKOverrides,
   ShieldConfiguration,
   type ThirdPartyAuthConfiguration,
   type User,
@@ -11,7 +10,7 @@ import { validateEnvironment } from '../lib/environmentValidation'
 import { getEmbeddedStateName, logger } from '../lib/logger'
 import { EmbeddedWalletWebView, NativePasskeyHandler, WebViewUtils } from '../native'
 import type { OAuthFlowState, PasswordFlowState, RecoveryFlowState, SiweFlowState } from '../types'
-import { createOpenfortClient, setDefaultClient } from './client'
+import { createOpenfortClient, type SDKOverrides, setDefaultClient } from './client'
 import { computeClientConfigKey } from './clientKey'
 import { OpenfortContext, type OpenfortContextValue } from './context'
 
