@@ -1,4 +1,5 @@
-import type { SDKOverrides, ThirdPartyAuthConfiguration } from '@openfort/openfort-js'
+import type { ThirdPartyAuthConfiguration } from '@openfort/openfort-js'
+import type { SDKOverrides } from './client'
 import type { EmbeddedWalletConfiguration } from './provider'
 
 /**

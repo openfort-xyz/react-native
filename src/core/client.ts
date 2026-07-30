@@ -5,6 +5,14 @@ import { logger } from '../lib/logger'
 import { createNormalizedStorage, SecureStorageAdapter } from './storage'
 
 /**
+ * Transport and platform overrides accepted by the Openfort client.
+ *
+ * openfort-js declares this shape but does not export it, so it is derived from
+ * the exported configuration type to stay in sync with the core SDK.
+ */
+export type SDKOverrides = NonNullable<OpenfortSDKConfiguration['overrides']>
+
+/**
  * Creates an {@link OpenfortClient} configured for Expo and React Native environments.
  *
  * The helper ensures Expo-specific utilities like secure storage and the crypto digest

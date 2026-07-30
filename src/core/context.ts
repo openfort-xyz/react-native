@@ -49,7 +49,7 @@ export interface OpenfortContextValue {
   _internal: {
     refreshUserState: (
       user?: import('@openfort/openfort-js').User
-    ) => Promise<import('@openfort/openfort-js').AuthResponse | null>
+    ) => Promise<import('@openfort/openfort-js').User | null>
   }
 }
 

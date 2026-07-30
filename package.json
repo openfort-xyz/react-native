@@ -41,7 +41,7 @@
     }
   },
   "dependencies": {
-    "@openfort/openfort-js": "^1.5.0",
+    "@openfort/openfort-js": "^2.0.0",
     "react-native-passkeys": "0.4.1"
   },
   "peerDependencies": {
@@ -107,6 +107,9 @@
     "auditConfig": {
       "ignoreCves": [
         "CVE-2025-14505"
+      ],
+      "ignoreGhsas": [
+        "GHSA-mh99-v99m-4gvg"
       ]
     },
     "overrides": {
@@ -116,14 +119,18 @@
       "axios@<1.16.0": ">=1.16.0",
       "form-data@<4.0.6": ">=4.0.6",
       "shell-quote@<1.8.4": ">=1.8.4",
-      "linkify-it@<5.0.1": ">=5.0.1",
+      "linkify-it@<5.0.2": "5.0.2",
       "markdown-it@<14.2.0": ">=14.2.0",
       "tmp@<0.2.6": ">=0.2.6",
       "@babel/core@<7.29.6": ">=7.29.6",
       "uuid@<11.1.1": ">=11.1.1",
-      "brace-expansion@>=5.0.0 <5.0.6": ">=5.0.6",
+      "postcss@<8.5.18": ">=8.5.18",
+      "brace-expansion@<1.1.16": "1.1.16",
+      "brace-expansion@>=5.0.0 <5.0.8": ">=5.0.8",
+      "test-exclude@<8": "8.0.0",
       "js-yaml@<3.15.0": "3.15.0",
-      "js-yaml@>=4.0.0 <4.2.0": ">=4.2.0",
+      "js-yaml@>=4.0.0 <4.2.0": ">=4.2.0 <5",
+      "js-yaml@>=5.0.0 <5.2.2": ">=5.2.2",
       "ws@>=6.0.0 <6.2.4": ">=6.2.4",
       "ws@>=7.0.0 <7.5.11": ">=7.5.11",
       "ws@>=8.0.0 <8.21.0": ">=8.21.0"

@@ -1,4 +1,4 @@
-import type { OpenfortError, AuthResponse as OpenfortUser } from '@openfort/openfort-js'
+import type { OpenfortError, User as OpenfortUser } from '@openfort/openfort-js'
 
 /**
  * Password authentication flow state
