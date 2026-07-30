@@ -38,6 +38,8 @@ app-example
 
 .claude/
 claude.md
+# local agent tooling state (session ids, transcript offsets, cached snapshots)
+.maestro/
 # openfort-js-docs/
 
 openfort-react-native-*.tgz
