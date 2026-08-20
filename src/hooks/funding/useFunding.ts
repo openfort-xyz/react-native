@@ -61,9 +61,14 @@ export type UseFunding = {
 const TERMINAL: FundingSessionStatus[] = ['succeeded', 'bounced', 'expired']
 const POLL_MS = 4000
 
+/** The one funding capability the poll loop needs — lets useOnramp reuse it. */
+export type FundingSessionReader = {
+  sessions: { get(id: string, params: { clientSecret: string }): Promise<FundingSession> }
+}
+
 /** Poll a session until terminal, pushing each update through `onUpdate`. */
-async function pollUntilTerminal(
-  funding: FundingApi,
+export async function pollUntilTerminal(
+  funding: FundingSessionReader,
   onUpdate: (session: FundingSession) => void,
   start: FundingSession,
   isCurrent: () => boolean

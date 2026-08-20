@@ -29,3 +29,12 @@ export {
   nominalUnits,
   useFundingChains,
 } from './useFundingChains'
+export type {
+  OnrampMethodId,
+  OnrampOpenParams,
+  OnrampQuote,
+  ResolvedOnrampMethod,
+  ResolvedOnrampMethods,
+  UseOnramp,
+} from './useOnramp'
+export { useOnramp } from './useOnramp'
