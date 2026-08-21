@@ -401,6 +401,7 @@ export const OpenfortProvider = ({
   const contextValue: OpenfortContextValue = useMemo(
     () => ({
       client,
+      publishableKey,
       user,
       isReady,
       error,
@@ -431,6 +432,7 @@ export const OpenfortProvider = ({
     }),
     [
       client,
+      publishableKey,
       user,
       isReady,
       error,

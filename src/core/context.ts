@@ -9,6 +9,8 @@ import type { Chain, EmbeddedWalletConfiguration } from './provider'
 export interface OpenfortContextValue {
   /** The Openfort client instance. */
   client: OpenfortClient
+  /** The project's publishable key (`pk_test_…` / `pk_live_…`). */
+  publishableKey: string
   /** The current authenticated user, or null when unauthenticated. */
   user: import('@openfort/openfort-js').User | null
   /** Whether the SDK has initialized and is ready for use. */

@@ -6,3 +6,8 @@
  */
 
 export { AuthBoundary, type AuthBoundaryProps } from './AuthBoundary'
+export {
+  OnrampPaymentSheet,
+  type OnrampPaymentSheetProps,
+  type OnrampSheetEvent,
+} from './OnrampPaymentSheet'
