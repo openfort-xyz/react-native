@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.0
+
+### Minor Changes
+
+- [#124](https://github.com/openfort-xyz/react-native/pull/124) [`e7408df`](https://github.com/openfort-xyz/react-native/commit/e7408df7348a731c472ec80b1689259c21669728) Thanks [@joalavedra](https://github.com/joalavedra)! - Add `useWalletPayVerification` (Coinbase-issued email + US-phone OTP via `client.funding.verifications`, with 60-day on-device reuse of completed verifications and `+1000…` sandbox numbers on test keys) and `OnrampPaymentSheet` (payment-link WebView with the `onramp_api.*` event bridge) for native wallet pay (Apple/Google Pay) funding. Requires `@openfort/openfort-js` with the `funding.verifications` namespace.
+
 ## 2.0.1
 
 ### Patch Changes
