@@ -1,7 +1,7 @@
 {
   "name": "@openfort/react-native",
   "main": "dist/index.js",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "license": "MIT",
   "description": "React Native SDK for Openfort platform integration",
   "repository": {
@@ -41,7 +41,7 @@
     }
   },
   "dependencies": {
-    "@openfort/openfort-js": "^2.2.0",
+    "@openfort/openfort-js": "^2.1.0",
     "react-native-passkeys": "0.4.1"
   },
   "peerDependencies": {
