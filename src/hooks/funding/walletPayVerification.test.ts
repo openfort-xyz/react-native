@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { initialWalletPayStep, US_MOBILE_E164 } from './walletPayIdentity'
+import {
+  isTestPublishableKey,
+  isValidWalletPayPhone,
+  parseStoredVerifications,
+  SANDBOX_E164,
+  storedVerificationId,
+  US_MOBILE_E164,
+  withStoredVerification,
+} from './walletPayIdentity'
 
 describe('US_MOBILE_E164', () => {
   it('accepts a US mobile in E.164', () => {
@@ -16,22 +24,54 @@ describe('US_MOBILE_E164', () => {
   })
 })
 
-describe('initialWalletPayStep', () => {
-  it('starts at email when the auth session has no email', () => {
-    expect(initialWalletPayStep(null)).toBe('email')
-    expect(initialWalletPayStep({ phoneNumber: '+14155550123', phoneNumberVerified: true })).toBe('email')
+describe('isValidWalletPayPhone', () => {
+  it('accepts Coinbase sandbox numbers only in test mode', () => {
+    expect(SANDBOX_E164.test('+10005550100')).toBe(true)
+    expect(isValidWalletPayPhone('+10005550100', true)).toBe(true)
+    expect(isValidWalletPayPhone('+10005550100', false)).toBe(false)
+    expect(isValidWalletPayPhone('+14155550123', false)).toBe(true)
+  })
+})
+
+describe('isTestPublishableKey', () => {
+  it('recognises pk_test_ keys', () => {
+    expect(isTestPublishableKey('pk_test_abc')).toBe(true)
+    expect(isTestPublishableKey('pk_live_abc')).toBe(false)
+    expect(isTestPublishableKey(undefined)).toBe(false)
+  })
+})
+
+describe('60-day verification store', () => {
+  const now = Date.parse('2026-08-21T00:00:00Z')
+
+  it('parses missing or corrupt storage as empty', () => {
+    expect(parseStoredVerifications(null)).toEqual({})
+    expect(parseStoredVerifications('not json')).toEqual({})
+    expect(parseStoredVerifications('"a string"')).toEqual({})
   })
 
-  it('starts at phone when the email exists but the phone is missing or unverified', () => {
-    expect(initialWalletPayStep({ email: 'a@b.co' })).toBe('phone')
-    expect(initialWalletPayStep({ email: 'a@b.co', phoneNumber: '+14155550123', phoneNumberVerified: false })).toBe(
-      'phone'
-    )
+  it('returns a stored id only for the same destination while unexpired', () => {
+    const store = withStoredVerification({}, 'sms', {
+      destination: '+14155550123',
+      verificationId: 'ver_1',
+      verificationExpiresAt: '2026-10-20T00:00:00Z',
+    })
+    expect(storedVerificationId(store, 'sms', '+14155550123', now)).toBe('ver_1')
+    expect(storedVerificationId(store, 'sms', '+14155550124', now)).toBeNull()
+    expect(storedVerificationId(store, 'email', '+14155550123', now)).toBeNull()
+    expect(storedVerificationId(store, 'sms', '+14155550123', Date.parse('2026-10-20T00:00:00Z'))).toBeNull()
   })
 
-  it('is already complete when auth collected and verified both', () => {
-    expect(initialWalletPayStep({ email: 'a@b.co', phoneNumber: '+14155550123', phoneNumberVerified: true })).toBe(
-      'complete'
-    )
+  it('treats a record without an expiry as valid and round-trips through JSON', () => {
+    const store = withStoredVerification({}, 'email', { destination: 'a@b.co', verificationId: 'ver_2' })
+    const reparsed = parseStoredVerifications(JSON.stringify(store))
+    expect(storedVerificationId(reparsed, 'email', 'a@b.co', now)).toBe('ver_2')
+  })
+
+  it('replaces the previous record for the same channel', () => {
+    const first = withStoredVerification({}, 'sms', { destination: '+14155550123', verificationId: 'ver_1' })
+    const second = withStoredVerification(first, 'sms', { destination: '+14155550124', verificationId: 'ver_3' })
+    expect(storedVerificationId(second, 'sms', '+14155550123', now)).toBeNull()
+    expect(storedVerificationId(second, 'sms', '+14155550124', now)).toBe('ver_3')
   })
 })

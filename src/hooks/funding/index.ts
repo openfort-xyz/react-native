@@ -33,6 +33,12 @@ export type {
   UseWalletPayVerification,
   UseWalletPayVerificationOptions,
   WalletPayIdentity,
+  WalletPayVerificationChannel,
   WalletPayVerificationStep,
 } from './useWalletPayVerification'
-export { initialWalletPayStep, US_MOBILE_E164, useWalletPayVerification } from './useWalletPayVerification'
+export {
+  isValidWalletPayPhone,
+  SANDBOX_E164,
+  US_MOBILE_E164,
+  useWalletPayVerification,
+} from './useWalletPayVerification'
