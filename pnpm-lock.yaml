@@ -32,8 +32,8 @@ importers:
   .:
     dependencies:
       '@openfort/openfort-js':
-        specifier: ^2.0.0
-        version: 2.0.0(typescript@5.9.3)
+        specifier: ^2.2.0
+        version: 2.2.0(typescript@5.9.3)
       react-native-passkeys:
         specifier: 0.4.1
         version: 0.4.1(react-native@0.77.1(@babel/core@8.0.1)(@types/react@18.3.28)(react@18.3.1))(react@18.3.1)
@@ -1118,8 +1118,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@openfort/openfort-js@2.0.0':
-    resolution: {integrity: sha512-eZ/9f7M2orN9kZHPzrxKeUF95ObUrXBFsS1Y80iEPrUWh2G/U6QHxJJLqt9KMTKZ5ET7UC1+mT+vJM+LuQAQgQ==}
+  '@openfort/openfort-js@2.2.0':
+    resolution: {integrity: sha512-5xKcP2AjU+HC6qR3b8EyHCUpCcMgKYmgXS+Q2blJMUD6mqvDrBvLXvahXaOB/OIA2Xpx3l7Toj2GcTy5loECCg==}
     peerDependencies:
       typescript: '>=5.9.3'
     peerDependenciesMeta:
@@ -4906,7 +4906,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.1
 
-  '@openfort/openfort-js@2.0.0(typescript@5.9.3)':
+  '@openfort/openfort-js@2.2.0(typescript@5.9.3)':
     dependencies:
       '@ethersproject/abi': 5.8.0
       '@ethersproject/bytes': 5.8.0
