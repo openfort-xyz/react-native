@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.1
+
+### Patch Changes
+
+- [#129](https://github.com/openfort-xyz/react-native/pull/129) [`87bb839`](https://github.com/openfort-xyz/react-native/commit/87bb83969f05cf3aa500dd3cf67667dab216f2b0) Thanks [@n00m4d](https://github.com/n00m4d)! - Update openfort js lib
+
 ## 2.1.0
 
 ### Minor Changes
