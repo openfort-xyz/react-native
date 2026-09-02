@@ -32,8 +32,8 @@ importers:
   .:
     dependencies:
       '@openfort/openfort-js':
-        specifier: ^2.3.0
-        version: 2.3.0(typescript@5.9.3)
+        specifier: ^2.4.2
+        version: 2.4.2(typescript@5.9.3)
       react-native-passkeys:
         specifier: 0.4.1
         version: 0.4.1(react-native@0.77.1(@babel/core@8.0.1)(@types/react@18.3.28)(react@18.3.1))(react@18.3.1)
@@ -1118,8 +1118,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@openfort/openfort-js@2.3.0':
-    resolution: {integrity: sha512-Ycjj97j/21m5jTDqPNHQ0cuMcPh24XBvQuk6r6VWyli0L4O7HSyOZtAu4fU+RCnHJ6l8dVQThy1c5dhUpxBqDw==}
+  '@openfort/openfort-js@2.4.2':
+    resolution: {integrity: sha512-mRiiLpDe60OhTrT6kdRE4P/JqVe9D1st6u7zOpuV+A79GDk8DXd4jvMeHtwHMtG2PHXB2dinq8VaPR9Kk6JGBw==}
     peerDependencies:
       typescript: '>=5.9.3'
     peerDependenciesMeta:
@@ -1574,6 +1574,7 @@ packages:
   '@xmldom/xmldom@0.9.10':
     resolution: {integrity: sha512-A9gOqLdi6cV4ibazAjcQufGj0B1y/vDqYrcuP6d/6x8P27gRS8643Dj9o1dEKtB6O7fwxb2FgBmJS2mX7gpvdw==}
     engines: {node: '>=14.6'}
+    deprecated: this version has critical issues, please update to the latest version
 
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
@@ -4918,7 +4919,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.1
 
-  '@openfort/openfort-js@2.3.0(typescript@5.9.3)':
+  '@openfort/openfort-js@2.4.2(typescript@5.9.3)':
     dependencies:
       '@ethersproject/abi': 5.8.0
       '@ethersproject/bytes': 5.8.0
