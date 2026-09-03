@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.2
+
+### Patch Changes
+
+- [#131](https://github.com/openfort-xyz/react-native/pull/131) [`8d46414`](https://github.com/openfort-xyz/react-native/commit/8d4641461d531bed63e43066556d2b9a6c220b9b) Thanks [@n00m4d](https://github.com/n00m4d)! - Update @openfort/openfort-js to 2.4.2 so wallet calls use the /v2/transactions endpoints
+
 ## 2.1.1
 
 ### Patch Changes
