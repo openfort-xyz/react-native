@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.3
+
+### Patch Changes
+
+- [#133](https://github.com/openfort-xyz/react-native/pull/133) [`5b1fca8`](https://github.com/openfort-xyz/react-native/commit/5b1fca80b2312c6ffed2a401bf6dde6354fdc31b) Thanks [@jamalavedra](https://github.com/jamalavedra)! - Update `@openfort/openfort-js` to 2.5.0. `OpenfortEvents.ON_SIGNED_MESSAGE` now fires only for `personal_sign`/`signMessage` and EIP-712 typed data, and `SignedMessagePayload` carries a `type: 'message' | 'typedData'` discriminator.
+
 ## 2.1.2
 
 ### Patch Changes
