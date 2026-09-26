@@ -75,7 +75,7 @@
     "size-limit": "^11.2.0",
     "typedoc": "^0.28.19",
     "typescript": "5.9.3",
-    "vitest": "4.1.9"
+    "vitest": "5.0.2"
   },
   "knip": {
     "entry": [
