@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.0
+
+### Minor Changes
+
+- [#136](https://github.com/openfort-xyz/react-native/pull/136) [`1167eda`](https://github.com/openfort-xyz/react-native/commit/1167edaa250632d6147fd595964e3d57b0a62000) Thanks [@jamalavedra](https://github.com/jamalavedra)! - `useWalletAuth().linkSiwe` now links the wallet to the signed-in user via `linkWithSiwe` instead of signing in with it. Generate its message with `generateSiweMessage({ ..., link: true })` so the nonce comes from `initLinkSiwe`. `messageOverride` is now required on `signInWithSiwe` and `linkSiwe` (both already threw without it), and the unused `disableSignup` option is removed.
+
 ## 2.1.3
 
 ### Patch Changes
