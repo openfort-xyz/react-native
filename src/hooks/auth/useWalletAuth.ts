@@ -17,14 +17,13 @@ export type WalletHookOptions = OpenfortHookOptions<WalletHookResult | GenerateS
 type SiweOptions = {
   signature: string
   walletAddress: string
-  messageOverride?: string
-  disableSignup?: boolean
+  messageOverride: string
 } & OpenfortHookOptions<WalletHookResult>
 
 type LinkSiweOptions = {
   signature: string
   walletAddress: string
-  messageOverride?: string
+  messageOverride: string
 } & OpenfortHookOptions<WalletHookResult>
 
 type GenerateSiweMessageOptions = {
@@ -33,6 +32,8 @@ type GenerateSiweMessageOptions = {
     domain: string
     uri: string
   }
+  /** Set to `true` when the message will be passed to `linkSiwe`. */
+  link?: boolean
 } & OpenfortHookOptions<GenerateSiweMessageResult>
 
 type GenerateSiweMessageResult = {
@@ -67,6 +68,7 @@ const mapStatus = (status: SiweFlowState) => {
  *   - `generateSiweMessage` - Generate SIWE message for wallet to sign
  *   - `signInWithSiwe` - Authenticate user with signed SIWE message
  *   - `linkSiwe` - Link external wallet to existing authenticated account
+ *     (generate its message with `generateSiweMessage({ ..., link: true })`)
  *   - `isLoading` - Whether a SIWE operation is in progress
  *   - `isError` - Whether the last SIWE operation failed
  *   - `isSuccess` - Whether the last SIWE operation succeeded
@@ -110,9 +112,9 @@ export function useWalletAuth(hookOptions?: WalletHookOptions) {
         // Get wallet address from the external wallet
         const walletAddress = typeof args.wallet === 'string' ? args.wallet : args.wallet.address
 
-        const result = await client.auth.initSiwe({
-          address: walletAddress,
-        })
+        const result = args.link
+          ? await client.auth.initLinkSiwe({ address: walletAddress })
+          : await client.auth.initSiwe({ address: walletAddress })
 
         // Build the SIWE message
         const siweMessage = `${args.from.domain} wants you to sign in with your Ethereum account:\n${walletAddress}\n\nSign in to ${args.from.domain}\n\nURI: ${args.from.uri}\nVersion: 1\nChain ID: 1\nNonce: ${result.nonce}\nIssued At: ${new Date().toISOString()}`
@@ -153,27 +155,26 @@ export function useWalletAuth(hookOptions?: WalletHookOptions) {
         const message = opts.messageOverride || ''
 
         if (!message) {
-          throw new Error('SIWE message is required. Call generateSiweMessage first.')
+          throw new Error('SIWE message is required. Call generateSiweMessage with link: true first.')
         }
 
-        // Get current user access token for linking
         const accessToken = await client.getAccessToken()
         if (!accessToken) {
           throw new Error('User must be authenticated to link wallet')
         }
 
-        const result = await client.auth.loginWithSiwe({
+        await client.auth.linkWithSiwe({
           signature: opts.signature,
           message: message,
           walletClientType: 'unknown',
           connectorType: 'unknown',
           address: opts.walletAddress,
+          // generateSiweMessage always signs for Chain ID 1
+          chainId: 1,
         })
 
         setSiweState({ status: 'done' })
-        const user = result.user
-        // Refresh user state to reflect SIWE linking
-        await _internal.refreshUserState()
+        const user = (await _internal.refreshUserState()) ?? undefined
 
         return onSuccess({
           hookOptions,
