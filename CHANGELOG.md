@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.1
+
+### Patch Changes
+
+- [#144](https://github.com/openfort-xyz/react-native/pull/144) [`764eab7`](https://github.com/openfort-xyz/react-native/commit/764eab72b4e89c2562908330c10d35987b9a6bee) Thanks [@jamalavedra](https://github.com/jamalavedra)! - Update `@openfort/openfort-js` to 2.6.3, which pins axios 1.20.0 and `@openfort/shield-js` 0.2.1 to pick up the axios security fixes.
+
 ## 2.2.0
 
 ### Minor Changes
