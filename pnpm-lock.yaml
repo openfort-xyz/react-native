@@ -32,8 +32,8 @@ importers:
   .:
     dependencies:
       '@openfort/openfort-js':
-        specifier: ^2.5.0
-        version: 2.5.0(typescript@5.9.3)
+        specifier: ^2.6.3
+        version: 2.6.3(typescript@5.9.3)
       react-native-passkeys:
         specifier: 0.4.1
         version: 0.4.1(react-native@0.77.1(@babel/core@8.0.1)(@types/react@18.3.28)(react@18.3.1))(react@18.3.1)
@@ -1118,16 +1118,16 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@openfort/openfort-js@2.5.0':
-    resolution: {integrity: sha512-yB+glXx1SriDtbn0YbuWDyfQ2GHVZWHBPoVWnfDOAQ48e/xsiIkzCfUWAL7S8j5RTd4CTkkoIsiHMrdm6oMijA==}
+  '@openfort/openfort-js@2.6.3':
+    resolution: {integrity: sha512-SicFkWHWxRxyFxaKg5jFSrRLTpe1bJFGFRIAlrcqrahz/ppj77fwV7c4WwEimBwjBOPbte3iZQebd+22wdH4sA==}
     peerDependencies:
       typescript: '>=5.9.3'
     peerDependenciesMeta:
       typescript:
         optional: true
 
-  '@openfort/shield-js@0.1.36':
-    resolution: {integrity: sha512-0vB5HvIxFr7IAzEFc7xr7FtiLvx6Zt+ByI48R8tywLb0+xp7ZAo/psB4sVz4aRyo+d+q5wW/5ulGP3mxkQeJyA==}
+  '@openfort/shield-js@0.2.1':
+    resolution: {integrity: sha512-4Mo850330TNu2tkXXTNq2Zn7rYDt68KbcRs335Tf/fQl+9sTgzxntNo0bPgU0aaf7k5juSpxvv8G/PCsoNaSAw==}
 
   '@oxc-project/types@0.138.0':
     resolution: {integrity: sha512-1a7ZKmrRTCoN1XMZ4L0PyyqrMnrNlLyPuOkdSX2MZg7IiIGRUyurNhAm73ptDOraoBcIordsIGKNPKUzy3ZmfA==}
@@ -1652,8 +1652,8 @@ packages:
     peerDependencies:
       axios: '>=1.16.0'
 
-  axios@1.18.1:
-    resolution: {integrity: sha512-3nTvFlvpn9Zu/RkHUqtc7/+al4UpRW5az71ap5zccp6e8RAYEzhMTecX8Dz1wWDYrPpUoB1HAQEGEAEvUr7S9g==}
+  axios@1.20.0:
+    resolution: {integrity: sha512-r8aOh8j9cGKpgQAqpzrUHnSIc6a59Y3Xf/cv8sy1DrHCkZHzQGEuoq1tARk6qSyDdtQGSDgpb9kFlruzPvrgwg==}
 
   babel-jest@29.7.0:
     resolution: {integrity: sha512-BrvGY3xZSwEcCzKvKsCi2GgHqDqsYkOP4/by5xCgIwGXQxIEh+8ew3gmrE1y7XRR6LHZIj6yLYnUi/mm2KXKBg==}
@@ -4919,7 +4919,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.1
 
-  '@openfort/openfort-js@2.5.0(typescript@5.9.3)':
+  '@openfort/openfort-js@2.6.3(typescript@5.9.3)':
     dependencies:
       '@ethersproject/abi': 5.8.0
       '@ethersproject/bytes': 5.8.0
@@ -4927,11 +4927,11 @@ snapshots:
       '@ethersproject/keccak256': 5.8.0
       '@ethersproject/providers': 5.8.0
       '@ethersproject/transactions': 5.8.0
-      '@openfort/shield-js': 0.1.36
+      '@openfort/shield-js': 0.2.1
       '@sentry/browser': 9.47.1
       '@sentry/core': 9.47.1
-      axios: 1.18.1
-      axios-retry: 4.5.0(axios@1.18.1)
+      axios: 1.20.0
+      axios-retry: 4.5.0(axios@1.20.0)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.9.3
@@ -4941,10 +4941,10 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@openfort/shield-js@0.1.36':
+  '@openfort/shield-js@0.2.1':
     dependencies:
-      axios: 1.18.1
-      axios-retry: 4.5.0(axios@1.18.1)
+      axios: 1.20.0
+      axios-retry: 4.5.0(axios@1.20.0)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -5470,12 +5470,12 @@ snapshots:
 
   asynckit@0.4.0: {}
 
-  axios-retry@4.5.0(axios@1.18.1):
+  axios-retry@4.5.0(axios@1.20.0):
     dependencies:
-      axios: 1.18.1
+      axios: 1.20.0
       is-retry-allowed: 2.2.0
 
-  axios@1.18.1:
+  axios@1.20.0:
     dependencies:
       follow-redirects: 1.16.0
       form-data: 4.0.6

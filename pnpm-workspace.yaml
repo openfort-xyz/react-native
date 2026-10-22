@@ -19,3 +19,4 @@ overrides:
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - "@openfort/openfort-js"
+  - "@openfort/shield-js"
