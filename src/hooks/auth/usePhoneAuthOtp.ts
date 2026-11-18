@@ -49,7 +49,7 @@ export const usePhoneAuthOtp = (hookOptions: UsePhoneOtpHookOptions = {}) => {
           })
         }
 
-        const result = await client.auth.logInWithPhoneOtp({
+        await client.auth.logInWithPhoneOtp({
           phoneNumber: options.phone,
           otp: options.otp,
         })
@@ -57,7 +57,8 @@ export const usePhoneAuthOtp = (hookOptions: UsePhoneOtpHookOptions = {}) => {
         setStatus({
           status: 'success',
         })
-        const user = result.user
+        // The login response omits user metadata; /me returns it.
+        const user = await client.user.get()
 
         await _internal.refreshUserState(user)
         return onSuccess<PhoneOtpAuthResult>({

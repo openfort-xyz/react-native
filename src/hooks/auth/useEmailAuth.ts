@@ -126,7 +126,8 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
         } else {
           // Login successful
           setPasswordState({ status: 'done' })
-          const user = result.user
+          // The login response omits user metadata; /me returns it.
+          const user = await client.user.get()
           // Refresh user state in provider
           await _internal.refreshUserState(user)
           return onSuccess({
