@@ -210,7 +210,7 @@ export function useWalletAuth(hookOptions?: WalletHookOptions) {
           throw new Error('SIWE message is required. Call generateSiweMessage first.')
         }
 
-        const result = await client.auth.loginWithSiwe({
+        await client.auth.loginWithSiwe({
           signature: opts.signature,
           message: message,
           walletClientType: 'unknown',
@@ -219,7 +219,8 @@ export function useWalletAuth(hookOptions?: WalletHookOptions) {
         })
 
         setSiweState({ status: 'done' })
-        const user = result.user
+        // The login response omits user metadata; /me returns it.
+        const user = await client.user.get()
         // Refresh user state in provider
         await _internal.refreshUserState(user)
         return onSuccess({

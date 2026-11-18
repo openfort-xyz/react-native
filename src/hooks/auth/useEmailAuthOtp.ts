@@ -49,7 +49,7 @@ export const useEmailAuthOtp = (hookOptions: UseEmailOtpHookOptions = {}) => {
           })
         }
 
-        const result = await client.auth.logInWithEmailOtp({
+        await client.auth.logInWithEmailOtp({
           email: options.email,
           otp: options.otp,
         })
@@ -57,7 +57,8 @@ export const useEmailAuthOtp = (hookOptions: UseEmailOtpHookOptions = {}) => {
         setStatus({
           status: 'success',
         })
-        const user = result.user
+        // The login response omits user metadata; /me returns it.
+        const user = await client.user.get()
 
         await _internal.refreshUserState(user)
         return onSuccess<EmailOtpAuthResult>({

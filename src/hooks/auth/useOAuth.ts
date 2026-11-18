@@ -102,13 +102,14 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
               })
 
               // Complete OAuth flow with Apple credentials
-              const authResult = await client.auth.logInWithIdToken({
+              await client.auth.logInWithIdToken({
                 provider: OAuthProvider.APPLE,
                 token: appleResult.identityToken!,
               })
 
               setOAuthState({ status: 'done' })
-              const user = authResult.user
+              // The login response omits user metadata; /me returns it.
+              const user = await client.user.get()
               // Refresh user state in provider
               await _internal.refreshUserState(user)
 
