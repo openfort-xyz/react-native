@@ -7,10 +7,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   verify:
     name: Verify
     uses: ./.github/workflows/verify.yml
+    permissions:
+      contents: read
 
   publish:
     name: Publish
